@@ -2,6 +2,15 @@
 
 ### This is in alpha. Please don't use it yet
 
+## What's in it
+- Engine bytepatches for common SDK13 problems, including a fix for high fov breaking skyboxes, and for servers getting lagged out by clients, reverse engineered from scratch with the exception of a few passed down from other programmers
+- Engine hooks/detours for common SDK13 problems, including a new cvar `net_chan_proctime_limit_ms` that limits the amount of time that a client can make the server spend processing a packet, reverse engineered from scratch
+- Quality of life cvars allowing clients to automatically flush custom content after leaving a server, enabled by the above engine hooks
+- The ability to prevent clients from connecting to a list of malicious / "bad" servers, downloaded dynamically every game boot, enabled by engine detours
+- [Sentry.IO](https://sentry.io) integration for crash reporting / telemetry / developer data etc
+- Helper functions, including a function that allows you to hook when Steam has initialized on the client by spinning off a thread and checking every second
+- More  coming soon
+
 
 ## HOW TO USE:
 This is premade to hook up to VPC scripts.
