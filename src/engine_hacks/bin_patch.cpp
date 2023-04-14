@@ -46,7 +46,7 @@ CBinary::CBinary() : CAutoGameSystem("")
 CBinPatch g_EnginePatches[] =
 {
     #ifdef _WIN32
-        #ifdef TF_CLASSIC
+        #ifdef GAME_DLL
         // Server only!
         /*
             Patch:
@@ -134,7 +134,7 @@ CBinPatch g_EnginePatches[] =
         #endif
     #else 
     // LINUX
-        #ifdef TF_CLASSIC
+        #ifdef GAME_DLL
         // Server only!
         /*
             Patch:
@@ -230,7 +230,7 @@ CBinPatch g_EnginePatches[] =
 void CBinary::PostInit()
 {
     // Only run this on dedicated servers, not on clients
-    #ifdef TF_CLASSIC
+    #ifdef GAME_DLL
         if (engine->IsDedicatedServer())
         {
             bool didpatches = ApplyAllPatches();
