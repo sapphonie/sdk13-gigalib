@@ -1,0 +1,73 @@
+$Macro sappholibloc     "$SRCDIR\game\shared\sdk13-sappholib\src"
+$Configuration
+{
+    $Compiler
+    {
+        $AdditionalIncludeDirectories   "$BASE;$sappholibloc"
+        $SymbolVisibility               "default" [$POSIX]
+
+        // $Create/UsePrecompiledHeader "Not Using Precompiled Headers"
+    }
+}
+
+$Project
+{
+    $Folder "Source Files"
+    {
+        $Folder "sapphoiolib"
+        {
+            $Folder "helpers"
+            {
+                $File   "$sappholibloc/helpers/steam_helpers.h"
+                $File   "$sappholibloc/helpers/steam_helpers.cpp"
+
+                $File   "$sappholibloc/helpers/misc_helpers.h"
+                $File   "$sappholibloc/helpers/misc_helpers.cpp"
+            }
+            $Folder "memy"
+            {
+                $File "$sappholibloc/memy/bytepatch.hpp"
+                $File "$sappholibloc/memy/detourhook.hpp"
+
+                $File "$sappholibloc/memy/memytools.h"
+                $File "$sappholibloc/memy/memytools.cpp"
+
+                $File "$sappholibloc/memy/vtblhook.h"
+            }
+
+            $Folder "engine hacks"
+            {
+                $File   "$sappholibloc/engine_hacks/engine_detours.cpp"
+                $File   "$sappholibloc/engine_hacks/bin_patch.cpp"
+
+                $File   "$sappholibloc/engine_hacks/engine_detours.h"
+                $File   "$sappholibloc/engine_hacks/bin_patch.h"
+            }
+
+            $Folder "sentry native"
+            {
+                $File   "$sappholibloc/sentry_native/sdk_sentry.cpp"
+                $File   "$sappholibloc/sentry_native/sdk_sentry.h"
+
+                $File   "$sappholibloc/sentry_native/sentry.h"
+            }
+            $Folder "qol"
+            {
+                $File   "$sappholibloc/qol/flush_downloadables.cpp"
+                $File   "$sappholibloc/qol/flush_downloadables.h"
+
+                $File   "$sappholibloc/qol/blacklists.cpp"
+                $File   "$sappholibloc/qol/blacklists.h"
+            }
+        }
+    }
+    $Folder "Link Libraries"
+    {
+        $ImpLib                 "$sappholibloc\..\bin\sentry" [$WIN32]
+
+        // I had to build both of these myself (for 32 bit), so just be aware
+        // -sappho
+        $Lib                    "$sappholibloc\..\bin\libbreakpad_client" [$LINUX]
+        $Lib                    "$sappholibloc\..\bin\libsentry"          [$LINUX]
+    }
+}
