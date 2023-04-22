@@ -7,7 +7,7 @@
 #include <string>
 #include "tier0/valve_minmax_on.h"
 
-#include <sentry_native/sdk_sentry.h>
+#include <sdksentry/sdksentry.h>
 
 CSentry g_Sentry;
 void SentryInitTrampoline()

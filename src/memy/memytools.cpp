@@ -60,10 +60,17 @@ memy::memy()
 #endif
 }
 
+
+#include <sdkCURL/sdkCURL.h>
+
 bool memy_init::Init()
 {
     // memy();
     memy::InitAllBins();
+
+#ifdef SDKCURL
+    new sdkCURL;
+#endif
 
     return true;
 }

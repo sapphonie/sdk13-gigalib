@@ -9,8 +9,8 @@
 #include <memy/detourhook.hpp>
 
 
-#ifdef SENTRY
-    #include <sentry_native/sdk_sentry.h>
+#ifdef SDKSENTRY
+    #include <sdksentry/sdksentry.h>
 #endif
 
 class CEngineDetours : public CAutoGameSystem

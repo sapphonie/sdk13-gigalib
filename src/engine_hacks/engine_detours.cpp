@@ -696,8 +696,8 @@ void CEngineDetours::PostInit()
 #include <inetchannel.h>
 #include <iclient.h>
 
-#ifdef SENTRY
-    #include <sentry_native/sdk_sentry.h>
+#ifdef SDKSENTRY
+    #include <sdksentry/sdksentry.h>
 #endif
 
 #ifdef BLACKLISTS
@@ -772,7 +772,7 @@ static DetourHook Detour_NetChanShutdown    = {};
     // otherwise...
     if ( CBlacklists::CompareServerBlacklist(ipaddr) )
     {
-#ifdef SENTRY
+#ifdef SDKSENTRY
         sentry_value_t ctxinfo = sentry_value_new_object();
         sentry_value_set_by_key(ctxinfo, "malicious ip address", sentry_value_new_string(ipaddr));
         SentryEvent("info", __FUNCTION__, "Malicious IP connect attempt", ctxinfo);

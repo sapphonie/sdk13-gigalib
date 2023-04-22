@@ -2,7 +2,7 @@
 #define SDK_SENTRY_H
 #ifdef CLIENT_DLL
 
-#include "sentry.h"
+#include <sdksentry/vendored/sentry.h>
 #include <helpers/misc_helpers.h>
 #include <helpers/steam_helpers.h>
 
