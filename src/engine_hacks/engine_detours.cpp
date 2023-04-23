@@ -782,7 +782,7 @@ static DetourHook Detour_NetChanShutdown    = {};
         const int spewlen = strlen(malicious_spew);
         const int MAX_URL_SIZE = 128;
         char* finalspew = new char[spewlen + MAX_URL_SIZE + 1];
-        V_snprintf(finalspew, (spewlen + MAX_URL_SIZE + 1), "%s%s", malicious_spew, BLACKLISTS_CONTACT_URL);
+        V_snprintf( finalspew, (spewlen + MAX_URL_SIZE + 1), "%s%s", malicious_spew, V_STRINGIFY(BLACKLISTS_CONTACT_URL) );
         ConColorMsg(dullyello, "%s", malicious_spew);
         delete [] finalspew;
 

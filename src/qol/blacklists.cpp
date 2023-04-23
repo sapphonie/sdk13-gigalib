@@ -28,7 +28,14 @@ void CBlacklists::GetBlacklist()
 {
     SteamAPICall_t hCallServer;
 
-    HTTPRequestHandle httphandle = steamapicontext->SteamHTTP()->CreateHTTPRequest(k_EHTTPMethodGET, FORCE_OBFUSCATE(BLACKLISTS_URL));
+    HTTPRequestHandle httphandle = steamapicontext->SteamHTTP()->CreateHTTPRequest
+    (
+        k_EHTTPMethodGET,
+        FORCE_OBFUSCATE
+        (
+            V_STRINGIFY(BLACKLISTS_URL) 
+        )
+    );
     steamapicontext->SteamHTTP()->SetHTTPRequestAbsoluteTimeoutMS(httphandle, timeoutms);
     steamapicontext->SteamHTTP()->SendHTTPRequest(httphandle, &hCallServer);
     steamapicontext->SteamHTTP()->PrioritizeHTTPRequest(httphandle);

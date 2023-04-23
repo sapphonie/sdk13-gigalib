@@ -143,7 +143,7 @@ bool sdkCURL::InitCURL()
         return false;                                                   \
     }
 
-
+#define testdef testdef2
 #include <functional>
 bool sdkCURL::CURLGet_Thread(std::string inURL, curlResponse* resp)
 {

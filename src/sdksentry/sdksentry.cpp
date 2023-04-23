@@ -42,7 +42,7 @@ void sentry_callback(IConVar* var, const char* pOldValue, float flOldValue)
 ConVar cl_send_error_reports("cl_send_error_reports", "-1", FCVAR_ARCHIVE,
     "Enables/disables sending error reports to the developers to help improve the game.\n"
     "Error reports will include your SteamID, and any pertinent game info (class, loadout, current map, etc.) - we do not store any personally identifiable information.\n"
-    "Read more at " SENTRY_PRIVACY_POLICY_URL "\n"
+    "Read more at " V_STRINGIFY(SENTRY_PRIVACY_POLICY_URL) "\n"
     "-1 asks you again on game boot and disables reporting, 0 disables reporting and does not ask you again, 1 enables reporting.\n",
     sentry_callback
 );
@@ -61,7 +61,7 @@ void CSentry::GetURL()
         Error("Couldn't get SteamHTTP interface! Try restarting Steam.\n");
     }
 
-    const char* sentry_dl = _OBFUSCATE(SENTRY_URL);
+    const char* sentry_dl = FORCE_OBFUSCATE( V_STRINGIFY(SENTRY_URL) );
 
     HTTPRequestHandle httphandle = steamapicontext->SteamHTTP()->CreateHTTPRequest(k_EHTTPMethodGET, sentry_dl);
     steamapicontext->SteamHTTP()->SetHTTPRequestAbsoluteTimeoutMS(httphandle, 5000);

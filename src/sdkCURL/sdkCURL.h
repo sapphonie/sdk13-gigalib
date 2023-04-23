@@ -10,9 +10,9 @@
 #include <helpers/misc_helpers.h>
 
 #include "tier0/valve_minmax_off.h"
-#include <string>
-#include <vector>
-#include <thread>
+    #include <string>
+    #include <vector>
+    #include <thread>
 #include "tier0/valve_minmax_on.h"
 
 #undef SetPort
