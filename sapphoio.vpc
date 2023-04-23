@@ -6,8 +6,19 @@ $Configuration
         $AdditionalIncludeDirectories   "$BASE;$sappholibloc"
         $SymbolVisibility               "default" [$POSIX]
 
+        // Enable modern CURL
+        $PreprocessorDefinitions        "$BASE;CURL_STATICLIB"
+
         // $Create/UsePrecompiledHeader "Not Using Precompiled Headers"
     }
+
+    $Linker
+    {
+        $AdditionalDependencies             "$BASE wsock32.lib" [$WIN32]
+        $AdditionalDependencies             "$BASE ws2_32.lib" [$WIN32]
+        $AdditionalDependencies             "$BASE wldap32.lib" [$WIN32]
+    }
+
 }
 
 $Project
@@ -80,8 +91,8 @@ $Project
     }
     $Folder "Link Libraries"
     {
-        $ImpLib                 "$sappholibloc\..\bin\sentry" [$WIN32]
-
+        $ImpLib                 "$sappholibloc\..\bin\sentry"       [$WIN32]
+        $ImpLib                 "$sappholibloc\..\bin\libcurl"      [$WIN32]
         // I had to build both of these myself (for 32 bit), so just be aware
         // -sappho
         $Lib                    "$sappholibloc\..\bin\libbreakpad_client" [$LINUX]
