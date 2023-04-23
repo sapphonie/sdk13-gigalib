@@ -18,6 +18,29 @@ void curlcurlcurl(const curlResponse* curlRepsonseStruct)
 
     Warning("SUCCESS! %p / %.512s\n\n\n", curlRepsonseStruct, curlRepsonseStruct->body.c_str());
 
+
+    for (auto& thisheader : curlRepsonseStruct->headers)
+    {
+        // not the hdeaer we want
+        if (thisheader.find("HTTP/") == std::string::npos)
+        {
+            //continue;
+        }
+        // redirects
+        else if
+            (
+                thisheader.find("301")
+                || thisheader.find("302")
+                || thisheader.find("303")
+                || thisheader.find("307")
+                || thisheader.find("308")
+                )
+        {
+            //continue;
+        }
+        const char* th = thisheader.c_str();
+        Warning("header %s\n", th);
+    }
 }
 
 void recurl_f(const CCommand& command)
@@ -56,42 +79,7 @@ size_t sdkCURL::header_callback(char* buffer, size_t size, size_t nitems, void* 
 // called in memy
 bool sdkCURL::InitCURL()
 {
-    // set in sentry initialization. probably should move that someday
-    ConVar* __modpath = cvar->FindVar("_modpath");
-    char* libcurlLocation = new char[MAX_PATH]{};
-#ifdef _WIN32
-    V_snprintf(libcurlLocation, MAX_PATH, "%sbin%slibcurl.dll", __modpath->GetString(), CORRECT_PATH_SEPARATOR_S);
-
-    HMODULE libcurldll = LoadLibrary(libcurlLocation);
-#else
-    //
-#endif
-    delete [] libcurlLocation;
-    if (!libcurldll)
-    {
-        Warning("Couldn't load libcurl!\n");
-        return false;
-    }
-    ptr_curl_global_init        = GetProcAddress(libcurldll, "curl_global_init");
-    ptr_curl_global_init        = GetProcAddress(libcurldll, "curl_global_init");
-    ptr_curl_version            = GetProcAddress(libcurldll, "curl_version");
-    ptr_curl_global_sslset      = GetProcAddress(libcurldll, "curl_global_sslset");
-    ptr_curl_easy_init          = GetProcAddress(libcurldll, "curl_easy_init");
-    ptr_curl_easy_cleanup       = GetProcAddress(libcurldll, "curl_easy_cleanup");
-    ptr_curl_easy_setopt        = GetProcAddress(libcurldll, "curl_easy_setopt");
-    ptr_curl_easy_perform       = GetProcAddress(libcurldll, "curl_easy_perform");
-    ptr_curl_easy_strerror      = GetProcAddress(libcurldll, "curl_easy_strerror");
-    ptr_curl_easy_option_by_id  = GetProcAddress(libcurldll, "curl_easy_option_by_id");
-
-    f_curl_global_init          = (FUNC_curl_global_init*)          ptr_curl_global_init;
-    f_curl_version              = (FUNC_curl_version*)              ptr_curl_version;
-    f_curl_global_sslset        = (FUNC_curl_global_sslset*)        ptr_curl_global_sslset;
-    f_curl_easy_init            = (FUNC_curl_easy_init*)            ptr_curl_easy_init;
-    f_curl_easy_cleanup         = (FUNC_curl_easy_cleanup*)         ptr_curl_easy_cleanup;
-    f_curl_easy_setopt          = (FUNC_curl_easy_setopt*)          ptr_curl_easy_setopt;
-    f_curl_easy_perform         = (FUNC_curl_easy_perform*)         ptr_curl_easy_perform;
-    f_curl_easy_strerror        = (FUNC_curl_easy_strerror*)        ptr_curl_easy_strerror;
-    f_curl_easy_option_by_id    = (FUNC_curl_easy_option_by_id*)    ptr_curl_easy_option_by_id;
+    Warning("%s\n", curl_version());
 
 
     CURLcode ccode = {};
@@ -101,7 +89,7 @@ bool sdkCURL::InitCURL()
     if (!curlSetSSL)
     {
         // use the system ssl certs
-        CURLsslset sslset = f_curl_global_sslset(CURLSSLBACKEND_OPENSSL, NULL, NULL);
+        CURLsslset sslset = curl_global_sslset(CURLSSLBACKEND_OPENSSL, NULL, NULL);
         if (sslset != CURLSSLSET_OK)
         {
             Warning("curl_global_sslset failed: %i\n", sslset);
@@ -113,15 +101,14 @@ bool sdkCURL::InitCURL()
 
     if (!curlInited)
     {
-        ccode = f_curl_global_init(CURL_GLOBAL_ALL);
+        ccode = curl_global_init(CURL_GLOBAL_ALL);
         if (ccode != CURLE_OK)
         {
-            Warning("curl_global_init() failed: %s\n", f_curl_easy_strerror(ccode));
+            Warning("curl_global_init() failed: %s\n", curl_easy_strerror(ccode));
             return false;
         }
         curlInited = true;
     }
-    Warning("vers = %s\n", f_curl_version());
 
     reqs.clear();
 
@@ -131,15 +118,15 @@ bool sdkCURL::InitCURL()
 
 
 #define setopt_errwrap(chand, opt, etc)                                 \
-    ccode = f_curl_easy_setopt(chand, opt, etc);                        \
+    ccode = curl_easy_setopt(chand, opt, etc);                        \
     if (ccode != CURLE_OK)                                              \
     {                                                                   \
         resp->failed    = true;                                         \
         resp->completed = true;                                         \
-        const curl_easyoption* ezoptinfo = f_curl_easy_option_by_id(opt); \
+        const curl_easyoption* ezoptinfo = curl_easy_option_by_id(opt); \
         Warning("curl_easy_setopt (%s) failed: %s\n",                   \
-        f_curl_easy_strerror(ccode), ezoptinfo->name);                  \
-        f_curl_easy_cleanup(chand);                                     \
+        curl_easy_strerror(ccode), ezoptinfo->name);                  \
+        curl_easy_cleanup(chand);                                     \
         return false;                                                   \
     }
 
@@ -160,7 +147,7 @@ bool sdkCURL::CURLGet_Thread(std::string inURL, curlResponse* resp)
         return false;
     }
     CURL* curl = {};
-    curl = f_curl_easy_init();
+    curl = curl_easy_init();
     Warning("%p\n", curl);
 
     if (!curl)
@@ -177,7 +164,11 @@ bool sdkCURL::CURLGet_Thread(std::string inURL, curlResponse* resp)
     setopt_errwrap(curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
     setopt_errwrap(curl, CURLOPT_TRANSFER_ENCODING, 1L);
 
+    // setopt_errwrap(curl, CURLOPT_DNS_SERVERS, "1.1.1.1,1.0.0.1,8.8.8.8,8.8.4.4");
+
     setopt_errwrap(curl, CURLOPT_DOH_URL, "https://cloudflare-dns.com/dns-query");
+
+    setopt_errwrap(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_NONE);
 
     setopt_errwrap(curl, CURLOPT_URL, inURL.c_str());
     setopt_errwrap(curl, CURLOPT_FOLLOWLOCATION, 1L);
@@ -192,15 +183,15 @@ bool sdkCURL::CURLGet_Thread(std::string inURL, curlResponse* resp)
 
     setopt_errwrap(curl, CURLOPT_USERAGENT, "libcurl-agent/1.0");
 
-    ccode = f_curl_easy_perform(curl);
+    ccode = curl_easy_perform(curl);
     if (ccode != CURLE_OK)
     {
-        Warning("curl_easy_perform() failed: %s\n", f_curl_easy_strerror(ccode));
-        f_curl_easy_cleanup(curl);
+        Warning("curl_easy_perform() failed: %s\n", curl_easy_strerror(ccode));
+        curl_easy_cleanup(curl);
         return false;
     }
 
-    f_curl_easy_cleanup(curl);
+    curl_easy_cleanup(curl);
 
     resp->failed    = false;
     resp->completed = true;
@@ -256,34 +247,7 @@ void sdkCURL::Update(float frametime)
         }
     }
 
-    /*
-    Warning("%.512s\n\n\n", r->body.c_str());
 
-    for (auto& thisheader : r->headers)
-    {
-        // not the hdeaer we want
-        if (thisheader.find("HTTP/") == std::string::npos)
-        {
-            //continue;
-        }
-        // redirects
-        else if
-            (
-                thisheader.find("301")
-                || thisheader.find("302")
-                || thisheader.find("303")
-                || thisheader.find("307")
-                || thisheader.find("308")
-                )
-        {
-            //continue;
-        }
-        const char* th = thisheader.c_str();
-        Warning("header %s\n", th);
-    }
-
-    delete r;
-*/
 }
 
 

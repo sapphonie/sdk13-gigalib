@@ -3,8 +3,7 @@
 #define SDKCURL_H
 
 #ifdef CLIENT_DLL
-#    define CURL_EXTERN  __declspec(dllimport)
-
+extern "C" { FILE __iob_func[3] = { *stdin,*stdout,*stderr }; }
 #include <sdkCURL/vendored/curl.h>
 #include <sdkCURL/vendored/easy.h>
 #include <helpers/misc_helpers.h>
@@ -58,36 +57,6 @@ private:
     bool curlInited = false;
     bool CURLGet_Thread(std::string inURL, curlResponse* resp);
 
-    void* ptr_curl_global_init        = {};
-    void* ptr_curl_version            = {};
-    void* ptr_curl_global_sslset      = {};
-    void* ptr_curl_easy_init          = {};
-    void* ptr_curl_easy_cleanup       = {};
-    void* ptr_curl_easy_setopt        = {};
-    void* ptr_curl_easy_perform       = {};
-    void* ptr_curl_easy_strerror      = {};
-    void* ptr_curl_easy_option_by_id  = {};
-
-
-    typedef CURLcode                        FUNC_curl_global_init(long flags);
-    typedef char*                           FUNC_curl_version(void);
-    typedef CURLsslset                      FUNC_curl_global_sslset(curl_sslbackend id, const char* name, const curl_ssl_backend*** avail);
-    typedef CURL*                           FUNC_curl_easy_init(void);
-    typedef void                            FUNC_curl_easy_cleanup(CURL* curl);
-    typedef CURLcode                        FUNC_curl_easy_setopt(CURL* curl, CURLoption option, ...);
-    typedef CURLcode                        FUNC_curl_easy_perform(CURL* curl);
-    typedef const char*                     FUNC_curl_easy_strerror(CURLcode);
-    typedef const struct curl_easyoption*   FUNC_curl_easy_option_by_id(CURLoption);
-
-    FUNC_curl_global_init*          f_curl_global_init              = {};
-    FUNC_curl_version*              f_curl_version                  = {};
-    FUNC_curl_global_sslset*        f_curl_global_sslset            = {};
-    FUNC_curl_easy_init*            f_curl_easy_init                = {};
-    FUNC_curl_easy_cleanup*         f_curl_easy_cleanup             = {};
-    FUNC_curl_easy_setopt*          f_curl_easy_setopt              = {};
-    FUNC_curl_easy_perform*         f_curl_easy_perform             = {};
-    FUNC_curl_easy_strerror*        f_curl_easy_strerror            = {};
-    FUNC_curl_easy_option_by_id*    f_curl_easy_option_by_id        = {};
 };
 
 #endif
