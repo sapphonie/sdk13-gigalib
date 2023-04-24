@@ -92,10 +92,26 @@ $Project
     $Folder "Link Libraries"
     {
         $ImpLib                 "$sappholibloc\..\bin\sentry"       [$WIN32]
-        $ImpLib                 "$sappholibloc\..\bin\libcurl"      [$WIN32]
+
+
+        # $ImpLib                 "$sappholibloc\..\bin\libcurl"      [$LINUX]
+        $ImpLib                 "$sappholibloc\..\bin\libbrotlicommon"      [$LINUX]
+        $ImpLib                 "$sappholibloc\..\bin\libbrotlidec"      [$LINUX]
+        $ImpLib                 "$sappholibloc\..\bin\libcrypto"      [$LINUX]
+        $ImpLib                 "$sappholibloc\..\bin\libgsasl"      [$LINUX]
+        $ImpLib                 "$sappholibloc\..\bin\libnghttp2"      [$LINUX]
+        $ImpLib                 "$sappholibloc\..\bin\libnghttp3"      [$LINUX]
+        $ImpLib                 "$sappholibloc\..\bin\libngtcp2"      [$LINUX]
+        $ImpLib                 "$sappholibloc\..\bin\libngtcp2_crypto_openssl"      [$LINUX]
+        $ImpLib                 "$sappholibloc\..\bin\libssh2"      [$LINUX]
+        $ImpLib                 "$sappholibloc\..\bin\libssl"      [$LINUX]
+        $ImpLib                 "$sappholibloc\..\bin\libz"      [$LINUX]
+        $ImpLib                 "$sappholibloc\..\bin\libzstd"      [$LINUX]
+        $ImpLib                 "$sappholibloc\..\bin\libcurl"      [$LINUX]
         // I had to build both of these myself (for 32 bit), so just be aware
         // -sappho
         $Lib                    "$sappholibloc\..\bin\libbreakpad_client" [$LINUX]
         $Lib                    "$sappholibloc\..\bin\libsentry"          [$LINUX]
     }
 }
+v

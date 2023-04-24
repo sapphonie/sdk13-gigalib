@@ -74,7 +74,7 @@ class memy
 
         static bool         SetMemoryProtection(void* addr, size_t protlen, int wantprot);
         #if defined (POSIX)
-        static int          GetModuleInformation(const char* name, void** base, size_t* length, char[MAX_PATH] path);
+        static int          GetModuleInformation(const char* name, void** base, size_t* length, char path[MAX_PATH]);
         #endif
     private:
 

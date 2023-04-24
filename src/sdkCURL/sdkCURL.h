@@ -3,7 +3,9 @@
 #define SDKCURL_H
 
 #ifdef CLIENT_DLL
+#ifdef _WIN32
 extern "C" { FILE __iob_func[3] = { *stdin,*stdout,*stderr }; }
+#endif
 #include <sdkCURL/vendored/curl.h>
 #include <sdkCURL/vendored/easy.h>
 #include <helpers/misc_helpers.h>
