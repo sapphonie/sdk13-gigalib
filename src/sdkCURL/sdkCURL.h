@@ -6,6 +6,7 @@
 #ifdef _WIN32
 extern "C" { FILE __iob_func[3] = { *stdin,*stdout,*stderr }; }
 #endif
+
 #include <sdkCURL/vendored/curl.h>
 #include <sdkCURL/vendored/easy.h>
 #include <helpers/misc_helpers.h>
@@ -21,8 +22,6 @@ extern "C" { FILE __iob_func[3] = { *stdin,*stdout,*stderr }; }
 
 
 #include <helpers/steam_helpers.h>
-
-
 struct curlResponse
 {
     std::string originalURL             = {};
