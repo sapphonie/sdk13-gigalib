@@ -97,7 +97,7 @@ $Project
         $Lib                    "$sappholibloc\..\bin\libbreakpad_client" [$LINUX]
         $Lib                    "$sappholibloc\..\bin\libsentry"          [$LINUX]
 
-        $Lib                 "$sappholibloc\..\bin\libcurl"      [$LINUX]
+        $LibExternal                 "$sappholibloc\..\bin\libcurl"      [$LINUX]
 
         $Lib                 "$sappholibloc\..\bin\libbrotlicommon-static"      [$LINUX]
         $Lib                 "$sappholibloc\..\bin\libbrotlidec-static"      [$LINUX]
