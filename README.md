@@ -19,6 +19,21 @@ This is premade to hook up to VPC scripts.
 - Stick it in `/src/game/shared/sdk13-sappholib`
 - Stick this block somewhere in your client vpc, adjusting it as needed
 
+### IF YOU ARE USING THIS LIBCURL
+
+You NEED to go into ./src/game/client/client_base.vpc and comment out all instances of
+- libcurl
+- curlssl
+- libz
+- libcrypto
+- libbrotli
+- libnghttp2
+- libssh2
+- libssl
+- libstd
+
+You might not have all of these, that's fine. Comment out the ones you do have.
+
 ```
 // <sappholib>
 
