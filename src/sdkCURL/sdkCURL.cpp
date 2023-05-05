@@ -1,6 +1,5 @@
 
 #include <cbase.h>
-#ifdef CLIENT_DLL
 #include <sdkCURL/sdkCURL.h>
 sdkCURL* g_sdkCURL;
 
@@ -249,7 +248,3 @@ void sdkCURL::Update(float frametime)
 
 
 }
-
-
-
-#endif

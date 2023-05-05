@@ -2,7 +2,6 @@
 #ifndef SDKCURL_H
 #define SDKCURL_H
 
-#ifdef CLIENT_DLL
 #ifdef _WIN32
 extern "C" { FILE __iob_func[3] = { *stdin,*stdout,*stderr }; }
 #endif
@@ -60,5 +59,5 @@ private:
 
 };
 
-#endif
+
 #endif
