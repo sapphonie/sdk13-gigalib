@@ -11,13 +11,9 @@ sdkCURL::sdkCURL()
     InitCURL();
 }
 
-
-
 void curlcurlcurl(const curlResponse* curlRepsonseStruct)
 {
-
     Warning("SUCCESS! %p / %.512s\n\n\n", curlRepsonseStruct, curlRepsonseStruct->body.c_str());
-
 
     for (auto& thisheader : curlRepsonseStruct->headers)
     {
@@ -28,13 +24,13 @@ void curlcurlcurl(const curlResponse* curlRepsonseStruct)
         }
         // redirects
         else if
-            (
-                thisheader.find("301")
-                || thisheader.find("302")
-                || thisheader.find("303")
-                || thisheader.find("307")
-                || thisheader.find("308")
-                )
+        (
+               thisheader.find("301")
+            || thisheader.find("302")
+            || thisheader.find("303")
+            || thisheader.find("307")
+            || thisheader.find("308")
+        )
         {
             //continue;
         }
@@ -47,17 +43,10 @@ void recurl_f(const CCommand& command)
 {
     std::string url( command.Arg(1) );
 
-    // bool ret =
     g_sdkCURL->CURLGet(url, curlcurlcurl);
-    //if (!ret)
-    //{
-    //    Warning("CURL req failed!\n");
-    //    return;
-    //}
 }
 
 ConCommand recurl("recurl", recurl_f);
-
 
 size_t sdkCURL::response_callback(void* ptr, size_t size, size_t nmemb, void* stream)
 {
@@ -66,7 +55,6 @@ size_t sdkCURL::response_callback(void* ptr, size_t size, size_t nmemb, void* st
     reinterpret_cast<curlResponse*>(stream)->body.append((const char*)ptr, respsize);
     return respsize;
 }
-
 
 size_t sdkCURL::header_callback(char* buffer, size_t size, size_t nitems, void* userdata)
 {
@@ -80,7 +68,6 @@ size_t sdkCURL::header_callback(char* buffer, size_t size, size_t nitems, void* 
 bool sdkCURL::InitCURL()
 {
     Warning("%s\n", curl_version());
-
 
     CURLcode ccode = {};
     curlSetSSL = false;
@@ -98,7 +85,6 @@ bool sdkCURL::InitCURL()
         curlSetSSL = true;
     }
 
-
     if (!curlInited)
     {
         ccode = curl_global_init(CURL_GLOBAL_ALL);
@@ -113,20 +99,19 @@ bool sdkCURL::InitCURL()
     reqs.clear();
 
     return true;
-
 }
 
 
 #define setopt_errwrap(chand, opt, etc)                                 \
-    ccode = curl_easy_setopt(chand, opt, etc);                        \
+    ccode = curl_easy_setopt(chand, opt, etc);                          \
     if (ccode != CURLE_OK)                                              \
     {                                                                   \
         resp->failed    = true;                                         \
         resp->completed = true;                                         \
         const curl_easyoption* ezoptinfo = curl_easy_option_by_id(opt); \
         Warning("curl_easy_setopt (%s) failed: %s\n",                   \
-        curl_easy_strerror(ccode), ezoptinfo->name);                  \
-        curl_easy_cleanup(chand);                                     \
+        curl_easy_strerror(ccode), ezoptinfo->name);                    \
+        curl_easy_cleanup(chand);                                       \
         return false;                                                   \
     }
 
@@ -156,7 +141,6 @@ bool sdkCURL::CURLGet_Thread(std::string inURL, curlResponse* resp)
         Warning("curl_easy_init returned NULL!\n");
         return false;
     }
-    
 
     CURLcode ccode;
     setopt_errwrap(curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
@@ -179,12 +163,11 @@ bool sdkCURL::CURLGet_Thread(std::string inURL, curlResponse* resp)
     setopt_errwrap(curl, CURLOPT_HEADERFUNCTION, header_callback);
     setopt_errwrap(curl, CURLOPT_HEADERDATA, resp);
 
-
     /* enable progress meter */
     setopt_errwrap(curl, CURLOPT_NOPROGRESS, 0L);
 
-    setopt_errwrap(curl, CURLOPT_XFERINFODATA, canary);
-    setopt_errwrap(curl, CURLOPT_XFERINFOFUNCTION, progress_callback);
+    // setopt_errwrap(curl, CURLOPT_XFERINFODATA, canary);
+    // setopt_errwrap(curl, CURLOPT_XFERINFOFUNCTION, progress_callback);
 
     setopt_errwrap(curl, CURLOPT_USERAGENT, "sdk2013 CURL implementation by sappho.io - github.com/sapphonie/sdk13-sappholib");
 
@@ -213,18 +196,11 @@ bool sdkCURL::CURLGet(std::string inURL, curlCallback ccb)
     return true;
 }
 
-
-
-
 void sdkCURL::Update(float frametime)
 {
-
-
     for (size_t i = 0; i < reqs.size(); ++i)
     {
-
         curlResponse* thisReq = reqs.at(i);
-
 
         if (thisReq && !thisReq->failed && thisReq->completed)
         {
@@ -251,8 +227,6 @@ void sdkCURL::Update(float frametime)
             continue;
         }
     }
-
-
 }
 
 #endif
