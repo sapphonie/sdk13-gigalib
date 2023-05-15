@@ -194,13 +194,14 @@ void CSentry::SentryInit()
     // location of the crashpad handler (in moddir/bin)
     char crash_exe[MAX_PATH] = {};
     V_snprintf(crash_exe, MAX_PATH, "%sbin%ccrashpad_handler.exe", mpath, CORRECT_PATH_SEPARATOR);
-    AssertMsg1(NULL, "crash_exe = %s", crash_exe);
+    //AssertMsg1(NULL, "crash_exe = %s", crash_exe);
 #endif
+
 
     // location of the sentry workdir (we're just gonna stick it in mod dir/cache)
     char sentry_db[MAX_PATH] =  {};
     V_snprintf(sentry_db, MAX_PATH, "%scache", mpath);
-    AssertMsg1(NULL, "cache = %s", sentry_db);
+    //AssertMsg1(NULL, "cache = %s", sentry_db);
 
     // Suprisingly, this just works to disable built in Valve crash stuff for linux
     CommandLine()->AppendParm("-nominidumps", "");

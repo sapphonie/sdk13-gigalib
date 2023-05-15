@@ -4,6 +4,8 @@
 #ifdef _WIN32
 #pragma once
 #endif
+#include <cbase.h>
+
 #include <obfuscate.h>
 #include <vtf/vtf.h>
 #include <netadr.h>

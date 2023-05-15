@@ -1,5 +1,6 @@
 
 #include <cbase.h>
+#ifdef SDKCURL
 #include <sdkCURL/sdkCURL.h>
 sdkCURL* g_sdkCURL;
 
@@ -129,8 +130,6 @@ bool sdkCURL::InitCURL()
         return false;                                                   \
     }
 
-#define testdef testdef2
-#include <functional>
 bool sdkCURL::CURLGet_Thread(std::string inURL, curlResponse* resp)
 {
     resp->originalURL = inURL;
@@ -167,7 +166,7 @@ bool sdkCURL::CURLGet_Thread(std::string inURL, curlResponse* resp)
 
     setopt_errwrap(curl, CURLOPT_DOH_URL, "https://cloudflare-dns.com/dns-query");
 
-    setopt_errwrap(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_NONE);
+    setopt_errwrap(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_3);
 
     setopt_errwrap(curl, CURLOPT_URL, inURL.c_str());
     setopt_errwrap(curl, CURLOPT_FOLLOWLOCATION, 1L);
@@ -180,7 +179,14 @@ bool sdkCURL::CURLGet_Thread(std::string inURL, curlResponse* resp)
     setopt_errwrap(curl, CURLOPT_HEADERFUNCTION, header_callback);
     setopt_errwrap(curl, CURLOPT_HEADERDATA, resp);
 
-    setopt_errwrap(curl, CURLOPT_USERAGENT, "libcurl-agent/1.0");
+
+    /* enable progress meter */
+    setopt_errwrap(curl, CURLOPT_NOPROGRESS, 0L);
+
+    setopt_errwrap(curl, CURLOPT_XFERINFODATA, canary);
+    setopt_errwrap(curl, CURLOPT_XFERINFOFUNCTION, progress_callback);
+
+    setopt_errwrap(curl, CURLOPT_USERAGENT, "sdk2013 CURL implementation by sappho.io - github.com/sapphonie/sdk13-sappholib");
 
     ccode = curl_easy_perform(curl);
     if (ccode != CURLE_OK)
@@ -248,3 +254,5 @@ void sdkCURL::Update(float frametime)
 
 
 }
+
+#endif
