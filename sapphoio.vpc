@@ -91,23 +91,23 @@ $Project
     }
     $Folder "Link Libraries"
     {
-        $ImpLib                 "$sappholibloc\..\bin\sentry"       [$WIN32]
-        $ImpLib                 "$sappholibloc\..\bin\libcurl"      [$WIN32]
+        $ImpLib             "$sappholibloc\..\bin\sentry"                   [$WIN32]
+        $ImpLib             "$sappholibloc\..\bin\libcurl"                  [$WIN32]
 
-        $Lib                    "$sappholibloc\..\bin\libbreakpad_client" [$LINUX]
-        $Lib                    "$sappholibloc\..\bin\libsentry"          [$LINUX]
+        $Lib                "$sappholibloc\..\bin\libbreakpad_client"       [$LINUX]
+        $Lib                "$sappholibloc\..\bin\libsentry"                [$LINUX]
 
-        $LibExternal                 "$sappholibloc\..\bin\libcurl"      [$LINUX]
+        $LibExternal        "$sappholibloc\..\bin\libcurl"                  [$LINUX]
 
-        $Lib                 "$sappholibloc\..\bin\libbrotlicommon-static"      [$LINUX]
-        $Lib                 "$sappholibloc\..\bin\libbrotlidec-static"      [$LINUX]
-        $Lib                 "$sappholibloc\..\bin\libbrotlienc-static"      [$LINUX]
-        $Lib                 "$sappholibloc\..\bin\libcrypto"      [$LINUX]
-        $Lib                 "$sappholibloc\..\bin\libnghttp2"      [$LINUX]
-        $Lib                 "$sappholibloc\..\bin\libssh2"      [$LINUX]        
-	$Lib                 "$sappholibloc\..\bin\libssl"      [$LINUX]
-        $Lib                 "$sappholibloc\..\bin\libz"      [$LINUX]
-        // $Lib                 "$sappholibloc\..\bin\libzstd"      [$LINUX]
+        $Lib                "$sappholibloc\..\bin\libbrotlicommon-static"   [$LINUX]
+        $Lib                "$sappholibloc\..\bin\libbrotlidec-static"      [$LINUX]
+        $Lib                "$sappholibloc\..\bin\libbrotlienc-static"      [$LINUX]
+        $Lib                "$sappholibloc\..\bin\libcrypto"                [$LINUX]
+        $Lib                "$sappholibloc\..\bin\libnghttp2"               [$LINUX]
+        $Lib                "$sappholibloc\..\bin\libssh2"                  [$LINUX]
+        $Lib                "$sappholibloc\..\bin\libssl"                   [$LINUX]
+        $Lib                "$sappholibloc\..\bin\libz"                     [$LINUX]
+        // $Lib             "$sappholibloc\..\bin\libzstd"                  [$LINUX]
     }
 }
 
