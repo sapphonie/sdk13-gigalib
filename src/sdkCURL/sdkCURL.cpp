@@ -181,6 +181,24 @@ bool sdkCURL::CURLGet_Thread(std::string inURL, curlResponse* resp)
 
     curl_easy_cleanup(curl);
 
+    // helpers
+    for (auto& thisheader : resp->headers)
+    {
+        if (thisheader.find("HTTP/") != std::string::npos)
+        {
+            std::vector<std::string> svec = UTIL_SplitSTDString(thisheader, " ");
+
+            resp->httpType = std::string( svec.at(0) );
+            resp->respCode = stoi(svec.at(1));
+        }
+        else if (thisheader.find("content-length") != std::string::npos)
+        {
+            resp->contentLen = std::string(thisheader);
+        }
+    }
+
+    resp->bodyLen = resp->body.length();
+
     resp->failed    = false;
     resp->completed = true;
     return true;

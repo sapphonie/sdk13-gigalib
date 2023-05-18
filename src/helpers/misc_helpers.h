@@ -22,8 +22,14 @@
 bool UTIL_CheckRealRemoteAddr(netadr_t netaddr);
 bool UTIL_GetRealRemoteAddr(char* ipadr);
 #endif
+#include <vector>
+#include <string>
 bool UTIL_IsFakePlayer(CBasePlayer* inplayer);
 bool UTIL_IsVTFValid(const char* fileloc);
 void UTIL_AddrToString(void* inAddr, char outAddrStr[11]);
 
+
+// https://stackoverflow.com/a/57346888
+//
+std::vector<std::string> UTIL_SplitSTDString(const std::string& i_str, const std::string& i_delim);
 #endif

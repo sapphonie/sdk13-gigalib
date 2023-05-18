@@ -20,13 +20,10 @@ public:
 
     char                real_sentry_url[256] = {};
 
-    CCallResult <CSentry, HTTPRequestCompleted_t> SentryURLCallResult;
-
     static sentry_value_t nowCTX;
     static const char*    nowFUNC;
-private:
-    void                GetURL();
-    void                SentryURLCB(HTTPRequestCompleted_t* arg, bool bFailed);
+
+    void                SentryURLCB(const curlResponse* curlRepsonseStruct);
 };
 
 void SetSteamID();

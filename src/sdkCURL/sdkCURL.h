@@ -28,6 +28,12 @@ struct curlResponse
     void* callback                      = {};
     std::string body                    = {};
     std::vector<std::string> headers    = {};
+    std::string httpType                = {};
+    short respCode                      = {};
+    // do not use this for allocating buffers
+    std::string contentLen              = {};
+    // use this for allocating buffers instead
+    int bodyLen                         = {};
     bool completed                      = false;
     bool failed                         = false;
 };
@@ -59,6 +65,8 @@ private:
     bool CURLGet_Thread(std::string inURL, curlResponse* resp);
 
 };
+
+extern sdkCURL* g_sdkCURL;
 
 #endif 
 #endif

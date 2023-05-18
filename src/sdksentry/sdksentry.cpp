@@ -6,7 +6,7 @@
 #include <sstream>
 #include <string>
 #include "tier0/valve_minmax_on.h"
-
+#include <sdkCURL/sdkCURL.h>
 #include <sdksentry/sdksentry.h>
 
 CSentry g_Sentry;
@@ -42,62 +42,49 @@ void sentry_callback(IConVar* var, const char* pOldValue, float flOldValue)
 ConVar cl_send_error_reports("cl_send_error_reports", "-1", FCVAR_ARCHIVE,
     "Enables/disables sending error reports to the developers to help improve the game.\n"
     "Error reports will include your SteamID, and any pertinent game info (class, loadout, current map, etc.) - we do not store any personally identifiable information.\n"
-    "Read more at " V_STRINGIFY(SENTRY_PRIVACY_POLICY_URL) "\n"
+    "Read more at " SENTRY_PRIVACY_POLICY_URL "\n"
     "-1 asks you again on game boot and disables reporting, 0 disables reporting and does not ask you again, 1 enables reporting.\n",
     sentry_callback
 );
 
+void CSentry__SentryURLCB__THUNK(const curlResponse* curlRepsonseStruct)
+{
+    g_Sentry.SentryURLCB(curlRepsonseStruct);
+}
+
 void CSentry::PostInit()
 {
     Msg("Sentry Postinit!\n");
-    GetURL();
+
+    g_sdkCURL->CURLGet(SENTRY_URL, CSentry__SentryURLCB__THUNK);
 }
 
-void CSentry::GetURL()
+
+void CSentry::SentryURLCB(const curlResponse* resp)
 {
-    SteamAPICall_t hCallServer;
-    if (!steamapicontext->SteamHTTP())
-    {
-        Error("Couldn't get SteamHTTP interface! Try restarting Steam.\n");
-    }
-
-    const char* sentry_dl = FORCE_OBFUSCATE( V_STRINGIFY(SENTRY_URL) );
-
-    HTTPRequestHandle httphandle = steamapicontext->SteamHTTP()->CreateHTTPRequest(k_EHTTPMethodGET, sentry_dl);
-    steamapicontext->SteamHTTP()->SetHTTPRequestAbsoluteTimeoutMS(httphandle, 5000);
-    steamapicontext->SteamHTTP()->SendHTTPRequest(httphandle, &hCallServer);
-    steamapicontext->SteamHTTP()->PrioritizeHTTPRequest(httphandle);
-
-    SentryURLCallResult.Set(hCallServer, this, &CSentry::SentryURLCB);
-}
-
-void CSentry::SentryURLCB(HTTPRequestCompleted_t* arg, bool bFailed)
-{
-    if (bFailed || arg->m_eStatusCode < 200 || arg->m_eStatusCode > 299)
+    if (!resp->completed || resp->failed || resp->respCode != 200)
     {
         Warning("Failed to get Sentry DSN. Sentry integration disabled.\n");
-
-        steamapicontext->SteamHTTP()->ReleaseHTTPRequest(arg->m_hRequest);
+        Warning("completed = %i, failed = %i, statuscode = %i, bodylen = %i\n", resp->completed, resp->failed, resp->respCode, resp->bodyLen);
         return;
     }
-    uint32 size;
-    steamapicontext->SteamHTTP()->GetHTTPResponseBodySize(arg->m_hRequest, &size);
 
-    char buffer[256] = {};
-
-    if (size > 0)
+    if (resp->bodyLen >= sizeof(real_sentry_url))
     {
-        steamapicontext->SteamHTTP()->GetHTTPResponseBodyData(arg->m_hRequest, (unsigned char*)buffer, size);
+        Warning("sentry url respponse is >= 256chars, bailing!\n");
+        return;
     }
+
+    char* buffer = new char[resp->bodyLen]{};
+    V_strncpy(buffer, resp->body.c_str(), sizeof(real_sentry_url));
 
     // strip newlines
     buffer[strcspn(buffer, "\n")] = 0;
     buffer[strcspn(buffer, "\r")] = 0;
 
-    V_strncpy(real_sentry_url, buffer, sizeof(buffer) /* strlen(buffer + 1) */);
+    V_strncpy(real_sentry_url, buffer, sizeof(real_sentry_url));
 
-    steamapicontext->SteamHTTP()->ReleaseHTTPRequest(arg->m_hRequest);
-
+    delete [] buffer;
     SentryInit();
 }
 
