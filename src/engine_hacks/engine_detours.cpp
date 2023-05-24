@@ -8,31 +8,21 @@
     #pragma once
 #endif
 
-#undef NOINLINE
-
-
-#include "polyhook2/Detour/x86Detour.hpp"
-#include "polyhook2/Detour/x64Detour.hpp"
-#include "polyhook2/Exceptions/BreakPointHook.hpp"
-#include "polyhook2/IHook.hpp"
-#include "polyhook2/Detour/x86Detour.hpp"
-#include "polyhook2/ZydisDisassembler.hpp"
-
-#include "polyhook2/IHook.hpp"
-#include "polyhook2/Detour/x86Detour.hpp"
-#include "polyhook2/Detour/x64Detour.hpp"
 
 #ifdef _WIN32
     // it's a thiscall [member function] so we need a dummy edx and to make it fastcall
     #define dummyType uintptr_t*
     #define dummyVar  dummyRegister
+    #define dummyComma ,
     #define mbrcallconv __fastcall
 #else
     #define dummyType
     #define dummyVar
+    #define dummyComma
     #define mbrcallconv __cdecl
 #endif
 
+#ifdef _WIN32
 #include <Windows.h>
 int protection_up() {
     PROCESS_MITIGATION_DYNAMIC_CODE_POLICY policy1;
@@ -131,9 +121,21 @@ int protection_up() {
 
     return 1;
 }
+#endif
 #ifdef ENGINE_DETOURS
 #undef NOINLINE
+#undef FASTCALL
+// #define FASTCALL __attribute__((fastcall))
+#define __thiscall
+#include <valve_minmax_off.h>
+#define ZYDIS_DEPRECATED
+#include <polyhook2/Detour/x86Detour.hpp>
 
+#include <valve_minmax_on.h>
+
+
+
+#undef NOINLINE
 #include <engine_hacks/engine_detours.h>
 
 CEngineDetours g_CEngineDetours;
@@ -251,8 +253,8 @@ typedef struct netpacket_s
 
 sdkdetour* CNetChan__ProcessPacket = {};
 
-#define CNetChan__ProcessPacket_vars             uintptr_t* _this, dummyType dummyVar, uintptr_t* netpacket, bool a3
-#define CNetChan__ProcessPacket_varsnotype       _this, dummyVar, netpacket, a3
+#define CNetChan__ProcessPacket_vars             uintptr_t* _this, dummyType dummyVar dummyComma uintptr_t* netpacket, bool a3
+#define CNetChan__ProcessPacket_varsnotype       _this, dummyVar dummyComma netpacket, a3
 #define CNetChan__ProcessPacket_origfunc         PLH::FnCast(CNetChan__ProcessPacket->detourTrampoline, CNetChan__ProcessPacket_CB)(CNetChan__ProcessPacket_varsnotype);
 
 void mbrcallconv CNetChan__ProcessPacket_CB(CNetChan__ProcessPacket_vars)
@@ -462,7 +464,7 @@ void CNetChan__ProcessPacket_Init()
 
     #endif
 
-    populateAndInitDetour(CNetChan__ProcessPacket, CNetChan__ProcessPacket_CB);
+    populateAndInitDetour(CNetChan__ProcessPacket, (void*)CNetChan__ProcessPacket_CB);
 }
 
 
@@ -481,8 +483,8 @@ void CNetChan__ProcessPacket_Init()
 
 sdkdetour* CBaseServer__RejectConnection = {};
 
-#define CBaseServer__RejectConnection_vars             uintptr_t* _this, dummyType dummyVar, netadr_t* netadr, int clichallenge, const char* reason
-#define CBaseServer__RejectConnection_varsnotype       _this, dummyVar, netadr, clichallenge, reason
+#define CBaseServer__RejectConnection_vars             uintptr_t* _this, dummyType dummyVar dummyComma netadr_t* netadr, int clichallenge, const char* reason
+#define CBaseServer__RejectConnection_varsnotype       _this, dummyVar dummyComma netadr, clichallenge, reason
 #define CBaseServer__RejectConnection_origfunc         PLH::FnCast(CBaseServer__RejectConnection->detourTrampoline, CBaseServer__RejectConnection_CB)(CBaseServer__RejectConnection_varsnotype);
 
 void mbrcallconv CBaseServer__RejectConnection_CB(CBaseServer__RejectConnection_vars)
@@ -553,7 +555,7 @@ void CBaseServer__RejectConnection_Init()
     CBaseServer__RejectConnection->pattern      = "\x55\x89\xE5\x53\x8D\x85\xF4\xFA\xFF\xFF";
 
 #endif
-    populateAndInitDetour(CBaseServer__RejectConnection, CBaseServer__RejectConnection_CB);
+    populateAndInitDetour(CBaseServer__RejectConnection, (void*)CBaseServer__RejectConnection_CB);
 }
 
 
@@ -586,8 +588,8 @@ sdkdetour* CBaseServer__ConnectClient = {};
     int, cbCookie)
 */
 
-#define CBaseServer__ConnectClient_vars             uintptr_t* _this, dummyType dummyVar, netadr_t* netadr, int proto, int challenge, int clichallenge, int authproto, const char* clname, const char* clpasswd, const char* clcookie, int callbackcookie
-#define CBaseServer__ConnectClient_varsnotype       _this, dummyVar, netadr, proto, challenge, clichallenge, authproto, clname, clpasswd, clcookie, callbackcookie
+#define CBaseServer__ConnectClient_vars             uintptr_t* _this, dummyType dummyVar dummyComma netadr_t* netadr, int proto, int challenge, int clichallenge, int authproto, const char* clname, const char* clpasswd, const char* clcookie, int callbackcookie
+#define CBaseServer__ConnectClient_varsnotype       _this, dummyVar dummyComma netadr, proto, challenge, clichallenge, authproto, clname, clpasswd, clcookie, callbackcookie
 #define CBaseServer__ConnectClient_origfunc         PLH::FnCast(CBaseServer__ConnectClient->detourTrampoline, CBaseServer__ConnectClient_CB)(CBaseServer__ConnectClient_varsnotype);
 
 uintptr_t* mbrcallconv CBaseServer__ConnectClient_CB(CBaseServer__ConnectClient_vars)
@@ -694,7 +696,7 @@ void CBaseServer__ConnectClient_Init()
         CBaseServer__ConnectClient->pattern      = "\x55\x89\xE5\x83\xEC\x48\x8B\x55\x0C\x89\x5D\xF4\x8B\x45\x14";
     #endif
 
-    populateAndInitDetour(CBaseServer__ConnectClient, CBaseServer__ConnectClient_CB);
+    populateAndInitDetour(CBaseServer__ConnectClient, (void*)CBaseServer__ConnectClient_CB);
 
 }
 
@@ -736,13 +738,6 @@ void CEngineDetours::PostInit()
 
 
 
-
-
-
-
-
-
-
 #ifdef BLACKLISTS
 
 const char* malicious_server_dc =
@@ -758,8 +753,8 @@ const char* malicious_spew =
 
 sdkdetour* CClientState__FullConnect{};
 
-#define CClientState__FullConnect_vars            uintptr_t* _this, dummyType dummyVar, netadr_t& netadr
-#define CClientState__FullConnect_varsnotype      _this, dummyVar, netadr
+#define CClientState__FullConnect_vars            uintptr_t* _this, dummyType dummyVar dummyComma netadr_t& netadr
+#define CClientState__FullConnect_varsnotype      _this, dummyVar dummyComma netadr
 #define CClientState__FullConnect_origfunc        PLH::FnCast(CClientState__FullConnect->detourTrampoline, CClientState__FullConnect_CB)(CClientState__FullConnect_varsnotype);
 
 void mbrcallconv CClientState__FullConnect_CB(CClientState__FullConnect_vars)
@@ -772,14 +767,16 @@ void mbrcallconv CClientState__FullConnect_CB(CClientState__FullConnect_vars)
     }
 
     const char* ipaddr = netadr.ToString(true);
-    if (!ipaddr || !ipaddr[0])
+
+    if ( !ipaddr || !ipaddr[0] )
     {
         return;
     }
-
     // if this cmpserverblacklist returns true, the server is not malicious.
     // otherwise...
-    if ( !CBlacklists::CompareServerBlacklist(ipaddr) )
+    //bool CBlacklists::CompareServerBlacklist(const char* ipaddr)
+
+    if ( !CompareServerBlacklist( ipaddr ) )
     {
 #ifdef SDKSENTRY
         sentry_value_t ctxinfo = sentry_value_new_object();
@@ -812,7 +809,7 @@ void mbrcallconv CClientState__FullConnect_CB(CClientState__FullConnect_vars)
     }
 }
 
-void CClientSomething__FullConnect_Init()
+void CClientState__FullConnect_Init()
 {
     CClientState__FullConnect = new sdkdetour{};
 
@@ -830,7 +827,7 @@ void CClientSomething__FullConnect_Init()
         CClientState__FullConnect->pattern       = "\x55\x89\xE5\x83\xEC\x28\x89\x5D\xF4\x8B\x5D\x0C\x89\x75\xF8\x8B\x75\x08\x89\x7D\xFC\x89\x5C\x24\x04\x89\x34\x24\xE8\x2A\x2A\x2A\x2A\x8B\x46\x10";
     #endif
 
-    populateAndInitDetour(CClientState__FullConnect, &CClientState__FullConnect_CB);
+    populateAndInitDetour(CClientState__FullConnect, (void*)CClientState__FullConnect_CB);
 }
 #endif
 
@@ -844,8 +841,8 @@ void CClientSomething__FullConnect_Init()
 
 
 sdkdetour* CNetChan__Shutdown{};
-#define CNetChan__Shutdown_vars        uintptr_t* _this, dummyType dummyVar, const char* reason
-#define CNetChan__Shutdown_novars      _this, dummyVar, reason
+#define CNetChan__Shutdown_vars        uintptr_t* _this, dummyType dummyVar dummyComma const char* reason
+#define CNetChan__Shutdown_novars      _this, dummyVar dummyComma reason
 #define CNetChan__Shutdown_origfunc    PLH::FnCast(CNetChan__Shutdown->detourTrampoline, CNetChan__Shutdown_CB)(CNetChan__Shutdown_novars);
 void mbrcallconv CNetChan__Shutdown_CB(CNetChan__Shutdown_vars)
 {
@@ -894,7 +891,7 @@ void CNetChan__Shutdown_Init()
         CNetChan__Shutdown->pattern     = "\x55\x89\xE5\x57\x56\x53\x83\xEC\x3C\x8B\x5D\x08\x8B\x75\x0C\x8B\x8B\x8C\x00\x00\x00";
     #endif
 
-    populateAndInitDetour(CNetChan__Shutdown, CNetChan__Shutdown_CB);
+    populateAndInitDetour(CNetChan__Shutdown, (void*)CNetChan__Shutdown_CB);
 }
 
 
@@ -908,10 +905,11 @@ void CNetChan__Shutdown_Init()
 
 void CEngineDetours::PostInit()
 {
-    CClientSomething__FullConnect_Init();
+    CClientState__FullConnect_Init();
     CNetChan__Shutdown_Init();
-
+#ifdef _WIN32
     protection_up();
+#endif
 }
 #endif // client
 

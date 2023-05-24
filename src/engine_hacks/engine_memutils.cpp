@@ -52,7 +52,11 @@ int GetSignOnStateFromNetChanInfo(INetChannelInfo* info)
 	uintptr_t offs = 0xC8;
 #endif
 
-	uint8 signonstate_byte = *(reinterpret_cast<uint8*>(iclient_addr + offs));
+#ifdef _WIN32
+	uint8 signonstate_byte = *(reinterpret_cast<uint8*>( iclient_addr + offs));
+#else
+	uint8 signonstate_byte = *(reinterpret_cast<uint8*>( (iclient_addr - 0x4) + offs));
+#endif
 	int signonstate = signonstate_byte;
 
 	return signonstate;

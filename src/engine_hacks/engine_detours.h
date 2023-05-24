@@ -3,10 +3,18 @@
 #ifdef _WIN32
 #pragma once
 #endif
+
+
+
 #include <helpers/misc_helpers.h>
 #include <memy/memytools.h>
+#ifdef CLIENT_DLL
+#ifdef BLACKLISTS
+#include <qol/blacklists.h>
+#endif
+#endif
 
-#include <memy/detourhook.hpp>
+// #include <memy/detourhook.hpp>
 
 
 #ifdef SDKSENTRY
@@ -20,7 +28,7 @@ public:
 
     void                PostInit() override;
 
-    int GetSignonState(CBasePlayer* basePlayer);
-    int GetSignonState(INetChannelInfo* info);
+    // int GetSignonState(CBasePlayer* basePlayer);
+    // int GetSignonState(INetChannelInfo* info);
 };
 #endif
