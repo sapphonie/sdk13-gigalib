@@ -20,5 +20,7 @@ public:
 
     void                PostInit() override;
 
+    int GetSignonState(CBasePlayer* basePlayer);
+    int GetSignonState(INetChannelInfo* info);
 };
 #endif

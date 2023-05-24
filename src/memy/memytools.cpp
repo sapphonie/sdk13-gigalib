@@ -60,7 +60,6 @@ memy::memy()
 #endif
 }
 
-
 #include <sdkCURL/sdkCURL.h>
 
 bool memy_init::Init()
@@ -71,6 +70,8 @@ bool memy_init::Init()
 #ifdef SDKCURL
     new sdkCURL;
 #endif
+
+
 
     return true;
 }

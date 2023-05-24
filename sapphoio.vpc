@@ -4,6 +4,19 @@ $Configuration
     $Compiler
     {
         $AdditionalIncludeDirectories   "$BASE;$sappholibloc"
+        $AdditionalIncludeDirectories   "$BASE;$sappholibloc"
+
+
+        $AdditionalIncludeDirectories   "$BASE;$sappholibloc/engine_hacks"
+        $AdditionalIncludeDirectories   "$BASE;$sappholibloc/helpers"
+        $AdditionalIncludeDirectories   "$BASE;$sappholibloc/memy"
+        $AdditionalIncludeDirectories   "$BASE;$sappholibloc/polyhook"
+        $AdditionalIncludeDirectories   "$BASE;$sappholibloc/qol"
+        $AdditionalIncludeDirectories   "$BASE;$sappholibloc/sdkCURL"
+        $AdditionalIncludeDirectories   "$BASE;$sappholibloc/sdknanopb"
+        $AdditionalIncludeDirectories   "$BASE;$sappholibloc/sdksentry"
+
+
         $SymbolVisibility               "default" [$POSIX]
 
         // Enable modern CURL
@@ -17,9 +30,13 @@ $Configuration
         $AdditionalDependencies             "$BASE wsock32.lib" [$WIN32]
         $AdditionalDependencies             "$BASE ws2_32.lib" [$WIN32]
         $AdditionalDependencies             "$BASE wldap32.lib" [$WIN32]
+        $AdditionalDependencies             "$BASE msvcrtd.lib" [$WIN32]
+
+
     }
 
 }
+
 
 $Project
 {
@@ -50,9 +67,11 @@ $Project
             {
                 $File   "$sappholibloc/engine_hacks/engine_detours.cpp"
                 $File   "$sappholibloc/engine_hacks/bin_patch.cpp"
+                $File   "$sappholibloc/engine_hacks/engine_memutils.cpp"
 
                 $File   "$sappholibloc/engine_hacks/engine_detours.h"
                 $File   "$sappholibloc/engine_hacks/bin_patch.h"
+                $File   "$sappholibloc/engine_hacks/engine_memutils.h"
             }
 
             $Folder "sentry native"
@@ -87,7 +106,115 @@ $Project
                 $File   "$sappholibloc/sdkCURL/vendored/urlapi.h"
                 $File   "$sappholibloc/sdkCURL/vendored/websockets.h"
             }
+            $Folder "sdknanopb"
+            {
+                $File   "$sappholibloc/sdknanopb/vendored/pb_common.c" \
+                        "$sappholibloc/sdknanopb/vendored/pb_decode.c" \
+                        "$sappholibloc/sdknanopb/vendored/pb_encode.c"
+                {
+                $Configuration
+                {
+                    $Compiler
+                    {
+                        $Create/UsePrecompiledHeader    "Not Using Precompiled Headers"
+                    }
+                }   }
+                $File   "$sappholibloc/sdknanopb/vendored/pb_common.h"
+                $File   "$sappholibloc/sdknanopb/vendored/pb_encode.h"
+                $File   "$sappholibloc/sdknanopb/vendored/pb.h"
+            }
+
+        $Folder "polyhook"
+        {
+
+      
+
+        $File   "$sappholibloc/polyhook/polyhook2/Detour/ADetour.hpp"
+        $File   "$sappholibloc/polyhook/polyhook2/Detour/ILCallback.hpp"
+        $File   "$sappholibloc/polyhook/polyhook2/Detour/x64Detour.hpp"
+        $File   "$sappholibloc/polyhook/polyhook2/Detour/x86Detour.hpp"
+
+        $File   "$sappholibloc/polyhook/polyhook2/Enums.hpp"
+        $File   "$sappholibloc/polyhook/polyhook2/ErrorLog.hpp"
+        $File   "$sappholibloc/polyhook/polyhook2/EventDispatcher.hpp"
+
+        $File   "$sappholibloc/polyhook/polyhook2/Exceptions/AVehHook.hpp"
+        $File   "$sappholibloc/polyhook/polyhook2/Exceptions/BreakPointHook.hpp"
+        $File   "$sappholibloc/polyhook/polyhook2/Exceptions/HWBreakPointHook.hpp"
+
+        $File   "$sappholibloc/polyhook/polyhook2/FBAllocator.hpp"
+        $File   "$sappholibloc/polyhook/polyhook2/IHook.hpp"
+        $File   "$sappholibloc/polyhook/polyhook2/Instruction.hpp"
+        $File   "$sappholibloc/polyhook/polyhook2/MemAccessor.hpp"
+        $File   "$sappholibloc/polyhook/polyhook2/MemProtector.hpp"
+        $File   "$sappholibloc/polyhook/polyhook2/Misc.hpp"
+
+        $File   "$sappholibloc/polyhook/polyhook2/PE/EatHook.hpp"
+        $File   "$sappholibloc/polyhook/polyhook2/PE/IatHook.hpp"
+        $File   "$sappholibloc/polyhook/polyhook2/PE/PEB.hpp"
+        $File   "$sappholibloc/polyhook/polyhook2/PolyHookOs.hpp"
+        $File   "$sappholibloc/polyhook/polyhook2/PolyHookOsIncludes.hpp"
+        $File   "$sappholibloc/polyhook/polyhook2/RangeAllocator.hpp"
+        $File   "$sappholibloc/polyhook/polyhook2/UID.hpp"
+
+        $File   "$sappholibloc/polyhook/polyhook2/Virtuals/VFuncSwapHook.hpp"
+        $File   "$sappholibloc/polyhook/polyhook2/Virtuals/VTableSwapHook.hpp"
+        $File   "$sappholibloc/polyhook/polyhook2/ZydisDisassembler.hpp"
+
+        $File   "$sappholibloc/polyhook/Zycore/Allocator.h"
+
+        $File   "$sappholibloc/polyhook/Zycore/API/Memory.h"
+        $File   "$sappholibloc/polyhook/Zycore/API/Process.h"
+        $File   "$sappholibloc/polyhook/Zycore/API/Synchronization.h"
+        $File   "$sappholibloc/polyhook/Zycore/API/Terminal.h"
+        $File   "$sappholibloc/polyhook/Zycore/API/Thread.h"
+        $File   "$sappholibloc/polyhook/Zycore/ArgParse.h"
+        $File   "$sappholibloc/polyhook/Zycore/Atomic.h"
+        $File   "$sappholibloc/polyhook/Zycore/Bitset.h"
+        $File   "$sappholibloc/polyhook/Zycore/Comparison.h"
+        $File   "$sappholibloc/polyhook/Zycore/Defines.h"
+        $File   "$sappholibloc/polyhook/Zycore/Format.h"
+
+        $File   "$sappholibloc/polyhook/Zycore/Internal/AtomicGNU.h"
+        $File   "$sappholibloc/polyhook/Zycore/Internal/AtomicMSVC.h"
+        $File   "$sappholibloc/polyhook/Zycore/LibC.h"
+        $File   "$sappholibloc/polyhook/Zycore/List.h"
+        $File   "$sappholibloc/polyhook/Zycore/Object.h"
+        $File   "$sappholibloc/polyhook/Zycore/Status.h"
+        $File   "$sappholibloc/polyhook/Zycore/String.h"
+        $File   "$sappholibloc/polyhook/Zycore/Types.h"
+        $File   "$sappholibloc/polyhook/Zycore/Vector.h"
+        $File   "$sappholibloc/polyhook/Zycore/Zycore.h"
+
+        $File   "$sappholibloc/polyhook/Zydis/Decoder.h"
+        $File   "$sappholibloc/polyhook/Zydis/DecoderTypes.h"
+        $File   "$sappholibloc/polyhook/Zydis/Formatter.h"
+        $File   "$sappholibloc/polyhook/Zydis/FormatterBuffer.h"
+
+        $File   "$sappholibloc/polyhook/Zydis/Generated/EnumInstructionCategory.h"
+        $File   "$sappholibloc/polyhook/Zydis/Generated/EnumISAExt.h"
+        $File   "$sappholibloc/polyhook/Zydis/Generated/EnumISASet.h"
+        $File   "$sappholibloc/polyhook/Zydis/Generated/EnumMnemonic.h"
+        $File   "$sappholibloc/polyhook/Zydis/Generated/EnumRegister.h"
+
+        $File   "$sappholibloc/polyhook/Zydis/Internal/DecoderData.h"
+        $File   "$sappholibloc/polyhook/Zydis/Internal/FormatterATT.h"
+        $File   "$sappholibloc/polyhook/Zydis/Internal/FormatterBase.h"
+        $File   "$sappholibloc/polyhook/Zydis/Internal/FormatterIntel.h"
+        $File   "$sappholibloc/polyhook/Zydis/Internal/SharedData.h"
+        $File   "$sappholibloc/polyhook/Zydis/Internal/String.h"
+        $File   "$sappholibloc/polyhook/Zydis/MetaInfo.h"
+        $File   "$sappholibloc/polyhook/Zydis/Mnemonic.h"
+        $File   "$sappholibloc/polyhook/Zydis/Register.h"
+        $File   "$sappholibloc/polyhook/Zydis/SharedTypes.h"
+        $File   "$sappholibloc/polyhook/Zydis/ShortString.h"
+        $File   "$sappholibloc/polyhook/Zydis/Status.h"
+        $File   "$sappholibloc/polyhook/Zydis/Utils.h"
+        $File   "$sappholibloc/polyhook/Zydis/Zydis.h"
+        $File   "$sappholibloc/polyhook/ZydisExportConfig.h"
+
         }
+
     }
     $Folder "Link Libraries"
     {
@@ -95,10 +222,17 @@ $Project
         $ImpLib             "$sappholibloc\..\bin\libcurl"                  [$WIN32]
 
         $Lib                "$sappholibloc\..\bin\libbreakpad_client"       [$LINUX]
-        $Lib                "$sappholibloc\..\bin\libsentry"                [$LINUX]
+
+
+        //$Lib                 "$sappholibloc\polyhook\bin\debug\lib\asmjit"          [$WIN32]
+        //$Lib                 "$sappholibloc\polyhook\bin\debug\lib\asmtk"           [$WIN32]
+        //$Lib                 "$sappholibloc\polyhook\bin\debug\lib\Zycore"          [$WIN32]
+        $Lib                 "$sappholibloc\polyhook\bin\debug\lib\Zydis"           [$WIN32]
+        $Lib                 "$sappholibloc\polyhook\bin\debug\lib\PolyHook_2"      [$WIN32]
+
+
 
         $LibExternal        "$sappholibloc\..\bin\libcurl"                  [$LINUX]
-
         $Lib                "$sappholibloc\..\bin\libbrotlicommon-static"   [$LINUX]
         $Lib                "$sappholibloc\..\bin\libbrotlidec-static"      [$LINUX]
         $Lib                "$sappholibloc\..\bin\libbrotlienc-static"      [$LINUX]

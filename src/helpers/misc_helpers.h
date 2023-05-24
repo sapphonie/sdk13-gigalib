@@ -21,7 +21,7 @@
 
 bool UTIL_CheckRealRemoteAddr(netadr_t netaddr);
 bool UTIL_GetRealRemoteAddr(char* ipadr);
-#endif
+#endif // clientdll
 #include <vector>
 #include <string>
 bool UTIL_IsFakePlayer(CBasePlayer* inplayer);
@@ -32,4 +32,16 @@ void UTIL_AddrToString(void* inAddr, char outAddrStr[11]);
 // https://stackoverflow.com/a/57346888
 //
 std::vector<std::string> UTIL_SplitSTDString(const std::string& i_str, const std::string& i_delim);
+
+// https://stackoverflow.com/a/49066369
+#include <chrono>
+// Get time stamp in milliseconds.
+uint64_t millis();
+// Get time stamp in microseconds.
+uint64_t micros();
+// Get time stamp in nanoseconds.
+uint64_t nanos();
+
+
 #endif
+

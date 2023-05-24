@@ -8,13 +8,168 @@
     #pragma once
 #endif
 
+#undef NOINLINE
+
+
+#include "polyhook2/Detour/x86Detour.hpp"
+#include "polyhook2/Detour/x64Detour.hpp"
+#include "polyhook2/Exceptions/BreakPointHook.hpp"
+#include "polyhook2/IHook.hpp"
+#include "polyhook2/Detour/x86Detour.hpp"
+#include "polyhook2/ZydisDisassembler.hpp"
+
+#include "polyhook2/IHook.hpp"
+#include "polyhook2/Detour/x86Detour.hpp"
+#include "polyhook2/Detour/x64Detour.hpp"
+
+#ifdef _WIN32
+    // it's a thiscall [member function] so we need a dummy edx and to make it fastcall
+    #define dummyType uintptr_t*
+    #define dummyVar  dummyRegister
+    #define mbrcallconv __fastcall
+#else
+    #define dummyType
+    #define dummyVar
+    #define mbrcallconv __cdecl
+#endif
+
+#include <Windows.h>
+int protection_up() {
+    PROCESS_MITIGATION_DYNAMIC_CODE_POLICY policy1;
+    policy1.ProhibitDynamicCode = 1;
+    policy1.AllowThreadOptOut = 0;
+    policy1.AllowRemoteDowngrade = 0;
+    policy1.AuditProhibitDynamicCode = 0;
+    policy1.ReservedFlags = 0;
+
+    if (!SetProcessMitigationPolicy(ProcessDynamicCodePolicy, &policy1, sizeof(policy1))) {
+        Warning("Policy PROCESS_MITIGATION_DYNAMIC_CODE_POLICY change error: 0x%08x\n", GetLastError());
+        //return 0;
+    }
+
+    PROCESS_MITIGATION_CONTROL_FLOW_GUARD_POLICY policy2;
+    policy2.EnableControlFlowGuard = 1;
+    policy2.EnableExportSuppression = 0;  // or else we'll need GetProcAddress for every function we want to invoke...
+    policy2.StrictMode = 1;
+    policy2.ReservedFlags = 0;
+
+    if (!SetProcessMitigationPolicy(ProcessControlFlowGuardPolicy, &policy2, sizeof(policy2))) {
+        Warning("Policy PROCESS_MITIGATION_CONTROL_FLOW_GUARD_POLICY change error: 0x%08x\n", GetLastError());
+        //return 0;
+    }
+
+    PROCESS_MITIGATION_STRICT_HANDLE_CHECK_POLICY policy3;
+    policy3.RaiseExceptionOnInvalidHandleReference = 1;
+    policy3.HandleExceptionsPermanentlyEnabled = 1;
+    policy3.ReservedFlags = 0;
+
+    if (!SetProcessMitigationPolicy(ProcessStrictHandleCheckPolicy, &policy3, sizeof(policy3))) {
+        Warning("Policy PROCESS_MITIGATION_STRICT_HANDLE_CHECK_POLICY change error: 0x%08x\n", GetLastError());
+        //return 0;
+    }
+
+    PROCESS_MITIGATION_EXTENSION_POINT_DISABLE_POLICY policy5;
+    policy5.DisableExtensionPoints = 1;
+    policy5.ReservedFlags = 0;
+
+    if (!SetProcessMitigationPolicy(ProcessExtensionPointDisablePolicy, &policy5, sizeof(policy5))) {
+        Warning("Policy PROCESS_MITIGATION_EXTENSION_POINT_DISABLE_POLICY change error: 0x%08x\n", GetLastError());
+        //return 0;
+    }
+    /*
+        PROCESS_MITIGATION_BINARY_SIGNATURE_POLICY policy6;
+        memset(&policy6, 0, sizeof(policy6));
+        policy6.MicrosoftSignedOnly = 1;
+        policy6.ReservedFlags = 0;
+
+        if (!SetProcessMitigationPolicy(ProcessSignaturePolicy, &policy6, sizeof(policy6))) {
+            printf("Policy PROCESS_MITIGATION_BINARY_SIGNATURE_POLICY change error: 0x%08x\n", GetLastError());
+            return 0;
+        }
+    */
+    /*
+        PROCESS_MITIGATION_FONT_DISABLE_POLICY policy7;
+        memset(&policy7, 0, sizeof(policy7));
+        policy7.DisableNonSystemFonts = 1;
+        policy7.AuditNonSystemFontLoading = 0;
+        policy7.ReservedFlags = 0;
+
+        if (!SetProcessMitigationPolicy(ProcessFontDisablePolicy, &policy7, sizeof(policy7))) {
+            Warning("Policy PROCESS_MITIGATION_FONT_DISABLE_POLICY change error: 0x%08x\n", GetLastError());
+            return 0;
+        }
+        PROCESS_MITIGATION_IMAGE_LOAD_POLICY policy8;
+        memset(&policy8, 0, sizeof(policy8));
+        policy8.NoRemoteImages = 1;
+        policy8.NoLowMandatoryLabelImages = 1;
+        policy8.PreferSystem32Images = 1;
+        policy8.ReservedFlags = 0;
+
+        if (!SetProcessMitigationPolicy(ProcessImageLoadPolicy, &policy8, sizeof(policy8))) {
+            Warning("Policy PROCESS_MITIGATION_IMAGE_LOAD_POLICY change error: 0x%08x\n", GetLastError());
+            return 0;
+        }
+    */
+
+    // Error 0x00000057 The parameter is incorrect.
+    PROCESS_MITIGATION_ASLR_POLICY policy9;
+    memset(&policy9, 0, sizeof(policy9));
+    policy9.EnableBottomUpRandomization = 1;
+    policy9.EnableForceRelocateImages = 1;
+    policy9.EnableHighEntropy = 1;
+    policy9.DisallowStrippedImages = 1;
+    policy9.ReservedFlags = 0;
+
+    if (!SetProcessMitigationPolicy(ProcessASLRPolicy, &policy9, sizeof(policy9))) {
+        Warning("Policy PROCESS_MITIGATION_ASLR_POLICY change error: 0x%08x\n", GetLastError());
+        //return 0;
+    }
+
+    bool success = SetProcessDEPPolicy(PROCESS_DEP_ENABLE | PROCESS_DEP_DISABLE_ATL_THUNK_EMULATION);
+    if (!success) Warning("Policy SetProcessDEPPolicy change error: 0x%08x\n", GetLastError());
+    Warning("-> succ = %i\n", success);
+
+    return 1;
+}
 #ifdef ENGINE_DETOURS
+#undef NOINLINE
+
 #include <engine_hacks/engine_detours.h>
 
-// ctorCEngineDetours g_CEngineDetours;
+CEngineDetours g_CEngineDetours;
 
 CEngineDetours::CEngineDetours() : CAutoGameSystem("CEngineDetours")
 {
+}
+
+
+struct sdkdetour
+{
+    size_t patternSize          = {};
+    const char* pattern         = {};
+    uintptr_t patternAddr       = {};
+    PLH::x86Detour* detourPtr   = {};
+    //uint64_t callbackAddr       = {};
+    uint64_t detourTrampoline   = {};
+};
+
+void populateAndInitDetour(sdkdetour* detour, void* callback)
+{
+    detour->patternAddr = memy::FindPattern
+    (
+        engine_bin,
+        detour->pattern,
+        detour->patternSize,
+        0
+    );
+
+    detour->detourPtr = new PLH::x86Detour
+    (
+        detour->patternAddr,
+        (uint64_t)callback,
+        &detour->detourTrampoline
+    );
+    detour->detourPtr->hook();
 }
 
 // server detours
@@ -44,6 +199,7 @@ void procpack_dbg_cb(IConVar* var, const char* pOldValue, float flOldValue)
 
 ConVar net_chan_debug_proctime_limit("net_chan_debug_proctime_limit", "0", FCVAR_NONE,
     "For debugging net_chan_proctime_limit_ms.", procpack_dbg_cb);
+#include <netadr.h>
 
 
 #define toobig 2048
@@ -71,82 +227,37 @@ ConVar net_chan_debug_proctime_limit("net_chan_debug_proctime_limit", "0", FCVAR
 // if clients are being dumb and stinky
 ////////////////////////////////////////////////
 
-// https://stackoverflow.com/a/49066369
-#include <chrono>
-
-// NB: ALL OF THESE 3 FUNCTIONS BELOW USE SIGNED VALUES INTERNALLY AND WILL
-// EVENTUALLY OVERFLOW (AFTER 200+ YEARS OR SO), AFTER WHICH POINT THEY WILL
-// HAVE *SIGNED OVERFLOW*, WHICH IS UNDEFINED BEHAVIOR (IE: A BUG) FOR C/C++.
-// But...that's ok...this "bug" is designed into the C++11 specification, so
-// whatever. Your machine won't run for 200 years anyway...
-
-// Get time stamp in milliseconds.
-uint64_t millis()
+/*
+typedef struct netpacket_s
 {
-    uint64_t ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::high_resolution_clock::now().time_since_epoch())
-            .count();
-    return ms; 
-}
+// 0
+    netadr_t		    from;		// sender IP
+// 12
+    int				    source;		// received source 
+// 16
+    double			    received;	// received time
+// 24
+    unsigned char*      data;		// pointer to raw packet data
+// 48
+    bf_read			    message;	// easy bitbuf data access
+// 52
+    int				    size;		// size in bytes
+    int				    wiresize;   // size in bytes before decompression
+    bool			    stream;		// was send as stream
+    struct netpacket_s* pNext;	// for internal use, should be NULL in public
+} netpacket_t;
+*/
 
-// Get time stamp in microseconds.
-uint64_t micros()
+
+sdkdetour* CNetChan__ProcessPacket = {};
+
+#define CNetChan__ProcessPacket_vars             uintptr_t* _this, dummyType dummyVar, uintptr_t* netpacket, bool a3
+#define CNetChan__ProcessPacket_varsnotype       _this, dummyVar, netpacket, a3
+#define CNetChan__ProcessPacket_origfunc         PLH::FnCast(CNetChan__ProcessPacket->detourTrampoline, CNetChan__ProcessPacket_CB)(CNetChan__ProcessPacket_varsnotype);
+
+void mbrcallconv CNetChan__ProcessPacket_CB(CNetChan__ProcessPacket_vars)
 {
-    uint64_t us = std::chrono::duration_cast<std::chrono::microseconds>(
-            std::chrono::high_resolution_clock::now().time_since_epoch())
-            .count();
-    return us; 
-}
-
-// Get time stamp in nanoseconds.
-uint64_t nanos()
-{
-    uint64_t ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
-            std::chrono::high_resolution_clock::now().time_since_epoch())
-            .count();
-    return ns; 
-}
-
-static DetourHook Detour_ProcPacket{};
-
-#ifdef _WIN32
-
-    #define ProcessPacket_vars uintptr_t* _this, uintptr_t* dummy, uintptr_t* netpacket, bool a3
-    #define ProcessPacket_varsnotype _this, dummy, netpacket, a3
-
-    // it's a thiscall [member function] so we need a dummy edx and to make it fastcall
-    typedef
-        void                                                            // return
-        (__fastcall *TypeDef_ProcessPacket)                             // callconv + typedef
-        (ProcessPacket_vars);                                           // args
-
-    #define ProcPacket_origfunc                                         \
-        ((TypeDef_ProcessPacket)Detour_ProcPacket.GetOriginalFunc())    \
-            (ProcessPacket_varsnotype);                                 \
-            Detour_ProcPacket.RestorePatch();
-
-    void  __fastcall ProcPacket
-        (ProcessPacket_vars)
-#else
-    #define ProcessPacket_vars uintptr_t* _this, uintptr_t* netpacket, bool a3
-    #define ProcessPacket_varsnotype _this, netpacket, a3
-
-    // no dummy needed
-    // technically don't need the cdecl but i'd rather be explicit
-    typedef
-        void                                                            // ret
-        (__cdecl * TypeDef_ProcessPacket)                               // callconv + typedef
-        (ProcessPacket_vars);                                           // args
-
-    #define ProcPacket_origfunc                                         \
-        ((TypeDef_ProcessPacket)Detour_ProcPacket.GetOriginalFunc())    \
-            (ProcessPacket_varsnotype);                                 \
-            Detour_ProcPacket.RestorePatch();
-
-    void __cdecl ProcPacket
-        (ProcessPacket_vars)
-#endif
-{
+    CNetChan__ProcessPacket_origfunc;
     // this is in ms
     // this is also, technically,
     // "max processing time per tick", in ms
@@ -154,7 +265,7 @@ static DetourHook Detour_ProcPacket{};
 
     if (max_proc_time <= 0.1)
     {
-        ProcPacket_origfunc;
+        CNetChan__ProcessPacket_origfunc;
         return;
     }
 
@@ -204,6 +315,9 @@ static DetourHook Detour_ProcPacket{};
     {
         Warning("packetsize = %i\n", size);
     }
+    //byte* rawdata = (byte*) ( *( netpacket + (6) ) );
+    //Warning("-%p\n", rawdata);
+
 
     // maybe a nullcheck??
     if (size > toobig || size < toosmall)
@@ -238,7 +352,7 @@ static DetourHook Detour_ProcPacket{};
         {
             Warning("client is invalid??? idx = %i\n", client);
         }
-        ProcPacket_origfunc;
+        // CNetChan__ProcessPacket_origfunc;
         return;
     }
 
@@ -250,13 +364,13 @@ static DetourHook Detour_ProcPacket{};
             Warning("bplayer == null??\n");
         }
 
-        ProcPacket_origfunc;
+        CNetChan__ProcessPacket_origfunc;
         return;
     }
 
     uint64_t start  = nanos();
 
-    ProcPacket_origfunc;
+    CNetChan__ProcessPacket_origfunc;
 
     uint64_t end    = nanos();
 
@@ -328,7 +442,7 @@ static DetourHook Detour_ProcPacket{};
 
 void CNetChan__ProcessPacket_Init()
 {
-    size_t sizeof_ProcPacket = 0;
+    CNetChan__ProcessPacket = new sdkdetour{};
 
     // unique string: "corrupted packet"
     // that gets you ProcessPacketHeader, which only xrefs with ProcessPacket
@@ -336,28 +450,19 @@ void CNetChan__ProcessPacket_Init()
 
         // Signature for sub_101C9DF0:
         // 55 8B EC 51 53 56 8B F1 57 8B 7D 08
-        sizeof_ProcPacket = 12;
-        const char* pattern_ProcPacket = "\x55\x8B\xEC\x51\x53\x56\x8B\xF1\x57\x8B\x7D\x08";
+        CNetChan__ProcessPacket->patternSize    = 12;
+        CNetChan__ProcessPacket->pattern        = "\x55\x8B\xEC\x51\x53\x56\x8B\xF1\x57\x8B\x7D\x08";
 
     #else
 
         // Signature for ProcessPacket_sub_4DF310:
         // 55 89 E5 57 31 FF 56 53 83 EC 7C C7 45 D8 00 00 00 00
-        sizeof_ProcPacket = 18;
-        const char* pattern_ProcPacket = "\x55\x89\xE5\x57\x31\xFF\x56\x53\x83\xEC\x7C\xC7\x45\xD8\x00\x00\x00\x00";
+        CNetChan__ProcessPacket->patternSize    = 18;
+        CNetChan__ProcessPacket->pattern        = "\x55\x89\xE5\x57\x31\xFF\x56\x53\x83\xEC\x7C\xC7\x45\xD8\x00\x00\x00\x00";
 
     #endif
 
-    uintptr_t addr_ProcPacket = (uintptr_t)memy::FindPattern
-    (
-        engine_bin->addr,
-        engine_bin->size,
-        pattern_ProcPacket,
-        sizeof_ProcPacket,
-        0
-    );
-
-    Detour_ProcPacket.Init(addr_ProcPacket, (void*)ProcPacket);
+    populateAndInitDetour(CNetChan__ProcessPacket, CNetChan__ProcessPacket_CB);
 }
 
 
@@ -367,19 +472,28 @@ void CNetChan__ProcessPacket_Init()
 // ...which saved me several hours of painful and annoying reversing
 // #define STEAMIDSPOOF_DEBUGGING yep
 
-#include <netadr.h>
 
 ////////////////////////////////////////////////
 // CBaseServer::RejectConnection Hook[ish]
 // For rejecting clients in our
 // CBaseServer::ConnectClient Detour
 ////////////////////////////////////////////////
-uintptr_t addr_RejectConnection = NULL;
+
+sdkdetour* CBaseServer__RejectConnection = {};
+
+#define CBaseServer__RejectConnection_vars             uintptr_t* _this, dummyType dummyVar, netadr_t* netadr, int clichallenge, const char* reason
+#define CBaseServer__RejectConnection_varsnotype       _this, dummyVar, netadr, clichallenge, reason
+#define CBaseServer__RejectConnection_origfunc         PLH::FnCast(CBaseServer__RejectConnection->detourTrampoline, CBaseServer__RejectConnection_CB)(CBaseServer__RejectConnection_varsnotype);
+
+void mbrcallconv CBaseServer__RejectConnection_CB(CBaseServer__RejectConnection_vars)
+{
+    return CBaseServer__RejectConnection_origfunc;
+}
+
 // CBaseServer::RejectConnection ( [const] netadr_t &[*]address, int iClientChallenge, [const] char *pchReason )
 void CBaseServer__RejectConnection_Init()
 {
-    size_t sizeof_RejectConnection = 0;
-
+    CBaseServer__RejectConnection = new sdkdetour{};
 #ifdef _WIN32
     /*
 
@@ -393,9 +507,7 @@ void CBaseServer__RejectConnection_Init()
         https://github.com/asherkin/connect/blob/0c6274058e718d142189d331aae9b288b351360a/connect.games.txt#L71
 
 
-        sub_10155B50+70   220 mov     eax, [edi]
-        sub_10155B50+72   220 mov     ecx, edi
-        sub_10155B50+74   220 call    dword ptr [eax+48h]
+        ...
         sub_10155B50+77   220 push    offset aGameuiServerre_0 ; "#GameUI_ServerRejectBanned" (not unique)
         sub_10155B50+7C   224 push    dword ptr [esi+98h]
         sub_10155B50+82   228 mov     ecx, eax
@@ -409,15 +521,10 @@ void CBaseServer__RejectConnection_Init()
         sub_10155B50+9B   220 call    dword ptr [esi+54h]
         sub_10155B50+9E   220 push    eax             ; ArgList
         sub_10155B50+9F   224 push    offset aSteamUseridSIs ; "STEAM UserID %s is banned" (unique)
-        sub_10155B50+A4   228 call    sub_1017CF00
-        sub_10155B50+A9   228 push    eax
-        sub_10155B50+AA   22C push    edi
-        sub_10155B50+AB   230 call    dword ptr [esi+34h]
-        sub_10155B50+AE   230 add     esp, 10h
-        sub_10155B50+B1   220 jmp     loc_10155CC6
+        ...
     */
-    sizeof_RejectConnection = 12;
-    const char* pattern_RejectConnection = "\x55\x8B\xEC\x81\xEC\x04\x05\x00\x00\x56\x6A\xFF";
+    CBaseServer__RejectConnection->patternSize  = 12;
+    CBaseServer__RejectConnection->pattern      = "\x55\x8B\xEC\x81\xEC\x04\x05\x00\x00\x56\x6A\xFF";
 
 #else
 
@@ -428,15 +535,7 @@ void CBaseServer__RejectConnection_Init()
         55 89 E5 53 8D 85 F4 FA FF FF
         \x55\x89\xE5\x53\x8D\x85\xF4\xFA\xFF\xFF
 
-        sub_56ED90+65   25C mov     edx, [ebx+98h]
-        sub_56ED90+6B   25C mov     eax, [ebx]
-        sub_56ED90+6D   25C mov     [esp], ebx
-        sub_56ED90+70   25C mov     [ebp+var_230], edx
-        sub_56ED90+76   25C call    dword ptr [eax+1Ch]
-        sub_56ED90+79   25C mov     ecx, [eax]
-        sub_56ED90+7B   25C mov     [esp], eax
-        sub_56ED90+7E   25C call    dword ptr [ecx+0C4h]
-        sub_56ED90+84   25C mov     edx, [ebp+var_230]
+        ...
         sub_56ED90+8A   25C mov     dword ptr [esp+0Ch], offset aGameuiServerre_9 ; "#GameUI_ServerRejectBanned" (not unique)
         sub_56ED90+92   25C mov     [esp+4], eax
         sub_56ED90+96   25C mov     dword ptr [esp], offset dword_CD7980
@@ -448,57 +547,22 @@ void CBaseServer__RejectConnection_Init()
         sub_56ED90+AE   25C mov     [ebp+var_22C], edx
         sub_56ED90+B4   25C call    dword ptr [eax+28h]
         sub_56ED90+B7   25C mov     dword ptr [esp], offset aSteamUseridSIs ; "STEAM UserID %s is banned" (unique)
-        sub_56ED90+BE   25C mov     [esp+4], eax
-        sub_56ED90+C2   25C call    sub_3F7BB0
-        sub_56ED90+C7   25C mov     [esp], ebx
-        sub_56ED90+CA   25C mov     [esp+4], eax
-        sub_56ED90+CE   25C call    [ebp+var_22C]
+        ...
     */
-    sizeof_RejectConnection = 10;
-    const char* pattern_RejectConnection = "\x55\x89\xE5\x53\x8D\x85\xF4\xFA\xFF\xFF";
+    CBaseServer__RejectConnection->patternSize  = 10;
+    CBaseServer__RejectConnection->pattern      = "\x55\x89\xE5\x53\x8D\x85\xF4\xFA\xFF\xFF";
 
 #endif
-
-    addr_RejectConnection = (uintptr_t)memy::FindPattern
-    (
-        engine_bin->addr,
-        engine_bin->size,
-        pattern_RejectConnection,
-        sizeof_RejectConnection,
-        0
-    );
+    populateAndInitDetour(CBaseServer__RejectConnection, CBaseServer__RejectConnection_CB);
 }
 
-#ifdef _WIN32
-    #define RejectConnection_vars uintptr_t* _this, uintptr_t* dummy, netadr_t* netadr, int clichallenge, const char* reason
-    typedef
-        void                                    // ret
-        (__fastcall *TypeDef_RejectConnection)  // callconv + typedef
-        (RejectConnection_vars);                // vars
-#else
-    #define RejectConnection_vars uintptr_t* _this, netadr_t* netadr, int clichallenge, const char* reason
-    typedef
-        void                                    // ret
-        (__cdecl *TypeDef_RejectConnection)     // callconv + typedef
-        (RejectConnection_vars);                // vars
-#endif
 
-void RejectConnection_origfunc(uintptr_t* _this, netadr_t* netadr, int clichallenge, const char* reason)
-{
-    #ifdef _WIN32
-        ((TypeDef_RejectConnection)addr_RejectConnection)(_this, 0x0, netadr, clichallenge, reason);
-    #else
-        ((TypeDef_RejectConnection)addr_RejectConnection)(_this, netadr, clichallenge, reason);
-    #endif
-}
 
 
 ////////////////////////////////////////////////
 // CBaseServer::ConnectClient Detour
 // For SteamID spoofing prevention/hardening
 ////////////////////////////////////////////////
-static DetourHook Detour_ConnectClient{};
-
 typedef enum EAuthProtocol
 {
     k_EAuthProtocolWONCertificate   = 1,
@@ -506,7 +570,8 @@ typedef enum EAuthProtocol
     k_EAuthProtocolSteam            = 3,
 } EAuthProtocol;
 
-#ifdef _WIN32
+
+sdkdetour* CBaseServer__ConnectClient = {};
 /*
     CBaseServer__ConnectClient, // func
     IClient *,                  // ret
@@ -520,43 +585,12 @@ typedef enum EAuthProtocol
     const char *, pCookie,
     int, cbCookie)
 */
-    // it's a thiscall [member function]  we need a dummy edx and to make it fastcall
-    #define ConnectClient_vars uintptr_t* _this, uintptr_t* dummy, netadr_t* netadr, int proto, int challenge, int clichallenge, int authproto, const char* clname, const char* clpasswd, const char* clcookie, int callbackcookie
-    #define ConnectClient_varsnotype _this, dummy, netadr, proto, challenge, clichallenge, authproto, clname, clpasswd, clcookie, callbackcookie
-    typedef
-        uintptr_t*                                          // ret [iclient*]
-        (__fastcall *TypeDef_ConnectClient)                 // callconv + typedef
-        (ConnectClient_vars);                               // vars
 
-    uintptr_t* ConnectClient_origfunc(ConnectClient_vars)
-    {
-        void* origfunc = Detour_ConnectClient.GetOriginalFunc();
-        uintptr_t* iclient = ((TypeDef_ConnectClient)origfunc)(ConnectClient_varsnotype);
-        Detour_ConnectClient.RestorePatch();
-        return iclient;
-    }
+#define CBaseServer__ConnectClient_vars             uintptr_t* _this, dummyType dummyVar, netadr_t* netadr, int proto, int challenge, int clichallenge, int authproto, const char* clname, const char* clpasswd, const char* clcookie, int callbackcookie
+#define CBaseServer__ConnectClient_varsnotype       _this, dummyVar, netadr, proto, challenge, clichallenge, authproto, clname, clpasswd, clcookie, callbackcookie
+#define CBaseServer__ConnectClient_origfunc         PLH::FnCast(CBaseServer__ConnectClient->detourTrampoline, CBaseServer__ConnectClient_CB)(CBaseServer__ConnectClient_varsnotype);
 
-    uintptr_t* __fastcall ConnectClient(ConnectClient_vars)
-#else
-    // it's a __cdecl, no dummy needed
-    #define ConnectClient_vars uintptr_t* _this, netadr_t* netadr, int proto, int challenge, int clichallenge, int authproto, char* clname, char* clpasswd, char* clcookie, int callbackcookie
-    #define ConnectClient_varsnotype _this, netadr, proto, challenge, clichallenge, authproto, clname, clpasswd, clcookie, callbackcookie
-
-    typedef
-        uintptr_t*                          // ret [iclient*]
-        (__cdecl *TypeDef_ConnectClient)    // callconv + typedef
-        (ConnectClient_vars);               // vars
-
-    uintptr_t* ConnectClient_origfunc(ConnectClient_vars)
-    {
-        void* origfunc = Detour_ConnectClient.GetOriginalFunc();
-        uintptr_t* iclient = ((TypeDef_ConnectClient)origfunc)(ConnectClient_varsnotype);
-        Detour_ConnectClient.RestorePatch();
-        return iclient;
-    }
-
-    uintptr_t* __cdecl ConnectClient(ConnectClient_vars)
-#endif
+uintptr_t* mbrcallconv CBaseServer__ConnectClient_CB(CBaseServer__ConnectClient_vars)
 {
     #ifdef STEAMIDSPOOF_DEBUGGING
     Warning("CBaseServer::ConnectClient->       \n");
@@ -572,17 +606,19 @@ typedef enum EAuthProtocol
     Warning("callbackcookie                 = %x\n", callbackcookie);
     #endif
 
+
     // stv clients use k_EAuthProtocolHashedCDKey...!
     // don't interfere with them, for now
     if (authproto != k_EAuthProtocolSteam)
     {
-        uintptr_t* iclient = ConnectClient_origfunc(ConnectClient_varsnotype);
+        uintptr_t* iclient = CBaseServer__ConnectClient_origfunc;
         return iclient;
     }
 
     if (!clichallenge || !challenge)
     {
-        RejectConnection_origfunc(_this, netadr, clichallenge, "Invalid challenge(s).\n");
+        const char* reason = "Invalid challenge(s).\n";
+        CBaseServer__RejectConnection_origfunc(_this, netadr, clichallenge, reason);
         return nullptr;
     }
 
@@ -590,13 +626,15 @@ typedef enum EAuthProtocol
     int curproto = 24;
     if (proto != curproto)
     {
-        RejectConnection_origfunc(_this, netadr, clichallenge, "Invalid protocol.\n");
+        const char* reason = "Invalid protocol.\n";
+        CBaseServer__RejectConnection_origfunc(_this, netadr, clichallenge, reason);
         return nullptr;
     }
 
     if (clcookie == nullptr || (size_t)callbackcookie < sizeof(uint64))
     {
-        RejectConnection_origfunc(_this, netadr, clichallenge, "#GameUI_ServerRejectInvalidSteamCertLen");
+        const char* reason = "#GameUI_ServerRejectInvalidSteamCertLen";
+        CBaseServer__RejectConnection_origfunc(_this, netadr, clichallenge, reason);
         return nullptr;
     }
 
@@ -615,7 +653,8 @@ typedef enum EAuthProtocol
 
     if (!isvalidsteamid)
     {
-        RejectConnection_origfunc(_this, netadr, clichallenge, "Invalid SteamID.\n");
+        const char* reason = "Invalid SteamID.\n";
+        CBaseServer__RejectConnection_origfunc(_this, netadr, clichallenge, reason);
         return nullptr;
     }
 
@@ -634,47 +673,40 @@ typedef enum EAuthProtocol
     }
     */
 
-    uintptr_t* iclient = ConnectClient_origfunc(ConnectClient_varsnotype);
+    uintptr_t* iclient = CBaseServer__ConnectClient_origfunc;
     return iclient;
 }
 
-
 void CBaseServer__ConnectClient_Init()
 {
-    size_t sizeof_ConnectClient = 0;
-
+    CBaseServer__ConnectClient = new sdkdetour{};
     // unique string: "CBaseServer::ConnectClient"
     #ifdef _WIN32
-
         // Signature for sub_1015BB80:
         // 55 8B EC 81 EC 04 05 00 00 56 68 ? ? ? ?
-        sizeof_ConnectClient = 15;
-        const char* pattern_ConnectClient = "\x55\x8B\xEC\x81\xEC\x04\x05\x00\x00\x56\x68\x2A\x2A\x2A\x2A";
-
+        CBaseServer__ConnectClient->patternSize  = 15;
+        CBaseServer__ConnectClient->pattern      = "\x55\x8B\xEC\x81\xEC\x04\x05\x00\x00\x56\x68\x2A\x2A\x2A\x2A";
     #else
 
         // Signature for sub_372660:
         // 55 89 E5 83 EC 48 8B 55 0C 89 5D F4 8B 45 14
-        sizeof_ConnectClient = 15;
-        const char* pattern_ConnectClient = "\x55\x89\xE5\x83\xEC\x48\x8B\x55\x0C\x89\x5D\xF4\x8B\x45\x14";
-
+        CBaseServer__ConnectClient->patternSize  = 15;
+        CBaseServer__ConnectClient->pattern      = "\x55\x89\xE5\x83\xEC\x48\x8B\x55\x0C\x89\x5D\xF4\x8B\x45\x14";
     #endif
 
-    uintptr_t addr_ConnectClient = memy::FindPattern
-    (
-        engine_bin,
-        pattern_ConnectClient,
-        sizeof_ConnectClient,
-        0
-    );
+    populateAndInitDetour(CBaseServer__ConnectClient, CBaseServer__ConnectClient_CB);
 
-    Detour_ConnectClient.Init(addr_ConnectClient, (void*)ConnectClient);
 }
 
 
-////////////////////////////////////////////////
-// Init
-////////////////////////////////////////////////
+
+
+
+
+
+
+
+
 void CEngineDetours::PostInit()
 {
     // ONLY run these on dedis!
@@ -685,6 +717,8 @@ void CEngineDetours::PostInit()
         CBaseServer__ConnectClient_Init();
     }
 }
+
+
 
 // client detours
 #elif defined(CLIENT_DLL)
@@ -700,62 +734,37 @@ void CEngineDetours::PostInit()
     #include <sdksentry/sdksentry.h>
 #endif
 
+
+
+
+
+
+
+
+
+
 #ifdef BLACKLISTS
+
 const char* malicious_server_dc =
 "Sorry, this server has been marked by developers as malicious";
 
+// Something malicious is spewing...
 const char* malicious_spew =
 "!!\n"
 "!! Sorry, the server you tried to connect to has been marked by developers as malicious.\n"
 "!! If you believe this to be an error, please contact the developers at\n"
 "!! %s\n"
 "!!\n";
-#endif
 
-static DetourHook Detour_FullConnect        = {};
-static DetourHook Detour_NetChanShutdown    = {};
+sdkdetour* CClientState__FullConnect{};
 
-#ifdef _WIN32
+#define CClientState__FullConnect_vars            uintptr_t* _this, dummyType dummyVar, netadr_t& netadr
+#define CClientState__FullConnect_varsnotype      _this, dummyVar, netadr
+#define CClientState__FullConnect_origfunc        PLH::FnCast(CClientState__FullConnect->detourTrampoline, CClientState__FullConnect_CB)(CClientState__FullConnect_varsnotype);
 
-    #define FullConnect_vars uintptr_t* _this, uintptr_t* dummy, netadr_t& netadr
-    #define FullConnect_varsnotype _this, dummy, netadr
-
-    // it's a thiscall [member function] so we need a dummy edx and to make it fastcall
-    typedef
-        void                                        // return
-        (__fastcall *TypeDef__FullConnect)          // callconv + typedef
-        (FullConnect_vars);                         // args
-
-    #define FullConnect_origfunc                                        \
-        ((TypeDef__FullConnect)Detour_FullConnect.GetOriginalFunc())    \
-            (FullConnect_varsnotype);                                   \
-            Detour_FullConnect.RestorePatch();
-
-
-    void    __fastcall CClientSomething__FullConnect
-    (FullConnect_vars)
-#else
-
-    #define FullConnect_vars uintptr_t* _this, netadr_t& netadr
-    #define FullConnect_varsnotype _this, netadr
-
-    // it's a thiscall [member function] so we need a dummy edx and to make it fastcall
-    typedef
-        void                                        // return
-        (__cdecl *TypeDef__FullConnect)             // callconv + typedef
-        (FullConnect_vars);                         // args
-
-    #define FullConnect_origfunc                                        \
-        ((TypeDef__FullConnect)Detour_FullConnect.GetOriginalFunc())    \
-            (FullConnect_varsnotype);                                   \
-            Detour_FullConnect.RestorePatch();
-
-
-    void    __cdecl CClientSomething__FullConnect
-    (FullConnect_vars)
-#endif
+void mbrcallconv CClientState__FullConnect_CB(CClientState__FullConnect_vars)
 {
-    FullConnect_origfunc
+    CClientState__FullConnect_origfunc
 
     if (!UTIL_CheckRealRemoteAddr(netadr))
     {
@@ -770,7 +779,7 @@ static DetourHook Detour_NetChanShutdown    = {};
 
     // if this cmpserverblacklist returns true, the server is not malicious.
     // otherwise...
-    if ( CBlacklists::CompareServerBlacklist(ipaddr) )
+    if ( !CBlacklists::CompareServerBlacklist(ipaddr) )
     {
 #ifdef SDKSENTRY
         sentry_value_t ctxinfo = sentry_value_new_object();
@@ -781,7 +790,7 @@ static DetourHook Detour_NetChanShutdown    = {};
         Color dullyello(255, 136, 78, 255);
         const int spewlen = strlen(malicious_spew);
         const int MAX_URL_SIZE = 128;
-        char* finalspew = new char[spewlen + MAX_URL_SIZE + 1];
+        char* finalspew = new char[spewlen + MAX_URL_SIZE + 1]{};
         V_snprintf( finalspew, (spewlen + MAX_URL_SIZE + 1), "%s%s", malicious_spew, V_STRINGIFY(BLACKLISTS_CONTACT_URL) );
         ConColorMsg(dullyello, "%s", malicious_spew);
         delete [] finalspew;
@@ -805,78 +814,50 @@ static DetourHook Detour_NetChanShutdown    = {};
 
 void CClientSomething__FullConnect_Init()
 {
-    size_t sizeof_FullConnect = 0;
+    CClientState__FullConnect = new sdkdetour{};
 
     // unique string: "Connected to %s\n"
     #ifdef _WIN32
-
         // Signature for sub_100D0450:
         // 55 8B EC 53 8B 5D 08 56 57 53 8B F9 E8 ? ? ? ? 8B 4F 10
-        sizeof_FullConnect = 20;
-        const char* pattern_FullConnect = "\x55\x8B\xEC\x53\x8B\x5D\x08\x56\x57\x53\x8B\xF9\xE8\x2A\x2A\x2A\x2A\x8B\x4F\x10";
-
+        CClientState__FullConnect->patternSize   = 20;
+        CClientState__FullConnect->pattern       = "\x55\x8B\xEC\x53\x8B\x5D\x08\x56\x57\x53\x8B\xF9\xE8\x2A\x2A\x2A\x2A\x8B\x4F\x10";
     #else
 
         // Signature for sub_38A7C0:
         // 55 89 E5 83 EC 28 89 5D F4 8B 5D 0C 89 75 F8 8B 75 08 89 7D FC 89 5C 24 04 89 34 24 E8 ? ? ? ? 8B 46 10
-        sizeof_FullConnect = 36;
-        const char* pattern_FullConnect = "\x55\x89\xE5\x83\xEC\x28\x89\x5D\xF4\x8B\x5D\x0C\x89\x75\xF8\x8B\x75\x08\x89\x7D\xFC\x89\x5C\x24\x04\x89\x34\x24\xE8\x2A\x2A\x2A\x2A\x8B\x46\x10";
-
+        CClientState__FullConnect->patternSize   = 36;
+        CClientState__FullConnect->pattern       = "\x55\x89\xE5\x83\xEC\x28\x89\x5D\xF4\x8B\x5D\x0C\x89\x75\xF8\x8B\x75\x08\x89\x7D\xFC\x89\x5C\x24\x04\x89\x34\x24\xE8\x2A\x2A\x2A\x2A\x8B\x46\x10";
     #endif
 
-    uintptr_t addr_FullConnect = memy::FindPattern
-    (
-        engine_bin,
-        pattern_FullConnect,
-        sizeof_FullConnect,
-        0
-    );
-
-    Detour_FullConnect.Init(addr_FullConnect, (void*)CClientSomething__FullConnect);
+    populateAndInitDetour(CClientState__FullConnect, &CClientState__FullConnect_CB);
 }
-
-#ifdef _WIN32
-    #define NetChanShutdown_vars uintptr_t* _this, uintptr_t* dummy, const char* reason
-    #define NetChanShutdown_varsnotype _this, dummy, reason
-
-    // it's a thiscall [member function] so we need a dummy edx and to make it fastcall
-    typedef
-        void                                        // return
-        (__fastcall *TypeDef__NetChanShutdown)      // callconv + typedef
-        (NetChanShutdown_vars);                     // args
-
-    #define NetchanShutdown_origfunc                                            \
-        ((TypeDef__NetChanShutdown)Detour_NetChanShutdown.GetOriginalFunc())    \
-            (NetChanShutdown_varsnotype);                                       \
-            Detour_NetChanShutdown.RestorePatch();
-
-    void    __fastcall CNetChan__Shutdown(NetChanShutdown_vars)
-#else
-    #define NetChanShutdown_vars uintptr_t* _this, const char* reason
-    #define NetChanShutdown_varsnotype _this, reason
-
-    typedef
-        void                                        // return
-        (__cdecl *TypeDef__NetChanShutdown)         // callconv + typedef
-        (NetChanShutdown_vars);                     // args
-
-    #define NetchanShutdown_origfunc                                            \
-        ((TypeDef__NetChanShutdown)Detour_NetChanShutdown.GetOriginalFunc())    \
-            (NetChanShutdown_varsnotype);                                       \
-            Detour_NetChanShutdown.RestorePatch();
-
-    void    __cdecl CNetChan__Shutdown(NetChanShutdown_vars)
 #endif
+
+
+
+
+
+
+
+
+
+
+sdkdetour* CNetChan__Shutdown{};
+#define CNetChan__Shutdown_vars        uintptr_t* _this, dummyType dummyVar, const char* reason
+#define CNetChan__Shutdown_novars      _this, dummyVar, reason
+#define CNetChan__Shutdown_origfunc    PLH::FnCast(CNetChan__Shutdown->detourTrampoline, CNetChan__Shutdown_CB)(CNetChan__Shutdown_novars);
+void mbrcallconv CNetChan__Shutdown_CB(CNetChan__Shutdown_vars)
 {
     INetChannelInfo* netchan = engine->GetNetChannelInfo();
     if (netchan && netchan->IsLoopback())
     {
-        NetchanShutdown_origfunc;
-        // Warning("-> ignoring netchan shutdown = '%s'\n", reason);
+        CNetChan__Shutdown_origfunc;
+        Warning("-> ignoring netchan shutdown = '%s'\n", reason);
         return;
     }
-    NetchanShutdown_origfunc;
-    // Warning("-> Netchan shutdown = '%s'\n", reason);
+    CNetChan__Shutdown_origfunc;
+    Warning("-> Netchan shutdown = '%s'\n", reason);
 
 #ifdef FLUSH_DLS
     // no cvar, sorry
@@ -898,37 +879,41 @@ void CClientSomething__FullConnect_Init()
 
 void CNetChan__Shutdown_Init()
 {
-    size_t sizeof_NetChanShutDown = 0;
+    CNetChan__Shutdown = new sdkdetour{};
+
     // Unique string: "NetChannel removed.", which calls Shutdown immediately after
     #ifdef _WIN32
         // Signature for sub_101CCA10:
         // 55 8B EC 83 EC 10 56 8B F1 83 BE 8C 00 00 00 00
-        sizeof_NetChanShutDown = 16;
-        const char* pattern_NetChanShutDown = "\x55\x8B\xEC\x83\xEC\x10\x56\x8B\xF1\x83\xBE\x8C\x00\x00\x00\x00";
+        CNetChan__Shutdown->patternSize = 16;
+        CNetChan__Shutdown->pattern     = "\x55\x8B\xEC\x83\xEC\x10\x56\x8B\xF1\x83\xBE\x8C\x00\x00\x00\x00";
     #else
         // Signature for sub_4DFAF0:
         // 55 89 E5 57 56 53 83 EC 3C 8B 5D 08 8B 75 0C 8B 8B 8C 00 00 00
-        sizeof_NetChanShutDown = 21;
-        const char* pattern_NetChanShutDown = "\x55\x89\xE5\x57\x56\x53\x83\xEC\x3C\x8B\x5D\x08\x8B\x75\x0C\x8B\x8B\x8C\x00\x00\x00";
+        CNetChan__Shutdown->patternSize = 21;
+        CNetChan__Shutdown->pattern     = "\x55\x89\xE5\x57\x56\x53\x83\xEC\x3C\x8B\x5D\x08\x8B\x75\x0C\x8B\x8B\x8C\x00\x00\x00";
     #endif
 
-    uintptr_t addr_NetChanShutdown = memy::FindPattern
-    (
-        engine_bin,
-        pattern_NetChanShutDown,
-        sizeof_NetChanShutDown,
-        0
-    );
-
-    Detour_NetChanShutdown.Init(addr_NetChanShutdown, (void*)CNetChan__Shutdown);
+    populateAndInitDetour(CNetChan__Shutdown, CNetChan__Shutdown_CB);
 }
+
+
+
+
+
+
+
+
+
 
 void CEngineDetours::PostInit()
 {
     CClientSomething__FullConnect_Init();
     CNetChan__Shutdown_Init();
+
+    protection_up();
 }
-#endif
+#endif // client
 
 
 #endif

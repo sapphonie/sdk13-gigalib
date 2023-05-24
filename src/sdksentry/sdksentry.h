@@ -3,6 +3,7 @@
 #ifdef CLIENT_DLL
 
 #include <sdksentry/vendored/sentry.h>
+#include <sdkCURL/sdkCURL.h>
 #include <helpers/misc_helpers.h>
 #include <helpers/steam_helpers.h>
 

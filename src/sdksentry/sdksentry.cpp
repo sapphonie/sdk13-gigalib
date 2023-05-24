@@ -158,6 +158,8 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
     return event;
 }
 
+
+
 // #define sentry_id_debug
 // #define sentry_id_spewhashes
 
@@ -251,6 +253,7 @@ void CSentry::SentryInit()
     Msg("Sentry initialization success!\n");
 
     SentryMsg("info", __FUNCTION__);
+
 }
 
 void SetSteamID()
