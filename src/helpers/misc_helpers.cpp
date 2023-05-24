@@ -178,7 +178,10 @@ std::vector<std::string> UTIL_SplitSTDString(const std::string& i_str, const std
 
 
 // https://stackoverflow.com/a/49066369
+#include <valve_minmax_off.h>
 #include <chrono>
+#include <valve_minmax_on.h>
+
 
 // NB: ALL OF THESE 3 FUNCTIONS BELOW USE SIGNED VALUES INTERNALLY AND WILL
 // EVENTUALLY OVERFLOW (AFTER 200+ YEARS OR SO), AFTER WHICH POINT THEY WILL

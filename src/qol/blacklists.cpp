@@ -1,7 +1,8 @@
 #include <cbase.h>
 
 
-#if defined(CLIENT_DLL) && defined(BLACKLISTS) && defined(BLACKLISTS_URL) && defined(ENGINE_DETOURS)
+#if defined(CLIENT_DLL) && defined(BLACKLISTS)
+// && defined(BLACKLISTS_URL) && defined(ENGINE_DETOURS)
 
 #include <qol/blacklists.h>
 
@@ -85,7 +86,7 @@ void CBlacklists::BlacklistDownloadCallback(HTTPRequestCompleted_t* arg, bool bF
 }
 
 // Return true if client should connect and false if they shouldn't
-bool CBlacklists::CompareServerBlacklist(const char* ipaddr)
+bool CompareServerBlacklist(const char* ipaddr)
 {
     #ifdef blacklists_debugging
     Warning("CBlacklists::CompareServerBlacklist->\n");

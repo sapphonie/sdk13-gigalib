@@ -10,7 +10,7 @@
 #include <thread>
 #include "tier0/valve_minmax_on.h"
 
-
+bool         CompareServerBlacklist(const char* ipaddr);
 
 class CBlacklists
 {
@@ -18,9 +18,10 @@ public:
 
     CBlacklists();
 
+// bool CBlacklists::CompareServerBlacklist(const char* ipaddr)
 
-    static bool         CompareServerBlacklist(const char* ipaddr);
-    
+    // static bool         CompareServerBlacklist(std::string);
+
     CCallResult<CBlacklists, HTTPRequestCompleted_t> BlacklistsCallResult;
 
     void                GetBlacklist();
@@ -31,4 +32,4 @@ private:
 };
 
 #endif // BLACKLISTS_H
-#endif
+#endif // CLIENT_DLL
