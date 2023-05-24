@@ -122,6 +122,9 @@ struct callback_type<Ret(CCFROM Class::*)(Args...), void> \
 
 #endif
 
+// HACK TO WORKAROUND WACKY BUG WITH x86 ON LINUX
+// WE DONT USE ANY OF THESE ANYWAY
+// -SAPPHO
 #ifndef POLYHOOK2_ARCH_X64
 //MAKE_CALLBACK_IMPL(__stdcall, __stdcall)
 //MAKE_CALLBACK_CLASS_IMPL(__stdcall, __stdcall)
