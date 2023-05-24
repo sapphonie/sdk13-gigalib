@@ -124,11 +124,9 @@ $Project
                 $File   "$sappholibloc/sdknanopb/vendored/pb.h"
             }
 
-        $Folder "polyhook"
-        {
-
       
-
+ $Folder "polyhook"
+{
         $File   "$sappholibloc/polyhook/polyhook2/Detour/ADetour.hpp"
         $File   "$sappholibloc/polyhook/polyhook2/Detour/ILCallback.hpp"
         $File   "$sappholibloc/polyhook/polyhook2/Detour/x64Detour.hpp"
@@ -222,13 +220,15 @@ $Project
         $ImpLib             "$sappholibloc\..\bin\libcurl"                  [$WIN32]
 
         $Lib                "$sappholibloc\..\bin\libbreakpad_client"       [$LINUX]
+        $Lib                "$sappholibloc\..\bin\libsentry"                [$LINUX]
 
 
-        //$Lib                 "$sappholibloc\polyhook\bin\debug\lib\asmjit"          [$WIN32]
-        //$Lib                 "$sappholibloc\polyhook\bin\debug\lib\asmtk"           [$WIN32]
-        //$Lib                 "$sappholibloc\polyhook\bin\debug\lib\Zycore"          [$WIN32]
         $Lib                 "$sappholibloc\polyhook\bin\debug\lib\Zydis"           [$WIN32]
         $Lib                 "$sappholibloc\polyhook\bin\debug\lib\PolyHook_2"      [$WIN32]
+
+
+        $Lib                 "$sappholibloc\..\bin\libPolyHook_2"           [$LINUX]
+        $Lib                 "$sappholibloc\..\bin\libZydis"                [$LINUX]
 
 
 
