@@ -1,6 +1,7 @@
 //
 // Created by steve on 4/2/17.
 //
+
 #ifndef POLYHOOK_2_0_IHOOK_HPP
 #define POLYHOOK_2_0_IHOOK_HPP
 
@@ -72,8 +73,9 @@ protected:
 	bool m_debugSet;
 	bool m_hooked = false;
 };
+
 //Thanks @_can1357 for help with this.
-template<typename T, typename = uint64_t>
+template<typename T, typename = void>
 struct callback_type { using type = T; };
 
 template<typename T>
@@ -89,7 +91,7 @@ auto make_callback(Ret(CCFROM*)(Args...), F&& f) \
     return fn; \
 } \
 template<typename Ret, typename... Args> \
-struct callback_type<Ret(CCFROM*)(Args...), uintptr_t> \
+struct callback_type<Ret(CCFROM*)(Args...), void> \
 { \
     using type = Ret(CCTO*)(Args...); \
 };
@@ -122,23 +124,24 @@ struct callback_type<Ret(CCFROM Class::*)(Args...), void> \
 
 #endif
 
-// HACK TO WORKAROUND WACKY BUG WITH x86 ON LINUX
-// WE DONT USE ANY OF THESE ANYWAY
-// -SAPPHO
 #ifndef POLYHOOK2_ARCH_X64
-//MAKE_CALLBACK_IMPL(__stdcall, __stdcall)
-//MAKE_CALLBACK_CLASS_IMPL(__stdcall, __stdcall)
+// hack for x86
+// -sappho
+/*
+MAKE_CALLBACK_IMPL(__stdcall, __stdcall)
+MAKE_CALLBACK_CLASS_IMPL(__stdcall, __stdcall)
 
-//MAKE_CALLBACK_IMPL(__cdecl, __cdecl)
-//MAKE_CALLBACK_CLASS_IMPL(__cdecl, __cdecl)
+MAKE_CALLBACK_IMPL(__cdecl, __cdecl)
+MAKE_CALLBACK_CLASS_IMPL(__cdecl, __cdecl)
 
-//MAKE_CALLBACK_IMPL(__thiscall, __thiscall)
-//MAKE_CALLBACK_CLASS_IMPL(__thiscall, __fastcall, char*)
+MAKE_CALLBACK_IMPL(__thiscall, __thiscall)
+MAKE_CALLBACK_CLASS_IMPL(__thiscall, __fastcall, char*)
+*/
+
 #endif
 
-//MAKE_CALLBACK_IMPL(FASTCALL, FASTCALL)
-//MAKE_CALLBACK_CLASS_IMPL(FASTCALL, FASTCALL)
-
+MAKE_CALLBACK_IMPL(FASTCALL, FASTCALL)
+MAKE_CALLBACK_CLASS_IMPL(FASTCALL, FASTCALL)
 template <int I, class... Ts>
 decltype(auto) get_pack_idx(Ts&&... ts) {
 	return std::get<I>(std::forward_as_tuple(ts...));

@@ -340,7 +340,7 @@
  * Intentional fallthrough.
  */
 #if defined(ZYAN_GCC) && __GNUC__ >= 7
-#   define ZYAN_FALLTHROUGH __attribute__((__fallthrough__))
+#   define ZYAN_FALLTHROUGH ; __attribute__((__fallthrough__))
 #else
 #   define ZYAN_FALLTHROUGH
 #endif
@@ -473,6 +473,20 @@
  * Note that this macro only works for powers of 2.
  */
 #define ZYAN_ALIGN_DOWN(x, align) (((x) - 1) & ~((align) - 1))
+
+/**
+ * Divide the 64bit integer value by the given divisor.
+ *
+ * @param   n       Variable containing the dividend that will be updated with the result of the
+ *                  division.
+ * @param   divisor The divisor.
+ */
+#if defined(ZYAN_LINUX) && defined(ZYAN_KERNEL)
+#   include <asm/div64.h> /* do_div */
+#   define ZYAN_DIV64(n, divisor) do_div(n, divisor)
+#else
+#   define ZYAN_DIV64(n, divisor) (n /= divisor)
+#endif
 
 /* ---------------------------------------------------------------------------------------------- */
 /* Bit operations                                                                                 */
