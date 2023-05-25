@@ -10,19 +10,6 @@
 
 
 #ifdef _WIN32
-    // it's a thiscall [member function] so we need a dummy edx and to make it fastcall
-    #define dummyType uintptr_t*
-    #define dummyVar  dummyRegister
-    #define dummyComma ,
-    #define mbrcallconv __fastcall
-#else
-    #define dummyType
-    #define dummyVar
-    #define dummyComma
-    #define mbrcallconv __cdecl
-#endif
-
-#ifdef _WIN32
 #include <Windows.h>
 int protection_up() {
     PROCESS_MITIGATION_DYNAMIC_CODE_POLICY policy1;
@@ -123,21 +110,54 @@ int protection_up() {
 }
 #endif
 #ifdef ENGINE_DETOURS
+#include <engine_hacks/engine_detours.h>
+
+
+
+
+#ifdef _WIN32
+    // it's a thiscall [member function] so we need a dummy edx and to make it fastcall
+    #define dummyType uintptr_t*
+    #define dummyVar  dummyRegister
+    #define dummyComma ,
+    #define mbrcallconv __fastcall
+#else
+    #define dummyType
+    #define dummyVar
+    #define dummyComma
+    #define mbrcallconv __cdecl
+#endif
+
+#ifdef _WIN32
+    // hack because theres no macro for DEBUG that i can find
+    // feel free to PR to add it to vpc if you know of one
+    #ifdef DEBUG
+        #pragma comment( lib, "../shared/sdk13-sappholib/src/polyhook/bin/debug/PolyHook_2.lib" )
+        #pragma comment( lib, "../shared/sdk13-sappholib/src/polyhook/bin/debug/Zydis.lib" )
+
+    #else
+        #pragma comment( lib, "../shared/sdk13-sappholib/src/polyhook/bin/release/PolyHook_2.lib" )
+        #pragma comment( lib, "../shared/sdk13-sappholib/src/polyhook/bin/release/Zydis.lib" )
+    #endif
+#endif
+
 #undef NOINLINE
 #undef FASTCALL
-// #define FASTCALL __attribute__((fastcall))
 #define __thiscall
 #include <valve_minmax_off.h>
 #define ZYDIS_DEPRECATED
+#include <polyhook2/IHook.hpp>
 #include <polyhook2/Detour/x86Detour.hpp>
 
 #include <valve_minmax_on.h>
 
+/*
+    TODO:
 
+    MAKE_CALLBACK_CLASS_IMPL(__thiscall, __thiscall, etc)
 
-#undef NOINLINE
-#include <engine_hacks/engine_detours.h>
-
+    HOOK_CALLBACK etc
+*/
 CEngineDetours g_CEngineDetours;
 
 CEngineDetours::CEngineDetours() : CAutoGameSystem("CEngineDetours")
@@ -167,8 +187,8 @@ void populateAndInitDetour(sdkdetour* detour, void* callback)
 
     detour->detourPtr = new PLH::x86Detour
     (
-        detour->patternAddr,
-        (uint64_t)callback,
+        (const uint64_t)detour->patternAddr,
+        (const uint64_t)(callback),
         &detour->detourTrampoline
     );
     detour->detourPtr->hook();
@@ -202,6 +222,7 @@ void procpack_dbg_cb(IConVar* var, const char* pOldValue, float flOldValue)
 ConVar net_chan_debug_proctime_limit("net_chan_debug_proctime_limit", "0", FCVAR_NONE,
     "For debugging net_chan_proctime_limit_ms.", procpack_dbg_cb);
 #include <netadr.h>
+#include <engine_memutils.h>
 
 
 #define toobig 2048
@@ -259,7 +280,7 @@ sdkdetour* CNetChan__ProcessPacket = {};
 
 void mbrcallconv CNetChan__ProcessPacket_CB(CNetChan__ProcessPacket_vars)
 {
-    CNetChan__ProcessPacket_origfunc;
+    // CNetChan__ProcessPacket_origfunc;
     // this is in ms
     // this is also, technically,
     // "max processing time per tick", in ms
@@ -317,12 +338,12 @@ void mbrcallconv CNetChan__ProcessPacket_CB(CNetChan__ProcessPacket_vars)
     {
         Warning("packetsize = %i\n", size);
     }
-    //byte* rawdata = (byte*) ( *( netpacket + (6) ) );
-    //Warning("-%p\n", rawdata);
-
-
+    byte* rawdata = new byte[size]{};
+    V_memcpy(rawdata, (void*)(*(netpacket + 6)), size);
+    Warning("-%p\n", rawdata);
+    delete[] rawdata;
     // maybe a nullcheck??
-    if (size > toobig || size < toosmall)
+    if (size <= 0 && size > toobig || size < toosmall)
     {
         if (spew_procpacket)
         {
@@ -431,7 +452,13 @@ void mbrcallconv CNetChan__ProcessPacket_CB(CNetChan__ProcessPacket_vars)
         //}
 
         // could maybe be abused if clients send a CHONKY packet and then immediately dc?
-        if ( !bPlayer->IsDisconnecting() )
+        if
+        (
+            bPlayer
+            && UTIL_IsFullySignedOn(bPlayer)
+            && bPlayer->IsConnected()
+            && !bPlayer->IsDisconnecting()
+        )
         {
             const char* kickcmd = UTIL_VarArgs( "kickid %i %s;", bPlayer->GetUserID(), "Exceeded processing time" );
             engine->ServerCommand(kickcmd);
@@ -591,10 +618,11 @@ sdkdetour* CBaseServer__ConnectClient = {};
 #define CBaseServer__ConnectClient_vars             uintptr_t* _this, dummyType dummyVar dummyComma netadr_t* netadr, int proto, int challenge, int clichallenge, int authproto, const char* clname, const char* clpasswd, const char* clcookie, int callbackcookie
 #define CBaseServer__ConnectClient_varsnotype       _this, dummyVar dummyComma netadr, proto, challenge, clichallenge, authproto, clname, clpasswd, clcookie, callbackcookie
 #define CBaseServer__ConnectClient_origfunc         PLH::FnCast(CBaseServer__ConnectClient->detourTrampoline, CBaseServer__ConnectClient_CB)(CBaseServer__ConnectClient_varsnotype);
-
+#include <steam/isteamgameserver.h>
+#include <steam/isteamgameserverstats.h>
 uintptr_t* mbrcallconv CBaseServer__ConnectClient_CB(CBaseServer__ConnectClient_vars)
 {
-    #ifdef STEAMIDSPOOF_DEBUGGING
+    //#ifdef STEAMIDSPOOF_DEBUGGING
     Warning("CBaseServer::ConnectClient->       \n");
     Warning("_this                          = %p\n", _this);
     Warning("netadr                         = %p\n", netadr);
@@ -606,7 +634,7 @@ uintptr_t* mbrcallconv CBaseServer__ConnectClient_CB(CBaseServer__ConnectClient_
     Warning("clpasswd                       = %s\n", clpasswd);
     Warning("clcookie                       = %s\n", clcookie);
     Warning("callbackcookie                 = %x\n", callbackcookie);
-    #endif
+   // #endif
 
 
     // stv clients use k_EAuthProtocolHashedCDKey...!
@@ -660,24 +688,30 @@ uintptr_t* mbrcallconv CBaseServer__ConnectClient_CB(CBaseServer__ConnectClient_
         return nullptr;
     }
 
-    /*
     void* pvTicket      = (void*)((intptr_t)clcookie + sizeof(uint64));
     int cbTicket        = callbackcookie - sizeof(uint64);
 
     Warning("pvticket = %p\n", pvTicket);
     Warning("cbTicket = %i\n", cbTicket);
-
-    EBeginAuthSessionResult result = BeginAuthSession(pvTicket, cbTicket, realsteamid);
-    if (result != k_EBeginAuthSessionResultOK)
+    /*
+    Aggrevating nonsense with anonymous servers not being able to call steamgameserverapi funcs? 
+    will eventually fuck around with it in steam helpers but right now i dont care
+    
+    if (g_pSteamHelpers->pSteamGameServer)
     {
-        RejectConnection_origfunc(_this, 0x0, netadr, clichallenge, "#GameUI_ServerRejectSteam");
-        return NULL;
+        EBeginAuthSessionResult result = g_pSteamHelpers->pSteamGameServer->BeginAuthSession(pvTicket, cbTicket, realsteamid);
+        if (result != k_EBeginAuthSessionResultOK)
+        {
+            const char* reason = "#GameUI_ServerRejectSteam";
+            CBaseServer__RejectConnection_origfunc(_this, netadr, clichallenge, reason);
+            return NULL;
+        }
     }
     */
-
     uintptr_t* iclient = CBaseServer__ConnectClient_origfunc;
     return iclient;
 }
+
 
 void CBaseServer__ConnectClient_Init()
 {
@@ -703,7 +737,11 @@ void CBaseServer__ConnectClient_Init()
 
 
 
-
+/*
+Signature for _ZN17CGameEventManager13RegisterEventEP9KeyValues:
+55 89 E5 57 56 53 83 EC 2C 8B 5D 0C 8B 75 08 85 DB
+\x55\x89\xE5\x57\x56\x53\x83\xEC\x2C\x8B\x5D\x0C\x8B\x75\x08\x85\xDB
+*/
 
 
 
@@ -830,9 +868,6 @@ void CClientState__FullConnect_Init()
     populateAndInitDetour(CClientState__FullConnect, (void*)CClientState__FullConnect_CB);
 }
 #endif
-
-
-
 
 
 
