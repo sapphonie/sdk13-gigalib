@@ -66,8 +66,8 @@ class memy
         static bool         InitAllBins();
 
 
-        static uintptr_t    FindPattern(uintptr_t startaddr, size_t searchsize, const char* pattern, size_t sigsize, size_t offset = 0);
-        static uintptr_t    FindPattern(modbin* mbin, const char* pattern, size_t sigsize, size_t offset = 0)
+        static uintptr_t    FindPattern(const uintptr_t startaddr, const size_t searchsize, const char* pattern, const size_t sigsize, const size_t offset = 0);
+        static uintptr_t    FindPattern(modbin* mbin, const char* pattern, const size_t sigsize, const size_t offset = 0)
         {
             return          FindPattern(mbin->addr, mbin->size, pattern, sigsize, offset);
         }
@@ -81,7 +81,7 @@ class memy
         static bool         InitSingleBin(const char* binname, modbin* mbin);
 
 
-        static inline bool  comparedata(const byte* addr, const char* pattern, size_t sigsize);
+        static inline bool  comparedata(const byte* addr, const char* pattern, const size_t sigsize);
 
 };
 

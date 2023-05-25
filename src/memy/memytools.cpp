@@ -224,7 +224,7 @@ bool memy::InitSingleBin(const char* binname, modbin* mbin)
     return true;
 }
 
-inline bool memy::comparedata(const byte* data, const char* pattern, size_t sigsize)
+inline bool memy::comparedata(const byte* data, const char* pattern, const size_t sigsize)
 {
     if (!data || !pattern || !sigsize)
     {
@@ -274,7 +274,7 @@ inline bool memy::comparedata(const byte* data, const char* pattern, size_t sigs
 // Finds a pattern of bytes in the engine memory given a signature and a mask
 // Returns the address of the first (and hopefully only) match with an optional offset, otherwise nullptr
 //---------------------------------------------------------------------------------------------------------    
-uintptr_t memy::FindPattern(uintptr_t startaddr, size_t searchsize, const char* pattern, size_t sigsize, size_t offset)
+uintptr_t memy::FindPattern(const uintptr_t startaddr, const size_t searchsize, const char* pattern, const size_t sigsize, const size_t offset)
 {
     #ifdef memydbg
         char hexstr[128] = {};
