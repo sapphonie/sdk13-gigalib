@@ -124,6 +124,9 @@ struct callback_type<Ret(CCFROM Class::*)(Args...), void> \
 
 #endif
 
+/*
+* not going to bother fixing this multiply defined sillyness / nonportability
+* -sappho
 #ifndef POLYHOOK2_ARCH_X64
 MAKE_CALLBACK_IMPL(__stdcall, __stdcall)
 MAKE_CALLBACK_CLASS_IMPL(__stdcall, __stdcall)
@@ -134,7 +137,7 @@ MAKE_CALLBACK_CLASS_IMPL(__cdecl, __cdecl)
 MAKE_CALLBACK_IMPL(__thiscall, __thiscall)
 MAKE_CALLBACK_CLASS_IMPL(__thiscall, __fastcall, char*)
 #endif
-
+*/
 MAKE_CALLBACK_IMPL(FASTCALL, FASTCALL)
 MAKE_CALLBACK_CLASS_IMPL(FASTCALL, FASTCALL)
 

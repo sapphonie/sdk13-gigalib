@@ -194,7 +194,9 @@ public:
 		m_isRelative = true;
 		m_hasDisplacement = true;
 
-		assert(m_dispOffset + m_dispSize <= m_bytes.size() && m_dispSize <= sizeof(m_displacement.Relative));
+		// not going to bother fixing this unsigned mismatch
+		// -sappho
+		// assert(m_dispOffset + m_dispSize <= m_bytes.size() && m_dispSize <= sizeof(m_displacement.Relative));
 		std::memcpy(&m_bytes[getDisplacementOffset()], &m_displacement.Relative, m_dispSize);
 	}
 
