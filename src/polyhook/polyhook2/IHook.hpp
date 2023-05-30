@@ -125,9 +125,6 @@ struct callback_type<Ret(CCFROM Class::*)(Args...), void> \
 #endif
 
 #ifndef POLYHOOK2_ARCH_X64
-// hack for x86
-// -sappho
-/*
 MAKE_CALLBACK_IMPL(__stdcall, __stdcall)
 MAKE_CALLBACK_CLASS_IMPL(__stdcall, __stdcall)
 
@@ -136,12 +133,11 @@ MAKE_CALLBACK_CLASS_IMPL(__cdecl, __cdecl)
 
 MAKE_CALLBACK_IMPL(__thiscall, __thiscall)
 MAKE_CALLBACK_CLASS_IMPL(__thiscall, __fastcall, char*)
-*/
-
 #endif
 
 MAKE_CALLBACK_IMPL(FASTCALL, FASTCALL)
 MAKE_CALLBACK_CLASS_IMPL(FASTCALL, FASTCALL)
+
 template <int I, class... Ts>
 decltype(auto) get_pack_idx(Ts&&... ts) {
 	return std::get<I>(std::forward_as_tuple(ts...));
