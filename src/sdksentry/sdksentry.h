@@ -1,6 +1,7 @@
 #ifndef SDK_SENTRY_H
 #define SDK_SENTRY_H
-#ifdef CLIENT_DLL
+
+#if defined(CLIENT_DLL) && defined(SDKCURL) && defined(SDKSENTRY)
 
 #include <sdksentry/vendored/sentry.h>
 #include <sdkCURL/sdkCURL.h>
@@ -55,6 +56,6 @@ void SentryAddressBreadcrumb(void* address, const char* optionalName = NULL);
 #undef CreateEvent
 #endif
 
-#endif // CLIENT_DLL
+#endif // defined(CLIENT_DLL) && defined(SDKCURL) && defined(SDKSENTRY)
 
-#endif /* SDK_SENTRY_H */
+#endif // SDK_SENTRY_H

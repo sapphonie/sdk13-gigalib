@@ -1,6 +1,6 @@
 #include <cbase.h>
 
-#ifdef CLIENT_DLL
+#if defined(CLIENT_DLL) && defined(SDKCURL) && defined(SDKSENTRY)
 
 #include "tier0/valve_minmax_off.h"
 #include <sstream>
@@ -404,4 +404,4 @@ void SentryAddressBreadcrumb(void* address, const char* optionalName )
     );
     sentry_add_breadcrumb(addr_crumb);
 }
-#endif
+#endif // defined(CLIENT_DLL) && defined(SDKCURL) && defined(SDKSENTRY)

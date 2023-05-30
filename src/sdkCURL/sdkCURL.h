@@ -68,5 +68,5 @@ private:
 
 extern sdkCURL* g_sdkCURL;
 
-#endif 
-#endif
+#endif // SDKCURL
+#endif // SDKCURL_H
