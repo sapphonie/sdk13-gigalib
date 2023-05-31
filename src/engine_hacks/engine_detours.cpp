@@ -251,6 +251,7 @@ ConVar net_chan_debug_proctime_limit("net_chan_debug_proctime_limit", "0", FCVAR
 ////////////////////////////////////////////////
 
 /*
+* From VSES 2007
 typedef struct netpacket_s
 {
 // 0
@@ -338,10 +339,12 @@ void mbrcallconv CNetChan__ProcessPacket_CB(CNetChan__ProcessPacket_vars)
     {
         Warning("packetsize = %i\n", size);
     }
+    /*
     byte* rawdata = new byte[size]{};
     V_memcpy(rawdata, (void*)(*(netpacket + 6)), size);
     Warning("-%p\n", rawdata);
     delete[] rawdata;
+    */
     // maybe a nullcheck??
     if (size <= 0 && size > toobig || size < toosmall)
     {
@@ -356,6 +359,35 @@ void mbrcallconv CNetChan__ProcessPacket_CB(CNetChan__ProcessPacket_vars)
 
     INetChannel* pnetchan   = reinterpret_cast<INetChannel*>(_this);
     IClient* iclient        = static_cast<IClient*>( pnetchan->GetMsgHandler() );
+
+    /*
+    if (pnetchan->HasPendingReliableData())
+    {
+        bf_read& r = (bf_read&)(*(netpacket + 12));
+        Warning("r = %p\n", r);
+        // const char* dbg = r.GetDebugName();
+        const char* dbg2 = (const char*)r.GetBasePointer();
+        if (dbg2 && dbg2[0])
+        {
+            Warning("dbg = %s\n", dbg2);
+        }
+
+        bf_read read = *(netpacket + 12);
+        Warning("%p\n", read);
+        const char* dbg = read->GetDebugName();
+        if ( dbg && dbg[0] )
+        {
+            Warning("dbg \n", dbg);
+        }
+         read->
+         delete[] rawdata;
+        int bufsize = pnetchan->GetBufferSize();
+        if (bufsize != 64)
+        {
+            Warning("bsize = %i\n", bufsize);
+        }
+    }
+    */
 
     if (!iclient)
     {
@@ -622,7 +654,7 @@ sdkdetour* CBaseServer__ConnectClient = {};
 #include <steam/isteamgameserverstats.h>
 uintptr_t* mbrcallconv CBaseServer__ConnectClient_CB(CBaseServer__ConnectClient_vars)
 {
-    //#ifdef STEAMIDSPOOF_DEBUGGING
+    #ifdef STEAMIDSPOOF_DEBUGGING
     Warning("CBaseServer::ConnectClient->       \n");
     Warning("_this                          = %p\n", _this);
     Warning("netadr                         = %p\n", netadr);
@@ -634,7 +666,7 @@ uintptr_t* mbrcallconv CBaseServer__ConnectClient_CB(CBaseServer__ConnectClient_
     Warning("clpasswd                       = %s\n", clpasswd);
     Warning("clcookie                       = %s\n", clcookie);
     Warning("callbackcookie                 = %x\n", callbackcookie);
-   // #endif
+    #endif
 
 
     // stv clients use k_EAuthProtocolHashedCDKey...!
