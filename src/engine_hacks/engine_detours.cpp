@@ -132,12 +132,12 @@ int protection_up() {
     // hack because theres no macro for DEBUG that i can find
     // feel free to PR to add it to vpc if you know of one
     #ifdef DEBUG
-        #pragma comment( lib, "../shared/sdk13-sappholib/src/polyhook/bin/debug/PolyHook_2.lib" )
-        #pragma comment( lib, "../shared/sdk13-sappholib/src/polyhook/bin/debug/Zydis.lib" )
+        #pragma comment( lib, "../shared/sdk13-gigalib/src/polyhook/bin/debug/PolyHook_2.lib" )
+        #pragma comment( lib, "../shared/sdk13-gigalib/src/polyhook/bin/debug/Zydis.lib" )
 
     #else
-        #pragma comment( lib, "../shared/sdk13-sappholib/src/polyhook/bin/release/PolyHook_2.lib" )
-        #pragma comment( lib, "../shared/sdk13-sappholib/src/polyhook/bin/release/Zydis.lib" )
+        #pragma comment( lib, "../shared/sdk13-gigalib/src/polyhook/bin/release/PolyHook_2.lib" )
+        #pragma comment( lib, "../shared/sdk13-gigalib/src/polyhook/bin/release/Zydis.lib" )
     #endif
 #endif
 
