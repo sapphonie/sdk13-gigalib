@@ -75,7 +75,7 @@ void CSentry::SentryURLCB(const curlResponse* resp)
         return;
     }
 
-    char* buffer = new char[resp->bodyLen]{};
+    char* buffer = new char[256]{};
     V_strncpy(buffer, resp->body.c_str(), sizeof(real_sentry_url));
 
     // strip newlines
