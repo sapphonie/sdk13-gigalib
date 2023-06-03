@@ -6,6 +6,14 @@
 #endif
 #include <cbase.h>
 
+// If you use $QUOTE in VPCs, linux needs stringified to get the value as a string, windows does not
+#ifdef _WIN32
+	#define VPC_QUOTE_STRINGIFY(x) x
+
+#else
+	#define VPC_QUOTE_STRINGIFY(x) V_STRINGIFY(x)
+#endif
+
 #include <obfuscate.h>
 #include <vtf/vtf.h>
 #include <netadr.h>
