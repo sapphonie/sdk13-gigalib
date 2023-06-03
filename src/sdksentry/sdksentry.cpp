@@ -42,7 +42,7 @@ void sentry_callback(IConVar* var, const char* pOldValue, float flOldValue)
 ConVar cl_send_error_reports("cl_send_error_reports", "-1", FCVAR_ARCHIVE,
     "Enables/disables sending error reports to the developers to help improve the game.\n"
     "Error reports will include your SteamID, and any pertinent game info (class, loadout, current map, etc.) - we do not store any personally identifiable information.\n"
-    "Read more at " V_STRINGIFY(SENTRY_PRIVACY_POLICY_URL) "\n"
+    "Read more at " VPC_QUOTE_STRINGIFY(SENTRY_PRIVACY_POLICY_URL) "\n"
     "-1 asks you again on game boot and disables reporting, 0 disables reporting and does not ask you again, 1 enables reporting.\n",
     sentry_callback
 );
@@ -56,7 +56,7 @@ void CSentry::PostInit()
 {
     Msg("Sentry Postinit!\n");
 
-    g_sdkCURL->CURLGet(V_STRINGIFY(SENTRY_URL), CSentry__SentryURLCB__THUNK);
+    g_sdkCURL->CURLGet(VPC_QUOTE_STRINGIFY(SENTRY_URL), CSentry__SentryURLCB__THUNK);
 }
 
 
@@ -69,14 +69,14 @@ void CSentry::SentryURLCB(const curlResponse* resp)
         return;
     }
 
-    if (resp->bodyLen >= sizeof(real_sentry_url))
+    if (resp->bodyLen >= sizeof(real_sentry_url) || !resp->bodyLen)
     {
-        Warning("sentry url respponse is >= 256chars, bailing!\n");
+        Warning("sentry url response is >= 256chars || !=; == %i, bailing!\n", resp->bodyLen);
         return;
     }
 
-    char* buffer = new char[256]{};
-    V_strncpy(buffer, resp->body.c_str(), sizeof(real_sentry_url));
+    char* buffer = new char[resp->body.size() + 1]{};
+    strcpy(buffer, resp->body.c_str());
 
     // strip newlines
     buffer[strcspn(buffer, "\n")] = 0;
@@ -109,9 +109,7 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
 {
     Warning("[Warning] SENTRY CAUGHT A CRASH!\n");
     printf("[printf] SENTRY CAUGHT A CRASH!\n");
-
-
-    
+   
     // MessageBoxW(NULL, crashdialogue, crashtitle, MB_OK);
     // sentry_set_context(CSentry::SentryInstance().nowFUNC, CSentry::SentryInstance().nowCTX);
 
@@ -128,12 +126,12 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
 
     const char* crashdialogue =
     "\"BONK!\"\n\n"
-    "TF2 Classic has crashed. Sorry about that.\n"
+    "We crashed. Sorry about that.\n"
     "If you've enabled crash reporting,\n"
     "we'll get right on that.\n";
 
     const char* crashtitle = 
-    "TF2Classic crash handler";
+    "SDK13Mod crash handler - written by sappho.io";
 
 #ifdef _WIN32
     MessageBoxA(NULL, crashdialogue, crashtitle, MB_OK);
@@ -358,9 +356,9 @@ void _SentryEventThreaded(const char* level, const char* logger, const char* mes
     }
     */
 
-    void* junk = malloc(100);
-    memset(junk, 0x42, 100);
-    junk = malloc(100);
+    // void* junk = malloc(100);
+    // memset(junk, 0x42, 100);
+    // junk = malloc(100);
 
     return;
 }

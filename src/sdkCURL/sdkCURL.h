@@ -26,6 +26,16 @@ struct curlResponse
 {
     std::string originalURL             = {};
     void* callback                      = {};
+    /*
+        if you want to copy this into a c str:
+
+        char* buffer = new char[resp->body.size() + 1] {};
+        strcpy(buffer, resp->body.c_str());
+
+        ...
+
+        delete [] buffer;
+    */
     std::string body                    = {};
     std::vector<std::string> headers    = {};
     std::string httpType                = {};

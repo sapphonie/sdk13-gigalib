@@ -5,30 +5,26 @@
 
 #include <helpers/misc_helpers.h>
 #include <helpers/steam_helpers.h>
-
+#include <sdkCURL/sdkCURL.h>
 #include "tier0/valve_minmax_off.h"
 #include <thread>
 #include "tier0/valve_minmax_on.h"
 
 bool         CompareServerBlacklist(const char* ipaddr);
 
-class CBlacklists
+class CBlacklists : public CAutoGameSystem
 {
 public:
 
     CBlacklists();
+    void                PostInit() override;
 
 // bool CBlacklists::CompareServerBlacklist(const char* ipaddr)
 
     // static bool         CompareServerBlacklist(std::string);
-
-    CCallResult<CBlacklists, HTTPRequestCompleted_t> BlacklistsCallResult;
-
-    void                GetBlacklist();
+    void                BlacklistsURLCB(const curlResponse* resp);
 
 
-private:
-    void                BlacklistDownloadCallback(HTTPRequestCompleted_t* arg, bool bFailed);
 };
 
 #endif // BLACKLISTS_H
