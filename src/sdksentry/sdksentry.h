@@ -18,6 +18,38 @@ public:
 
     void                PostInit() override;
     void                Shutdown() override;
+    void                LevelBreadcrumbs(const char* function)
+    {
+        char map[128];
+        UTIL_GetMap(map);
+        char funcmap[256] = {};
+        if (map && map[0])
+        {
+            V_snprintf(funcmap, 255, "%s - map %s", function, map);
+        }
+        else
+        {
+            V_snprintf(funcmap, 255, "%s - map %s", function, "nada");
+        }
+        sentry_add_breadcrumb(sentry_value_new_breadcrumb(NULL, funcmap));
+    }
+    void LevelInitPreEntity()
+    {
+        LevelBreadcrumbs(__FUNCTION__);
+    }
+    void LevelInitPostEntity()
+    {
+        LevelBreadcrumbs(__FUNCTION__);
+    }
+    void LevelShutdownPreEntity()
+    {
+        LevelBreadcrumbs(__FUNCTION__);
+    }
+    void LevelShutdownPostEntity()
+    {
+        LevelBreadcrumbs(__FUNCTION__);
+    }
+
     void                SentryInit();
 
     char                real_sentry_url[256] = {};
@@ -33,6 +65,8 @@ void SentryMsg(const char* logger, const char* text, bool forcesend = false);
 void SentryEvent(const char* level, const char* logger, const char* message, sentry_value_t ctx, bool forcesend = false);
 // void sdk13_version_callback(IConVar* var, const char* pOldValue, float flOldValue);
 void SentrySetTags();
+
+void SentryAddressBreadcrumb(void* address, const char* optionalName);
 
 
 void _SentryEventThreaded(const char* level, const char* logger, const char* message, sentry_value_t ctx, bool forcesend = false);

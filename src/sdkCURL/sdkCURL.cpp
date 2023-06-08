@@ -224,7 +224,7 @@ void sdkCURL::Update(float frametime)
         {
             curlCallback callthis = (curlCallback)(thisReq->callback);
             callthis(thisReq);
-            Warning("SUCC \n");
+            Warning("CURL SUCCESS \n");
 
             reqs.erase(reqs.begin() + i);
             delete thisReq;

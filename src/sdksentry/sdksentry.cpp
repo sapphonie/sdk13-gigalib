@@ -10,16 +10,12 @@
 #include <sdksentry/sdksentry.h>
 
 CSentry g_Sentry;
-void SentryInitTrampoline()
-{
-    g_Sentry.SentryInit();
-}
 
 CSentry::CSentry()
 {
     didinit     = false;
     didshutdown = false;
-    RUN_THIS_FUNC_WHEN_STEAM_INITS(&SentryInitTrampoline);
+    RUN_THIS_FUNC_WHEN_STEAM_INITS(&SetSteamID);
 }
 
 // #ifdef _DEBUG
@@ -134,7 +130,7 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
     "SDK13Mod crash handler - written by sappho.io";
 
 #ifdef _WIN32
-    MessageBoxA(NULL, crashdialogue, crashtitle, MB_OK);
+    MessageBoxA(NULL, crashdialogue, crashtitle, MB_OK | MB_SETFOREGROUND);
 #else
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, crashtitle, crashdialogue, NULL);
 #endif
@@ -193,15 +189,19 @@ void CSentry::SentryInit()
     // Suprisingly, this just works to disable built in Valve crash stuff for linux
     CommandLine()->AppendParm("-nominidumps", "");
     CommandLine()->AppendParm("-nobreakpad", "");
+    CommandLine()->AppendParm("-nobreakpad", "");
+    CommandLine()->AppendParm("-nobreakpad", "");
+    EnableCrashingOnCrashes();
 
+    sentry_options_t* options               = sentry_options_new();
 
-    sentry_options_t* options           = sentry_options_new();
+    sentry_options_set_traces_sample_rate   (options, 1);
+    sentry_options_set_on_crash             (options, SENTRY_CRASHFUNC, (void*)NULL);
+    sentry_options_set_dsn                  (options, real_sentry_url);
+    sentry_options_set_release              (options, __DATE__ " " __TIME__);
+    sentry_options_set_debug                (options, 1);
+    sentry_options_set_max_breadcrumbs      (options, 1024);
 
-    sentry_options_set_traces_sample_rate(options, 1);
-    sentry_options_set_on_crash         (options, SENTRY_CRASHFUNC, (void*)NULL);
-    sentry_options_set_dsn              (options, real_sentry_url);
-    sentry_options_set_release          (options, __TIME__ __DATE__);
-    sentry_options_set_debug            (options, 1);
     // only windows needs the crashpad exe
 #ifdef _WIN32
     sentry_options_set_handler_path     (options, crash_exe);
@@ -210,11 +210,8 @@ void CSentry::SentryInit()
     sentry_options_set_database_path    (options, sentry_db);
     sentry_options_set_shutdown_timeout (options, 9999);
 
-#ifndef _WIN32
-    // Just in case
-    // sentry_reinstall_backend();
-#endif
-    
+    //sentry_reinstall_backend();
+
 
     /*
     // attachments !!
@@ -235,23 +232,94 @@ void CSentry::SentryInit()
     sentry_options_add_attachment(options, badipspath);
     */
 
-
-    if (sentry_init(options) != 0)
+    int sentryinit = sentry_init(options);
+    if (sentryinit != 0)
     {
         Warning("Sentry initialization failed!\n");
         CSentry::didinit = false;
         return;
     }
 
-    SetSteamID();
 
     CSentry::didinit = true;
 
     sentry_add_breadcrumb(sentry_value_new_breadcrumb(NULL, "SentryInit"));
     Msg("Sentry initialization success!\n");
 
-    SentryMsg("info", __FUNCTION__);
 
+
+    ConVarRef cl_send_error_reports("cl_send_error_reports");
+    // already asked
+    if (cl_send_error_reports.GetInt() >= 0)
+    {
+        return;
+    }
+
+    // localize these with translations eventually
+    const char* windowText = \
+        "Do you want to send error reports to the developers?\n"
+        "We collect no personally identifiable info, but check out our privacy policy at " VPC_QUOTE_STRINGIFY(SENTRY_PRIVACY_POLICY_URL) "\n"
+        "You can change this later by changing the cl_send_error_reports cvar.";
+
+    const char* windowTitle = \
+        "Error reporting consent popup";
+
+#ifdef _WIN32
+    int msgboxID = MessageBox(
+        NULL,
+        windowText,
+        windowTitle,
+        MB_YESNO | MB_SETFOREGROUND
+    );
+
+    switch (msgboxID)
+    {
+    case IDYES:
+        cl_send_error_reports.SetValue(1);
+        break;
+    case IDNO:
+        cl_send_error_reports.SetValue(0);
+        break;
+    }
+#else
+
+    SDL_MessageBoxData messageboxdata   = {};
+    messageboxdata.flags                = SDL_MESSAGEBOX_INFORMATION;
+    messageboxdata.window               = nullptr;
+    messageboxdata.title                = windowTitle;
+    messageboxdata.message              = windowMessage;
+
+    SDL_MessageBoxButtonData buttons[2] = {};
+    buttons[0].flags                    = SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT;
+    buttons[0].buttonid                 = 0;
+    buttons[0].text                     = "Yes";
+    buttons[1].flags                    = SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT;
+    buttons[1].buttonid                 = 1;
+    buttons[1].text                     = "No";
+
+    messageboxdata.numbuttons           = 2;
+    messageboxdata.buttons              = buttons;
+    messageboxdata.colorScheme          = nullptr;
+
+    int buttonid                        = {};
+    SDL_ShowMessageBox(&messageboxdata, &buttonid);
+
+    // yes
+    if (buttonid == 0)
+    {
+        cl_send_error_reports.SetValue(1);
+    }
+    // no
+    else if (buttonid == 1)
+    {
+        cl_send_error_reports.SetValue(0);
+    }
+    // fall thru
+    else
+    {
+        cl_send_error_reports.SetValue(-1);
+    }
+#endif
 }
 
 void SetSteamID()
@@ -366,8 +434,7 @@ void _SentryEventThreaded(const char* level, const char* logger, const char* mes
 void SentrySetTags()
 {
     char mapname[128] = {};
-    V_FileBase(engine->GetLevelName(), mapname, sizeof(mapname));
-    V_strlower(mapname);
+    UTIL_GetMap(mapname);
     if (mapname && mapname[0])
     {
         sentry_set_tag("current map", mapname);
@@ -378,7 +445,8 @@ void SentrySetTags()
     }
 
     char ipadr[64] = {};
-    if (UTIL_GetRealRemoteAddr(ipadr) && ipadr && ipadr[0])
+    UTIL_GetRealRemoteAddr(ipadr);
+    if (ipadr && ipadr[0])
     {
         sentry_set_tag("server ip", ipadr);
     }

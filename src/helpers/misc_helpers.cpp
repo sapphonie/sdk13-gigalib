@@ -18,6 +18,7 @@ bool UTIL_CheckRealRemoteAddr(netadr_t netadr)
 
 bool UTIL_GetRealRemoteAddr(char* ipadr)
 {
+	// memset(ipadr, 0x0, sizeof(ipadr));
     INetChannel* netchan = static_cast<INetChannel*>(engine->GetNetChannelInfo());
     if (netchan)
     {
@@ -29,7 +30,7 @@ bool UTIL_GetRealRemoteAddr(char* ipadr)
             return true;
         }
     }
-    ipadr[0] = '\0';
+	ipadr[0] = 0x0;
     return false;
 }
 
@@ -81,6 +82,11 @@ bool UTIL_IsVTFValid(const char* fileloc)
 
 	// Get our header
 	VTFFileHeader_t* vtfheader = (VTFFileHeader_t*)calloc(1, sizeof(VTFFileHeader_t));
+	// will never happen
+	if (!vtfheader)
+	{
+		return true;
+	}
 	memcpy(vtfheader, bytes, sizeof(VTFFileHeader_t));
 
 	// Duh
@@ -148,6 +154,7 @@ bool UTIL_IsVTFValid(const char* fileloc)
 
 void UTIL_AddrToString(void* inAddr, char outAddrStr[11])
 {
+	// sizeof doesn't work for params
 	memset(outAddrStr, 0x0, 11);
 	if (!inAddr)
 	{
@@ -215,3 +222,13 @@ uint64_t nanos()
 		.count();
 	return ns;
 }
+
+#ifdef CLIENT_DLL
+void UTIL_GetMap(char mapname[128])
+{
+	// sizeof doesn't work for params
+	memset(mapname, 0x0, 128);
+	V_FileBase(engine->GetLevelName(), mapname, 128);
+	V_strlower(mapname);
+}
+#endif

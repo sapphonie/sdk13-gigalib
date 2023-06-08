@@ -55,7 +55,9 @@ uint64_t micros();
 // Get time stamp in nanoseconds.
 uint64_t nanos();
 
-
+#ifdef CLIENT_DLL
+void UTIL_GetMap(char mapname[128]);
+#endif
 #endif
 
 #ifdef GNUC
