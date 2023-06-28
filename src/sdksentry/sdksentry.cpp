@@ -157,11 +157,11 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
 // #define sentry_id_debug
 // #define sentry_id_spewhashes
 
-#include <minidump.h>
 
 // Why? Well, some steam changes require that we manually hook into the minidump sys and override it.
 // handle_exception tosses it over to the sentry crash handler.
 #ifdef _WIN32
+#include <minidump.h>
 void mini(unsigned int uStructuredExceptionCode, _EXCEPTION_POINTERS* pExceptionInfo, const char* pszFilenameSuffix)
 {
     sentry_handle_exception( (sentry_ucontext_t*)pExceptionInfo);
@@ -192,7 +192,9 @@ void CSentry::SentryInit()
     CommandLine()->AppendParm("-nobreakpad", "");
     CommandLine()->AppendParm("-nobreakpad", "");
     CommandLine()->AppendParm("-nobreakpad", "");
+#ifdef _WIN32
     EnableCrashingOnCrashes();
+#endif
 
     sentry_options_t* options               = sentry_options_new();
 
