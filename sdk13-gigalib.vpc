@@ -146,5 +146,8 @@ $Project
         $Lib                "$gigalibloc\..\bin\libssl"                   [$LINUX]
         $Lib                "$gigalibloc\..\bin\libz"                     [$LINUX]
         // $Lib             "$gigalibloc\..\bin\libzstd"                  [$LINUX]
+
+        $ImpLib             SDL2 [$LINUX] // [$SDL]
+
     }
 }
