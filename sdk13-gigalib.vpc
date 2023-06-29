@@ -17,8 +17,6 @@ $Configuration
 
         $AdditionalIncludeDirectories   "$BASE;$SRCDIR\thirdparty\SDL2" // [$SDL || $DEDICATED]
 
-
-
         $SymbolVisibility               "default" [$POSIX]
 
         // Enable modern CURL
@@ -150,7 +148,5 @@ $Project
         $Lib                "$gigalibloc\..\bin\libz"                     [$LINUX]
         // $Lib             "$gigalibloc\..\bin\libzstd"                  [$LINUX]
         $ImpLibExternal     "$gigalibloc\..\bin\SDL2"                     [$LINUX]
-	// [$SDL]
-
     }
 }
