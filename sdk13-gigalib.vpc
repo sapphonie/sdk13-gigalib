@@ -15,6 +15,9 @@ $Configuration
         $AdditionalIncludeDirectories   "$BASE;$gigalibloc/sdknanopb"
         $AdditionalIncludeDirectories   "$BASE;$gigalibloc/sdksentry"
 
+        $AdditionalIncludeDirectories   "$BASE;$SRCDIR\thirdparty\SDL2" // [$SDL || $DEDICATED]
+
+
 
         $SymbolVisibility               "default" [$POSIX]
 
@@ -146,8 +149,8 @@ $Project
         $Lib                "$gigalibloc\..\bin\libssl"                   [$LINUX]
         $Lib                "$gigalibloc\..\bin\libz"                     [$LINUX]
         // $Lib             "$gigalibloc\..\bin\libzstd"                  [$LINUX]
-
-        $ImpLib             SDL2 [$LINUX] // [$SDL]
+        $ImpLibExternal     "$gigalibloc\..\bin\SDL2"                     [$LINUX]
+	// [$SDL]
 
     }
 }
