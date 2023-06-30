@@ -35,6 +35,7 @@ int protection_up() {
         //return 0;
     }
 
+    /*
     PROCESS_MITIGATION_STRICT_HANDLE_CHECK_POLICY policy3;
     policy3.RaiseExceptionOnInvalidHandleReference = 1;
     policy3.HandleExceptionsPermanentlyEnabled = 1;
@@ -44,6 +45,7 @@ int protection_up() {
         //Warning("Policy PROCESS_MITIGATION_STRICT_HANDLE_CHECK_POLICY change error: 0x%08x\n", GetLastError());
         //return 0;
     }
+    */
 
     PROCESS_MITIGATION_EXTENSION_POINT_DISABLE_POLICY policy5;
     policy5.DisableExtensionPoints = 1;
