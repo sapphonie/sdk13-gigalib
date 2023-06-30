@@ -183,6 +183,26 @@ std::vector<std::string> UTIL_SplitSTDString(const std::string& i_str, const std
 	return result;
 }
 
+std::string UTIL_StripCharsFromSTDString(std::string i_str, char char_to_strip)
+{ 
+	i_str.erase(std::remove(i_str.begin(), i_str.end(), char_to_strip), i_str.end());
+	std::string o_str = i_str;
+	return o_str;
+
+}
+
+//https://en.cppreference.com/w/cpp/string/basic_string/replace
+std::string& UTIL_ReplaceAll(std::string& context, std::string const& from, std::string const& to)
+{
+	std::size_t lookHere = 0;
+	std::size_t foundHere;
+	while ((foundHere = context.find(from, lookHere)) != std::string::npos)
+	{
+		context.replace(foundHere, from.size(), to);
+		lookHere = foundHere + to.size();
+	}
+	return context;
+}
 
 // https://stackoverflow.com/a/49066369
 #include <valve_minmax_off.h>

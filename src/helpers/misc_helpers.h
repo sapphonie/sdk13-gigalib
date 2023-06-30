@@ -21,7 +21,6 @@
 #include <inetchannel.h>
 #include <eiface.h>
 #include <cdll_int.h>
-
 #include <valve_minmax_off.h>
 #include <chrono>
 
@@ -46,6 +45,8 @@ void UTIL_AddrToString(void* inAddr, char outAddrStr[11]);
 // https://stackoverflow.com/a/57346888
 //
 std::vector<std::string> UTIL_SplitSTDString(const std::string& i_str, const std::string& i_delim);
+std::string UTIL_StripCharsFromSTDString(std::string i_str, char char_to_strip);
+std::string& UTIL_ReplaceAll(std::string& context, std::string const& from, std::string const& to);
 
 // https://stackoverflow.com/a/49066369
 // Get time stamp in milliseconds.
