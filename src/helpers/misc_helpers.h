@@ -26,7 +26,7 @@
 
 #include <vector>
 #include <string>
-
+#include <algorithm>
 #include <valve_minmax_on.h>
 
 #ifdef CLIENT_DLL
