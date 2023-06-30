@@ -167,25 +167,24 @@ void UTIL_AddrToString(void* inAddr, char outAddrStr[11])
 
 	return;
 }
-
 std::vector<std::string> UTIL_SplitSTDString(const std::string& i_str, const std::string& i_delim)
 {
 	std::vector<std::string> result;
 	size_t startIndex = 0;
 
-	for (size_t found = i_str.find(i_delim); found != std::string::npos; found = i_str.find(i_delim, startIndex))
+	for (size_t found = i_str.std::string::find(i_delim); found != std::string::npos; found = i_str.std::string::find(i_delim, startIndex))
 	{
-		result.emplace_back(i_str.begin() + startIndex, i_str.begin() + found);
-		startIndex = found + i_delim.size();
+		result.emplace_back(i_str.std::string::begin() + startIndex, i_str.std::string::begin() + found);
+		startIndex = found + i_delim.std::string::size();
 	}
-	if (startIndex != i_str.size())
-		result.emplace_back(i_str.begin() + startIndex, i_str.end());
+	if (startIndex != i_str.std::string::size())
+		result.emplace_back(i_str.std::string::begin() + startIndex, i_str.std::string::end());
 	return result;
 }
 
 std::string UTIL_StripCharsFromSTDString(std::string i_str, char char_to_strip)
 { 
-	i_str.erase(std::remove(i_str.begin(), i_str.end(), char_to_strip), i_str.end());
+	i_str.std::string::erase( std::remove( i_str.std::string::begin(), i_str.std::string::end(), char_to_strip), i_str.std::string::end() );
 	std::string o_str = i_str;
 	return o_str;
 

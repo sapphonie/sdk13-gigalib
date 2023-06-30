@@ -3,7 +3,7 @@
 #include <memy/memytools.h>
 #include <helpers/misc_helpers.h>
 
-#define memydbg yep
+// #define memydbg yep
 
 memy_init _memy_init;
 memy_init::memy_init() : CAutoGameSystem("")
