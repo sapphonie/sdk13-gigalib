@@ -20,7 +20,7 @@ int protection_up() {
     policy1.ReservedFlags = 0;
 
     if (!SetProcessMitigationPolicy(ProcessDynamicCodePolicy, &policy1, sizeof(policy1))) {
-        Warning("Policy PROCESS_MITIGATION_DYNAMIC_CODE_POLICY change error: 0x%08x\n", GetLastError());
+        //Warning("Policy PROCESS_MITIGATION_DYNAMIC_CODE_POLICY change error: 0x%08x\n", GetLastError());
         //return 0;
     }
 
@@ -31,7 +31,7 @@ int protection_up() {
     policy2.ReservedFlags = 0;
 
     if (!SetProcessMitigationPolicy(ProcessControlFlowGuardPolicy, &policy2, sizeof(policy2))) {
-        Warning("Policy PROCESS_MITIGATION_CONTROL_FLOW_GUARD_POLICY change error: 0x%08x\n", GetLastError());
+        //Warning("Policy PROCESS_MITIGATION_CONTROL_FLOW_GUARD_POLICY change error: 0x%08x\n", GetLastError());
         //return 0;
     }
 
@@ -41,7 +41,7 @@ int protection_up() {
     policy3.ReservedFlags = 0;
 
     if (!SetProcessMitigationPolicy(ProcessStrictHandleCheckPolicy, &policy3, sizeof(policy3))) {
-        Warning("Policy PROCESS_MITIGATION_STRICT_HANDLE_CHECK_POLICY change error: 0x%08x\n", GetLastError());
+        //Warning("Policy PROCESS_MITIGATION_STRICT_HANDLE_CHECK_POLICY change error: 0x%08x\n", GetLastError());
         //return 0;
     }
 
@@ -50,7 +50,7 @@ int protection_up() {
     policy5.ReservedFlags = 0;
 
     if (!SetProcessMitigationPolicy(ProcessExtensionPointDisablePolicy, &policy5, sizeof(policy5))) {
-        Warning("Policy PROCESS_MITIGATION_EXTENSION_POINT_DISABLE_POLICY change error: 0x%08x\n", GetLastError());
+        //Warning("Policy PROCESS_MITIGATION_EXTENSION_POINT_DISABLE_POLICY change error: 0x%08x\n", GetLastError());
         //return 0;
     }
     /*
@@ -98,22 +98,22 @@ int protection_up() {
     policy9.ReservedFlags = 0;
 
     if (!SetProcessMitigationPolicy(ProcessASLRPolicy, &policy9, sizeof(policy9))) {
-        Warning("Policy PROCESS_MITIGATION_ASLR_POLICY change error: 0x%08x\n", GetLastError());
+        //Warning("Policy PROCESS_MITIGATION_ASLR_POLICY change error: 0x%08x\n", GetLastError());
         //return 0;
     }
 
     bool success = SetProcessDEPPolicy(PROCESS_DEP_ENABLE | PROCESS_DEP_DISABLE_ATL_THUNK_EMULATION);
-    if (!success) Warning("Policy SetProcessDEPPolicy change error: 0x%08x\n", GetLastError());
-    Warning("-> succ = %i\n", success);
+    if (!success)
+    {
+        //Warning("Policy SetProcessDEPPolicy change error: 0x%08x\n", GetLastError());
+    }
+    //Warning("-> succ = %i\n", success);
 
     return 1;
 }
 #endif
 #ifdef ENGINE_DETOURS
 #include <engine_hacks/engine_detours.h>
-
-
-
 
 #ifdef _WIN32
     // it's a thiscall [member function] so we need a dummy edx and to make it fastcall

@@ -71,8 +71,6 @@ bool memy_init::Init()
     new sdkCURL;
 #endif
 
-
-
     return true;
 }
 

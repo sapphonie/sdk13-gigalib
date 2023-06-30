@@ -7,7 +7,7 @@
 CSteamHelpers g_SteamHelpers;
 CSteamHelpers::CSteamHelpers()
 {
-    Warning("CSteamHelpers->\n");
+    DevMsg(2, "CSteamHelpers CTOR->\n");
 
     // spin off a thread and wait until steam is up before we call any of our funcs
     SteamSpin = std::thread( &SpinUntilSteamIsAlive );
@@ -26,7 +26,7 @@ void CSteamHelpers::SpinUntilSteamIsAlive()
             // exits the thread
             return;
         }
-        Warning("Failed getting Steam interfaces! Attempt #%i...\n", tries);
+        DevMsg(2, "Failed getting Steam interfaces! Attempt #%i...\n", tries);
         std::this_thread::sleep_for(std::chrono::seconds(1));
         continue;
     }
@@ -40,7 +40,7 @@ void CSteamHelpers::iterFuncsToRun()
     {
         // call it up
         element();
-        Warning("-> Called %p after SteamInit\n", element);
+        DevMsg(2, "-> Called %p after SteamInit\n", element);
     }
     funcPtrVector.clear();
 }

@@ -67,7 +67,7 @@ size_t sdkCURL::header_callback(char* buffer, size_t size, size_t nitems, void* 
 // called in memy
 bool sdkCURL::InitCURL()
 {
-    Warning("%s\n", curl_version());
+    DevMsg(2, "%s\n", curl_version());
 
     CURLcode ccode = {};
     curlSetSSL = false;
@@ -131,7 +131,7 @@ bool sdkCURL::CURLGet_Thread(std::string inURL, curlResponse* resp)
     }
     CURL* curl = {};
     curl = curl_easy_init();
-    Warning("%p\n", curl);
+    DevMsg(2, "curl ptr = %p\n", curl);
 
     if (!curl)
     {
@@ -224,7 +224,7 @@ void sdkCURL::Update(float frametime)
         {
             curlCallback callthis = (curlCallback)(thisReq->callback);
             callthis(thisReq);
-            Warning("CURL SUCCESS \n");
+            DevMsg(2, "CURL REQUEST SUCCESSFUL!\n");
 
             reqs.erase(reqs.begin() + i);
             delete thisReq;
@@ -233,14 +233,14 @@ void sdkCURL::Update(float frametime)
 
         else if (!thisReq)
         {
-            AssertMsgAlways(0, "How the hell did we not get a curl request???");
+            AssertMsg(0, "How the hell did we not get a curl request???");
             Warning("How the hell did we not get a curl request???");
             continue;
         }
 
         else if (thisReq->failed && thisReq->completed)
         {
-            Warning("%p FAILED\n", thisReq);
+            Warning("CURL REQUEST %p FAILED\n", thisReq);
             reqs.erase(reqs.begin() + i);
             continue;
         }

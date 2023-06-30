@@ -24,7 +24,7 @@ void CBlacklists__SentryURLCB__THUNK(const curlResponse* curlRepsonseStruct)
 
 void CBlacklists::PostInit()
 {
-    Msg("Blacklists Postinit!\n");
+    DevMsg(2, "Blacklists Postinit!\n");
 
     g_sdkCURL->CURLGet(VPC_QUOTE_STRINGIFY(BLACKLISTS_URL), CBlacklists__SentryURLCB__THUNK);
 }

@@ -50,7 +50,7 @@ void CSentry__SentryURLCB__THUNK(const curlResponse* curlRepsonseStruct)
 
 void CSentry::PostInit()
 {
-    Msg("Sentry Postinit!\n");
+    DevMsg(2, "Sentry Postinit!\n");
 
     g_sdkCURL->CURLGet(VPC_QUOTE_STRINGIFY(SENTRY_URL), CSentry__SentryURLCB__THUNK);
 }
@@ -171,13 +171,13 @@ void mini(unsigned int uStructuredExceptionCode, _EXCEPTION_POINTERS* pException
 
 void CSentry::SentryInit()
 {
-    Msg("Sentry init!\n");
+    DevMsg(2, "Sentry init!\n");
     const char* mpath = ConVarRef("_modpath", false).GetString();
 
 #ifdef _WIN32
     // location of the crashpad handler (in moddir/bin)
     char crash_exe[MAX_PATH] = {};
-    V_snprintf(crash_exe, MAX_PATH, "%sbin%ccrashpad_handler.exe", mpath, CORRECT_PATH_SEPARATOR);
+    snprintf(crash_exe, MAX_PATH, "%sbin%ccrashpad_handler.exe", mpath, CORRECT_PATH_SEPARATOR);
     //AssertMsg1(NULL, "crash_exe = %s", crash_exe);
 #endif
 
@@ -247,7 +247,7 @@ void CSentry::SentryInit()
     CSentry::didinit = true;
 
     sentry_add_breadcrumb(sentry_value_new_breadcrumb(NULL, "SentryInit"));
-    Msg("Sentry initialization success!\n");
+    DevMsg(2, "Sentry initialization success!\n");
 
 
 
@@ -272,7 +272,7 @@ void CSentry::SentryInit()
         NULL,
         windowText,
         windowTitle,
-        MB_YESNO | MB_SETFOREGROUND
+        MB_YESNO | MB_SETFOREGROUND | MB_TOPMOST
     );
 
     switch (msgboxID)
