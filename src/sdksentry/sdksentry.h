@@ -52,7 +52,7 @@ public:
 
     void                SentryInit();
 
-    char                real_sentry_url[256] = {};
+    std::string real_sentry_url = {};
 
     static sentry_value_t nowCTX;
     static const char*    nowFUNC;

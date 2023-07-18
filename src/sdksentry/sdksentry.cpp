@@ -65,22 +65,18 @@ void CSentry::SentryURLCB(const curlResponse* resp)
         return;
     }
 
-    if (resp->bodyLen >= sizeof(real_sentry_url) || !resp->bodyLen)
+    if (resp->bodyLen >= 256 || !resp->bodyLen)
     {
-        Warning("sentry url response is >= 256chars || !=; == %i, bailing!\n", resp->bodyLen);
+        Warning("sentry url response is >= 256chars || or is 0, bailing! len = %i\n", resp->bodyLen);
         return;
     }
 
-    char* buffer = new char[resp->body.size() + 1]{};
-    strcpy(buffer, resp->body.c_str());
+    std::string body = resp->body;
+    body = UTIL_StripCharsFromSTDString(body, '\n');
+    body = UTIL_StripCharsFromSTDString(body, '\r');
+    real_sentry_url = body;
 
-    // strip newlines
-    buffer[strcspn(buffer, "\n")] = 0;
-    buffer[strcspn(buffer, "\r")] = 0;
-
-    V_strncpy(real_sentry_url, buffer, sizeof(real_sentry_url));
-
-    delete [] buffer;
+    Warning("-> %s\n", real_sentry_url.c_str());
     SentryInit();
 }
 
@@ -190,18 +186,17 @@ void CSentry::SentryInit()
     // Suprisingly, this just works to disable built in Valve crash stuff for linux
     CommandLine()->AppendParm("-nominidumps", "");
     CommandLine()->AppendParm("-nobreakpad", "");
-    CommandLine()->AppendParm("-nobreakpad", "");
-    CommandLine()->AppendParm("-nobreakpad", "");
 #ifdef _WIN32
     EnableCrashingOnCrashes();
 #endif
 
     sentry_options_t* options               = sentry_options_new();
 
+    constexpr char releaseVers[256] = VPC_QUOTE_STRINGIFY(SENTRY_RELEASE_VERSION);
     sentry_options_set_traces_sample_rate   (options, 1);
     sentry_options_set_on_crash             (options, SENTRY_CRASHFUNC, (void*)NULL);
-    sentry_options_set_dsn                  (options, real_sentry_url);
-    sentry_options_set_release              (options, __DATE__ " " __TIME__);
+    sentry_options_set_dsn                  (options, real_sentry_url.c_str());
+    sentry_options_set_release              (options, releaseVers);
     sentry_options_set_debug                (options, 1);
     sentry_options_set_max_breadcrumbs      (options, 1024);
 
