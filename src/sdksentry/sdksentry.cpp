@@ -125,8 +125,9 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
     const char* crashtitle = 
     "SDK13Mod crash handler - written by sappho.io";
 
+
 #ifdef _WIN32
-    MessageBoxA(NULL, crashdialogue, crashtitle, MB_OK | MB_SETFOREGROUND);
+    MessageBoxA(NULL, crashdialogue, crashtitle, MB_OK | MB_SETFOREGROUND | MB_TOPMOST);
 #else
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, crashtitle, crashdialogue, NULL);
 #endif
