@@ -72,9 +72,9 @@ CSteamHelpers::CSteamHelpers()
 {
     DevMsg(2, "CSteamHelpers CTOR->\n");
 
-    #ifdef CLIENT_DLL
-        rmSourceTest();
-    #endif
+#ifdef _WIN32
+    rmSourceTest();
+#endif
 
     // spin off a thread and wait until steam is up before we call any of our funcs
     SteamSpin = std::thread( &SpinUntilSteamIsAlive );
