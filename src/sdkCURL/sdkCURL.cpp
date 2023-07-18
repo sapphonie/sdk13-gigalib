@@ -45,8 +45,12 @@ void recurl_f(const CCommand& command)
 
     g_sdkCURL->CURLGet(url, curlcurlcurl);
 }
-
-ConCommand recurl("recurl", recurl_f);
+#ifdef CLIENT_DLL
+ConCommand curl_test_client("curl_test_client", recurl_f);
+#endif
+#ifdef GAME_DLL
+ConCommand curl_test_server("curl_test_server", recurl_f);
+#endif
 
 size_t sdkCURL::response_callback(void* ptr, size_t size, size_t nmemb, void* stream)
 {
@@ -129,6 +133,7 @@ bool sdkCURL::CURLGet_Thread(std::string inURL, curlResponse* resp)
         Warning("CURL COULDN'T INIT!\n");
         return false;
     }
+    // If you're crashing around here it's because you didn't remove the old libs from client_base/server_base vpcs
     CURL* curl = {};
     curl = curl_easy_init();
     DevMsg(2, "curl ptr = %p\n", curl);
