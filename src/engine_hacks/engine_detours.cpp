@@ -815,13 +815,6 @@ void CEngineDetours::PostInit()
 const char* malicious_server_dc =
 "Sorry, this server has been marked by developers as malicious";
 
-// Something malicious is spewing...
-const char* malicious_spew =
-"!!\n"
-"!! Sorry, the server you tried to connect to has been marked by developers as malicious.\n"
-"!! If you believe this to be an error, please contact the developers at\n"
-"!! %s\n"
-"!!\n";
 
 sdkdetour* CClientState__FullConnect{};
 
@@ -848,7 +841,7 @@ void mbrcallconv CClientState__FullConnect_CB(CClientState__FullConnect_vars)
     // otherwise...
     //bool CBlacklists::CompareServerBlacklist(const char* ipaddr)
 
-    if ( !CompareServerBlacklist( ipaddr ) )
+    if ( !CompareServerBlacklist(ipaddr) )
     {
 #ifdef SDKSENTRY
         sentry_value_t ctxinfo = sentry_value_new_object();
@@ -856,13 +849,19 @@ void mbrcallconv CClientState__FullConnect_CB(CClientState__FullConnect_vars)
         SentryEvent("info", __FUNCTION__, "Malicious IP connect attempt", ctxinfo);
 #endif
 
+
         Color dullyello(255, 136, 78, 255);
-        const int spewlen = strlen(malicious_spew);
-        const int MAX_URL_SIZE = 128;
-        char* finalspew = new char[spewlen + MAX_URL_SIZE + 1]{};
-        V_snprintf( finalspew, (spewlen + MAX_URL_SIZE + 1), "%s%s", malicious_spew, VPC_QUOTE_STRINGIFY(BLACKLISTS_CONTACT_URL) );
-        ConColorMsg(dullyello, "%s", malicious_spew);
-        delete [] finalspew;
+        static std::stringstream spew;
+        if (spew.str().empty())
+        {
+            spew << "!!\n";
+            spew << "!! Sorry, the server you tried to connect to has been marked by developers as malicious.\n";
+            spew << "!! If you believe this to be an error, please contact the developers at\n";
+            spew << "!! " << VPC_QUOTE_STRINGIFY(BLACKLISTS_CONTACT_URL) << "\n";
+            spew << "!!\n";
+        }
+
+        ConColorMsg(dullyello, "%s", spew.str().c_str());
 
         INetChannel* netchan = static_cast<INetChannel*>(engine->GetNetChannelInfo());
         if (netchan)
@@ -915,15 +914,16 @@ sdkdetour* CNetChan__Shutdown{};
 #define CNetChan__Shutdown_origfunc    PLH::FnCast(CNetChan__Shutdown->detourTrampoline, CNetChan__Shutdown_CB)(CNetChan__Shutdown_novars);
 void mbrcallconv CNetChan__Shutdown_CB(CNetChan__Shutdown_vars)
 {
+    // Pretty sure this calls twice but I do not care enough to fix it right now
     INetChannelInfo* netchan = engine->GetNetChannelInfo();
     if (netchan && netchan->IsLoopback())
     {
         CNetChan__Shutdown_origfunc;
-        Warning("-> ignoring netchan shutdown = '%s'\n", reason);
+        //Warning("-> ignoring netchan shutdown = '%s'\n", reason);
         return;
     }
     CNetChan__Shutdown_origfunc;
-    Warning("-> Netchan shutdown = '%s'\n", reason);
+    //Warning("-> Netchan shutdown = '%s'\n", reason);
 
 #ifdef FLUSH_DLS
     // no cvar, sorry

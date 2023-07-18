@@ -56,7 +56,9 @@ void rmSourceTest()
         CommandLine()->RemoveParm("-game sourcetest");
         CommandLine()->AppendParm("-novid",         "");
         CommandLine()->AppendParm("-multirun", "");
-
+#ifdef SDKSENTRY
+        //CommandLine()->AppendParm("-nobreakpad", "");
+#endif
         Sleep(1);
         restartWithFixedCmdline();
     }
