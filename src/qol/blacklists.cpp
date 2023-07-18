@@ -1,8 +1,7 @@
 #include <cbase.h>
 
 
-#if defined(CLIENT_DLL) && defined(BLACKLISTS)
-// && defined(BLACKLISTS_URL) && defined(ENGINE_DETOURS)
+#if defined(CLIENT_DLL) && defined(BLACKLISTS) && defined(BLACKLISTS_URL) && defined(ENGINE_DETOURS) && defined(SDKCURL)
 
 #include <qol/blacklists.h>
 #include <sdkCURL/sdkCURL.h>
