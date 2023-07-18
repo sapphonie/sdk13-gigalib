@@ -76,7 +76,7 @@ void CSentry::SentryURLCB(const curlResponse* resp)
     body = UTIL_StripCharsFromSTDString(body, '\r');
     real_sentry_url = body;
 
-    Warning("-> %s\n", real_sentry_url.c_str());
+    DevMsg(2, "sentry_dns %s\n", real_sentry_url.c_str());
     SentryInit();
 }
 
