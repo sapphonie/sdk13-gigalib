@@ -136,7 +136,6 @@ int protection_up() {
     #ifdef DEBUG
         #pragma comment( lib, "../shared/sdk13-gigalib/src/polyhook/bin/debug/PolyHook_2.lib" )
         #pragma comment( lib, "../shared/sdk13-gigalib/src/polyhook/bin/debug/Zydis.lib" )
-
     #else
         #pragma comment( lib, "../shared/sdk13-gigalib/src/polyhook/bin/release/PolyHook_2.lib" )
         #pragma comment( lib, "../shared/sdk13-gigalib/src/polyhook/bin/release/Zydis.lib" )
@@ -166,9 +165,30 @@ CEngineDetours::CEngineDetours() : CAutoGameSystem("CEngineDetours")
 {
 }
 
-
-struct sdkdetour
+class sdkdetour
 {
+public:
+    void whackVars()
+    {
+        patternSize         = {};
+        pattern             = {};
+        patternAddr         = {};
+        detourPtr           = {};
+        // callbackAddr     = {};
+        detourTrampoline    = {};
+    };
+
+    sdkdetour()
+    {
+        //Warning("test");
+        whackVars();
+    };
+    ~sdkdetour()
+    {
+        //Warning("untest");
+        //detourPtr->unHook(); // broken by dynamic code policy on windows...?
+        //whackVars();
+    };
     size_t patternSize          = {};
     const char* pattern         = {};
     uintptr_t patternAddr       = {};
@@ -722,11 +742,11 @@ uintptr_t* mbrcallconv CBaseServer__ConnectClient_CB(CBaseServer__ConnectClient_
         return nullptr;
     }
 
-    void* pvTicket      = (void*)((intptr_t)clcookie + sizeof(uint64));
-    int cbTicket        = callbackcookie - sizeof(uint64);
+    // void* pvTicket      = (void*)((intptr_t)clcookie + sizeof(uint64));
+    // int cbTicket        = callbackcookie - sizeof(uint64);
 
-    Warning("pvticket = %p\n", pvTicket);
-    Warning("cbTicket = %i\n", cbTicket);
+    // Warning("pvticket = %p\n", pvTicket);
+    // Warning("cbTicket = %i\n", cbTicket);
     /*
     Aggrevating nonsense with anonymous servers not being able to call steamgameserverapi funcs? 
     will eventually fuck around with it in steam helpers but right now i dont care
@@ -982,5 +1002,19 @@ void CEngineDetours::PostInit()
 }
 #endif // client
 
-
+// dtors
+void CEngineDetours::Shutdown()
+{
+#ifdef CLIENT_DLL
+    delete CClientState__FullConnect;
+    delete CNetChan__Shutdown;
+#else
+    if (engine->IsDedicatedServer())
+    {
+        delete CNetChan__ProcessPacket;
+        delete CBaseServer__RejectConnection;
+        delete CBaseServer__ConnectClient;
+    }
+#endif
+}
 #endif

@@ -27,6 +27,8 @@ public:
                         CEngineDetours();
 
     void                PostInit() override;
+    void                Shutdown() override;
+
 };
 
 
