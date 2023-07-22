@@ -15,7 +15,7 @@ CSentry::CSentry()
 {
     didinit     = false;
     didshutdown = false;
-    RUN_THIS_FUNC_WHEN_STEAM_INITS(&SetSteamID);
+    //RUN_THIS_FUNC_WHEN_STEAM_INITS(&SetSteamID);
 }
 
 // #ifdef _DEBUG
@@ -211,7 +211,6 @@ void CSentry::SentryInit()
 
     //sentry_reinstall_backend();
 
-
     /*
     // attachments !!
     char inventorypath[MAX_PATH] = {};
@@ -242,9 +241,11 @@ void CSentry::SentryInit()
 
     CSentry::didinit = true;
 
+    // HAS TO RUN AFTER SENTRY INIT!!!
+    SetSteamID();
+
     sentry_add_breadcrumb(sentry_value_new_breadcrumb(NULL, "SentryInit"));
     DevMsg(2, "Sentry initialization success!\n");
-
 
 
     ConVarRef cl_send_error_reports("cl_send_error_reports");
@@ -338,9 +339,9 @@ void SetSteamID()
             // i eated it all </3
             steamid_string = std::to_string(c_steamid.ConvertToUint64());
 
-#if defined (sentry_id_debug)
+//#if defined (sentry_id_debug)
             Warning("steamid_string -> %s\n", steamid_string.c_str());
-#endif
+//#endif
         }
         else
         {
