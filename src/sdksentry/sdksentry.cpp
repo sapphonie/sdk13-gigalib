@@ -339,9 +339,9 @@ void SetSteamID()
             // i eated it all </3
             steamid_string = std::to_string(c_steamid.ConvertToUint64());
 
-//#if defined (sentry_id_debug)
+#if defined (sentry_id_debug)
             Warning("steamid_string -> %s\n", steamid_string.c_str());
-//#endif
+#endif
         }
         else
         {
