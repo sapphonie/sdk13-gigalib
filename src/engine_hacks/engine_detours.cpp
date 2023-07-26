@@ -8,112 +8,6 @@
     #pragma once
 #endif
 
-
-#ifdef _WIN32
-#include <Windows.h>
-int protection_up() {
-    PROCESS_MITIGATION_DYNAMIC_CODE_POLICY policy1;
-    policy1.ProhibitDynamicCode = 1;
-    policy1.AllowThreadOptOut = 0;
-    policy1.AllowRemoteDowngrade = 0;
-    policy1.AuditProhibitDynamicCode = 0;
-    policy1.ReservedFlags = 0;
-
-    if (!SetProcessMitigationPolicy(ProcessDynamicCodePolicy, &policy1, sizeof(policy1))) {
-        //Warning("Policy PROCESS_MITIGATION_DYNAMIC_CODE_POLICY change error: 0x%08x\n", GetLastError());
-        //return 0;
-    }
-
-    PROCESS_MITIGATION_CONTROL_FLOW_GUARD_POLICY policy2;
-    policy2.EnableControlFlowGuard = 1;
-    policy2.EnableExportSuppression = 0;  // or else we'll need GetProcAddress for every function we want to invoke...
-    policy2.StrictMode = 1;
-    policy2.ReservedFlags = 0;
-
-    if (!SetProcessMitigationPolicy(ProcessControlFlowGuardPolicy, &policy2, sizeof(policy2))) {
-        //Warning("Policy PROCESS_MITIGATION_CONTROL_FLOW_GUARD_POLICY change error: 0x%08x\n", GetLastError());
-        //return 0;
-    }
-
-    /*
-    PROCESS_MITIGATION_STRICT_HANDLE_CHECK_POLICY policy3;
-    policy3.RaiseExceptionOnInvalidHandleReference = 1;
-    policy3.HandleExceptionsPermanentlyEnabled = 1;
-    policy3.ReservedFlags = 0;
-
-    if (!SetProcessMitigationPolicy(ProcessStrictHandleCheckPolicy, &policy3, sizeof(policy3))) {
-        //Warning("Policy PROCESS_MITIGATION_STRICT_HANDLE_CHECK_POLICY change error: 0x%08x\n", GetLastError());
-        //return 0;
-    }
-    */
-
-    PROCESS_MITIGATION_EXTENSION_POINT_DISABLE_POLICY policy5;
-    policy5.DisableExtensionPoints = 1;
-    policy5.ReservedFlags = 0;
-
-    if (!SetProcessMitigationPolicy(ProcessExtensionPointDisablePolicy, &policy5, sizeof(policy5))) {
-        //Warning("Policy PROCESS_MITIGATION_EXTENSION_POINT_DISABLE_POLICY change error: 0x%08x\n", GetLastError());
-        //return 0;
-    }
-    /*
-        PROCESS_MITIGATION_BINARY_SIGNATURE_POLICY policy6;
-        memset(&policy6, 0, sizeof(policy6));
-        policy6.MicrosoftSignedOnly = 1;
-        policy6.ReservedFlags = 0;
-
-        if (!SetProcessMitigationPolicy(ProcessSignaturePolicy, &policy6, sizeof(policy6))) {
-            printf("Policy PROCESS_MITIGATION_BINARY_SIGNATURE_POLICY change error: 0x%08x\n", GetLastError());
-            return 0;
-        }
-    */
-    /*
-        PROCESS_MITIGATION_FONT_DISABLE_POLICY policy7;
-        memset(&policy7, 0, sizeof(policy7));
-        policy7.DisableNonSystemFonts = 1;
-        policy7.AuditNonSystemFontLoading = 0;
-        policy7.ReservedFlags = 0;
-
-        if (!SetProcessMitigationPolicy(ProcessFontDisablePolicy, &policy7, sizeof(policy7))) {
-            Warning("Policy PROCESS_MITIGATION_FONT_DISABLE_POLICY change error: 0x%08x\n", GetLastError());
-            return 0;
-        }
-        PROCESS_MITIGATION_IMAGE_LOAD_POLICY policy8;
-        memset(&policy8, 0, sizeof(policy8));
-        policy8.NoRemoteImages = 1;
-        policy8.NoLowMandatoryLabelImages = 1;
-        policy8.PreferSystem32Images = 1;
-        policy8.ReservedFlags = 0;
-
-        if (!SetProcessMitigationPolicy(ProcessImageLoadPolicy, &policy8, sizeof(policy8))) {
-            Warning("Policy PROCESS_MITIGATION_IMAGE_LOAD_POLICY change error: 0x%08x\n", GetLastError());
-            return 0;
-        }
-    */
-
-    // Error 0x00000057 The parameter is incorrect.
-    PROCESS_MITIGATION_ASLR_POLICY policy9;
-    memset(&policy9, 0, sizeof(policy9));
-    policy9.EnableBottomUpRandomization = 1;
-    policy9.EnableForceRelocateImages = 1;
-    policy9.EnableHighEntropy = 1;
-    policy9.DisallowStrippedImages = 1;
-    policy9.ReservedFlags = 0;
-
-    if (!SetProcessMitigationPolicy(ProcessASLRPolicy, &policy9, sizeof(policy9))) {
-        //Warning("Policy PROCESS_MITIGATION_ASLR_POLICY change error: 0x%08x\n", GetLastError());
-        //return 0;
-    }
-
-    bool success = SetProcessDEPPolicy(PROCESS_DEP_ENABLE | PROCESS_DEP_DISABLE_ATL_THUNK_EMULATION);
-    if (!success)
-    {
-        //Warning("Policy SetProcessDEPPolicy change error: 0x%08x\n", GetLastError());
-    }
-    //Warning("-> succ = %i\n", success);
-
-    return 1;
-}
-#endif
 #ifdef ENGINE_DETOURS
 #include <engine_hacks/engine_detours.h>
 
@@ -989,15 +883,72 @@ void CNetChan__Shutdown_Init()
 
 
 
+#ifdef _WIN32
+#include <Windows.h>
+int win32_HARDENING() {
+    /*
+        DWORD ProhibitDynamicCode : 1;
+        DWORD AllowThreadOptOut : 1;
+        DWORD AllowRemoteDowngrade : 1;
+        DWORD AuditProhibitDynamicCode : 1;
+        DWORD ReservedFlags : 28;
+    */
+    PROCESS_MITIGATION_DYNAMIC_CODE_POLICY dynCode;
+    dynCode.ProhibitDynamicCode             = 1;
+    dynCode.AllowThreadOptOut               = 0;
+    dynCode.AllowRemoteDowngrade            = 0;
+    dynCode.AuditProhibitDynamicCode        = 0;
+    dynCode.ReservedFlags                   = 0;
 
+    if (!SetProcessMitigationPolicy(ProcessDynamicCodePolicy, &dynCode, sizeof(dynCode)))
+    {
+    }
 
+    PROCESS_MITIGATION_CONTROL_FLOW_GUARD_POLICY cfGuard;
+    cfGuard.EnableControlFlowGuard      = 1;
+    cfGuard.EnableExportSuppression     = 0;
+    cfGuard.StrictMode                  = 1;
+    cfGuard.ReservedFlags               = 0;
+
+    if (!SetProcessMitigationPolicy(ProcessControlFlowGuardPolicy, &cfGuard, sizeof(cfGuard)))
+    {
+    }
+
+    PROCESS_MITIGATION_EXTENSION_POINT_DISABLE_POLICY exPtDisable;
+    exPtDisable.DisableExtensionPoints  = 1;
+    exPtDisable.ReservedFlags           = 0;
+
+    if (!SetProcessMitigationPolicy(ProcessExtensionPointDisablePolicy, &exPtDisable, sizeof(exPtDisable)))
+    {
+    }
+
+    PROCESS_MITIGATION_ASLR_POLICY aslr;
+    memset(&aslr, 0, sizeof(aslr));
+    aslr.EnableBottomUpRandomization     = 1;
+    aslr.EnableForceRelocateImages       = 1;
+    aslr.EnableHighEntropy               = 1;
+    aslr.DisallowStrippedImages          = 1;
+    aslr.ReservedFlags                   = 0;
+
+    if (!SetProcessMitigationPolicy(ProcessASLRPolicy, &aslr, sizeof(aslr)))
+    {
+        Warning("-> Failed ASLR");
+    }
+
+    if (!SetProcessDEPPolicy(PROCESS_DEP_ENABLE | PROCESS_DEP_DISABLE_ATL_THUNK_EMULATION))
+    {
+    }
+
+    return 1;
+}
+#endif
 
 void CEngineDetours::PostInit()
 {
     CClientState__FullConnect_Init();
     CNetChan__Shutdown_Init();
 #ifdef _WIN32
-    protection_up();
+    win32_HARDENING();
 #endif
 }
 #endif // client

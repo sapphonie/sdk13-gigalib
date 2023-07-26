@@ -170,19 +170,19 @@ void CSentry::SentryInit()
 {
     DevMsg(2, "Sentry init!\n");
     const char* mpath = ConVarRef("_modpath", false).GetString();
-
+    if (!mpath)
+    {
+        Error("Couldn't get ConVarRef for _modpath!\n");
+    }
+    std::string modpath_ss( mpath );
 #ifdef _WIN32
     // location of the crashpad handler (in moddir/bin)
-    char crash_exe[MAX_PATH] = {};
-    snprintf(crash_exe, MAX_PATH, "%sbin%ccrashpad_handler.exe", mpath, CORRECT_PATH_SEPARATOR);
-    //AssertMsg1(NULL, "crash_exe = %s", crash_exe);
+    std::stringstream crash_exe;
+    crash_exe << modpath_ss << CORRECT_PATH_SEPARATOR << "bin" << CORRECT_PATH_SEPARATOR << "crashpad_handler.exe";
 #endif
-
-
     // location of the sentry workdir (we're just gonna stick it in mod dir/cache)
-    char sentry_db[MAX_PATH] =  {};
-    V_snprintf(sentry_db, MAX_PATH, "%scache", mpath);
-    //AssertMsg1(NULL, "cache = %s", sentry_db);
+    std::stringstream sentry_db;
+    sentry_db << modpath_ss << CORRECT_PATH_SEPARATOR << "cache";
 
     // Suprisingly, this just works to disable built in Valve crash stuff for linux
     CommandLine()->AppendParm("-nominidumps", "");
@@ -203,10 +203,10 @@ void CSentry::SentryInit()
 
     // only windows needs the crashpad exe
 #ifdef _WIN32
-    sentry_options_set_handler_path     (options, crash_exe);
+    sentry_options_set_handler_path     (options, crash_exe.str().c_str());
     SetMiniDumpFunction(mini);
 #endif
-    sentry_options_set_database_path    (options, sentry_db);
+    sentry_options_set_database_path    (options, sentry_db.str().c_str());
     sentry_options_set_shutdown_timeout (options, 9999);
 
     //sentry_reinstall_backend();

@@ -93,10 +93,12 @@ bool memy::InitAllBins()
     char* clipath = client_bin->binpath;
     V_StripFilename(clipath);
     V_StripLastDir(clipath, MAX_PATH);
+    V_StripTrailingSlash(clipath);
+
     ConVarRef modpath = ConVarRef("_modpath", false);
     if (modpath.IsValid())
     {
-        modpath.SetValue(client_bin->binpath);
+        modpath.SetValue(clipath);
     }
     else
     {
@@ -108,10 +110,12 @@ bool memy::InitAllBins()
     char* engpath = engine_bin->binpath;
     V_StripFilename(engpath);
     V_StripLastDir(engpath, MAX_PATH);
+    V_StripTrailingSlash(engpath);
+
     ConVarRef sdkpath = ConVarRef("_sdkpath", false);
     if (sdkpath.IsValid())
     {
-        sdkpath.SetValue(engine_bin->binpath);
+        sdkpath.SetValue(engpath);
     }
     else
     {
