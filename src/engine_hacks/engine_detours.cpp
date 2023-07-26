@@ -949,11 +949,11 @@ void mbrcallconv CNetChan__Shutdown_CB(CNetChan__Shutdown_vars)
     // no cvar, sorry
     engine->ClientCmd_Unrestricted("flush_map_overrides\n");
 
-    if (cvar->FindVar("cl_flush_downloads_on_dc")->GetBool())
+    if (cvar->FindVar("cl_auto_flush_downloads")->GetBool())
     {
         engine->ClientCmd_Unrestricted("flush_dls\n");
     }
-    else if (cvar->FindVar("cl_flush_sprays_on_dc")->GetBool())
+    else if (cvar->FindVar("cl_auto_flush_sprays")->GetBool())
     {
         engine->ClientCmd_Unrestricted("flush_sprays\n");
     }
