@@ -96,16 +96,16 @@ public:
 };
 
 
-void RegisterEconNetworkMessageHandler( MsgType_t eMsg, IMessageHandler *pHandler );
+void RegisterNetworkMessageHandler( MsgType_t eMsg, IMessageHandler *pHandler );
 #define REG_ECON_MSG_HANDLER( classType, msgType, msgName ) \
 		static classType s_##msgName##Handler; \
 		static class CReg##classType \
 		{ \
 		public: \
-			CReg##classType() { RegisterEconNetworkMessageHandler( msgType, &s_##msgName##Handler ); } \
+			CReg##classType() { RegisterNetworkMessageHandler( msgType, &s_##msgName##Handler ); } \
 		} g_Reg##classType
 
-bool QueueEconNetworkMessageWork( IMessageHandler *pHandler, CSmartPtr<CNetPacket> const &pPacket );
+bool QueueNetworkMessageWork( IMessageHandler *pHandler, CSmartPtr<CNetPacket> const &pPacket );
 
 
 template< class TProtoMsg >
