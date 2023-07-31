@@ -12,7 +12,6 @@
 void restartWithFixedCmdline()
 {
     const char* cmdline = CommandLine()->GetCmdLine();
-    DevMsg(2, "%s\n", cmdline);
 
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
@@ -37,28 +36,26 @@ void restartWithFixedCmdline()
                 &si,				// Pointer to STARTUPINFO structure
                 &pi					// Pointer to PROCESS_INFORMATION structure
             )
-            )
+        )
     {
-        Warning("CreateProcess failed (%d).\n", GetLastError());
+        Warning("CreateProcess failed, Steam overlay probably won't work! Error: %i.\n", GetLastError());
         return;
     }
-
-
-    exit(0);
+     
+    abort();
 }
-
 
 
 void rmSourceTest()
 {
+    //return;
     if (V_stristr(GetCommandLineA(), "sourcetest"))
     {
         CommandLine()->RemoveParm("-game sourcetest");
-        CommandLine()->AppendParm("-novid",         "");
+        CommandLine()->AppendParm("-novid",     "");
         CommandLine()->AppendParm("-multirun", "");
-#ifdef SDKSENTRY
-        //CommandLine()->AppendParm("-nobreakpad", "");
-#endif
+        CommandLine()->AppendParm("-allowmultiple", "");
+        
         Sleep(1);
         restartWithFixedCmdline();
     }
