@@ -23,11 +23,11 @@ static ConVar net_steamcnx_usep2p( "net_steamcnx_usep2p", "1", FCVAR_DEVELOPMENT
 CUtlMap<MsgType_t, IMessageHandler *> &MessageMap( void );
 
 
-class CEconNetworking : public INetworking
+class CNetworking : public INetworking
 {
 public:
-	CEconNetworking();
-	virtual ~CEconNetworking();
+	CNetworking();
+	virtual ~CNetworking();
 
 	virtual bool Init( void );
 	virtual void Shutdown( void );
@@ -88,27 +88,27 @@ private:
 };
 
 //-----------------------------------------------------------------------------
-static CEconNetworking g_Networking;
+static CNetworking g_Networking;
 INetworking *g_pNetworking = &g_Networking;
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CEconNetworking::CEconNetworking()
+CNetworking::CNetworking()
 {
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CEconNetworking::~CEconNetworking()
+CNetworking::~CNetworking()
 {
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CEconNetworking::Init( void )
+bool CNetworking::Init( void )
 {
 	if ( net_steamcnx_allowrelay.GetBool() )
 		SteamNetworkingUtils()->InitRelayNetworkAccess();
@@ -132,7 +132,7 @@ bool CEconNetworking::Init( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CEconNetworking::Shutdown( void )
+void CNetworking::Shutdown( void )
 {
 	FOR_EACH_VEC( m_ActiveConnections, i )
 	{
@@ -143,7 +143,7 @@ void CEconNetworking::Shutdown( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CEconNetworking::Update( float frametime )
+void CNetworking::Update( float frametime )
 {
 	if ( !m_QueuedMessages.IsEmpty() )
 	{
@@ -175,7 +175,7 @@ void CEconNetworking::Update( float frametime )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CEconNetworking::OnClientConnected( CSteamID const &steamID )
+void CNetworking::OnClientConnected( CSteamID const &steamID )
 {
 	CProtobufMsg<CServerHelloMsg> msg;
 	CSteamID const *remoteID = engine->GetGameServerSteamID();
@@ -203,7 +203,7 @@ void CEconNetworking::OnClientConnected( CSteamID const &steamID )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CEconNetworking::OnClientDisconnected( CSteamID const &steamID )
+void CNetworking::OnClientDisconnected( CSteamID const &steamID )
 {
 	SteamNetworkingIdentity ident;
 	ident.SetSteamID( steamID );
@@ -223,7 +223,7 @@ void CEconNetworking::OnClientDisconnected( CSteamID const &steamID )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CEconNetworking::SendMessage( CSteamID const &targetID, MsgType_t eMsg, void *pubData, uint32 cubData )
+bool CNetworking::SendMessage( CSteamID const &targetID, MsgType_t eMsg, void *pubData, uint32 cubData )
 {
 	CSmartPtr<CNetPacket> pPacket( new CNetPacket );
 	if ( !pPacket )
@@ -278,7 +278,7 @@ bool CEconNetworking::SendMessage( CSteamID const &targetID, MsgType_t eMsg, voi
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CEconNetworking::RecvMessage( CSteamID const &remoteID, MsgType_t eMsg, void const *pubData, uint32 const cubData )
+void CNetworking::RecvMessage( CSteamID const &remoteID, MsgType_t eMsg, void const *pubData, uint32 const cubData )
 {
 	CNetPacket *pPacket = new CNetPacket();
 	pPacket->InitFromMemory( pubData, cubData );
@@ -305,7 +305,7 @@ void CEconNetworking::RecvMessage( CSteamID const &remoteID, MsgType_t eMsg, voi
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CEconNetworking::OnMessagesSessionRequest( SteamNetworkingMessagesSessionRequest_t *pRequest )
+void CNetworking::OnMessagesSessionRequest( SteamNetworkingMessagesSessionRequest_t *pRequest )
 {
 	SteamNetworkingMessages()->AcceptSessionWithUser( pRequest->m_identityRemote );
 	g_Networking.m_ActiveConnections.AddToTail( pRequest->m_identityRemote );
@@ -314,14 +314,14 @@ void CEconNetworking::OnMessagesSessionRequest( SteamNetworkingMessagesSessionRe
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CEconNetworking::OnMessagesSessionFailure( SteamNetworkingMessagesSessionFailed_t *pFailure )
+void CNetworking::OnMessagesSessionFailure( SteamNetworkingMessagesSessionFailed_t *pFailure )
 {
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CEconNetworking::DebugOutput( ESteamNetworkingSocketsDebugOutputType eType, const char *pszMsg )
+void CNetworking::DebugOutput( ESteamNetworkingSocketsDebugOutputType eType, const char *pszMsg )
 {
 	Msg( "%10.6f %s\n", Plat_FloatTime(), pszMsg );
 	if ( eType == k_ESteamNetworkingSocketsDebugOutputType_Bug )
@@ -345,7 +345,7 @@ CUtlMap<MsgType_t, IMessageHandler *> &MessageMap( void )
 	return s_MessageTypes;
 }
 
-void RegisterEconNetworkMessageHandler( MsgType_t eMsg, IMessageHandler *pHandler )
+void RegisterNetworkMessageHandler( MsgType_t eMsg, IMessageHandler *pHandler )
 {
 	Assert( MessageMap().Find( eMsg ) == MessageMap().InvalidIndex() );
 	MessageMap().Insert( eMsg, pHandler );
