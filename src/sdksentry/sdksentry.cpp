@@ -88,9 +88,6 @@ void CSentry::Shutdown()
 #ifndef _WIN32
     didshutdown = true;
 #endif
-
-    // Warning("-> CSentry::Shutdown <-\n");
-    // printf("-> CSentry::Shutdown <-\n");
 }
 
 #ifndef _WIN32
@@ -99,12 +96,6 @@ void CSentry::Shutdown()
 // DO NOT THREAD THIS OR ANY FUNCTIONS CALLED BY IT UNDER ANY CIRCUMSTANCES
 sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t event, void* closure)
 {
-    Warning("[Warning] SENTRY CAUGHT A CRASH!\n");
-    printf("[printf] SENTRY CAUGHT A CRASH!\n");
-   
-    // MessageBoxW(NULL, crashdialogue, crashtitle, MB_OK);
-    // sentry_set_context(CSentry::SentryInstance().nowFUNC, CSentry::SentryInstance().nowCTX);
-
     sentry_flush(9999);
 
     #ifndef _WIN32
