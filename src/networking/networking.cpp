@@ -54,7 +54,7 @@ private:
 		if ( nIndex != MessageMap().InvalidIndex() )
 			pHandler = MessageMap()[nIndex];
 
-		QueueEconNetworkMessageWork( pHandler, pPacket );
+		QueueNetworkMessageWork( pHandler, pPacket );
 	}
 
 	void SetHeaderSteamIDs( CSmartPtr<CNetPacket> &pPacket, CSteamID const &targetID )
@@ -243,8 +243,8 @@ bool CNetworking::SendMessage( CSteamID const &targetID, MsgType_t eMsg, void *p
 		SteamNetworkingIdentity ident;
 		ident.SetSteamID( targetID );
 		SteamNetworkingMessages()->SendMessageToUser( ident, pPacket->Data(), pPacket->Size(), 
-													k_nSteamNetworkingSend_AutoRestartBrokenSession|k_nSteamNetworkingSend_Reliable, 
-													k_nServerPort );
+													  k_nSteamNetworkingSend_AutoRestartBrokenSession|k_nSteamNetworkingSend_Reliable, 
+													  k_nServerPort );
 	}
 	else
 	{
