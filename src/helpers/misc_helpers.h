@@ -22,11 +22,14 @@
 #include <eiface.h>
 #include <cdll_int.h>
 #include <valve_minmax_off.h>
-#include <chrono>
 
+#include <chrono>
 #include <vector>
 #include <string>
+#include <sstream>
 #include <algorithm>
+#include <memory>
+
 #include <valve_minmax_on.h>
 
 #ifdef CLIENT_DLL
@@ -35,11 +38,11 @@
 #include <filesystem.h>
 
 bool UTIL_CheckRealRemoteAddr(netadr_t netaddr);
-bool UTIL_GetRealRemoteAddr(char* ipadr);
+std::string UTIL_GetRealRemoteAddr();
 #endif // clientdll
 bool UTIL_IsFakePlayer(CBasePlayer* inplayer);
-bool UTIL_IsVTFValid(const char* fileloc);
-void UTIL_AddrToString(void* inAddr, char outAddrStr[11]);
+bool UTIL_IsVTFValid(std::string fileloc);
+std::string UTIL_VarAddressToString(void* inAddr);
 
 
 // https://stackoverflow.com/a/57346888
@@ -57,7 +60,7 @@ uint64_t micros();
 uint64_t nanos();
 
 #ifdef CLIENT_DLL
-void UTIL_GetMap(char mapname[128]);
+std::string UTIL_GetMap();
 #endif
 #endif
 
@@ -69,3 +72,6 @@ void UTIL_GetMap(char mapname[128]);
 #undef offsetof
 #define offsetof(s,m)	(size_t)&(((s *)0)->m)
 #endif
+
+
+std::unique_ptr<byte> UTIL_SmartLoadFileForMe(const char* filename, int* pLength);

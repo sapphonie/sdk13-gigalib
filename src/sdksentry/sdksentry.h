@@ -20,18 +20,15 @@ public:
     void                Shutdown() override;
     void                LevelBreadcrumbs(const char* function)
     {
-        char map[128];
-        UTIL_GetMap(map);
-        char funcmap[256] = {};
-        if (map && map[0])
+        std::string map = UTIL_GetMap();
+        std::stringstream funcmap;
+        if (map.empty())
         {
-            V_snprintf(funcmap, 255, "%s - map %s", function, map);
+            map = "no map";
         }
-        else
-        {
-            V_snprintf(funcmap, 255, "%s - map %s", function, "nada");
-        }
-        sentry_add_breadcrumb(sentry_value_new_breadcrumb(NULL, funcmap));
+        funcmap << function << " - " << "map " << map;
+
+        sentry_add_breadcrumb(sentry_value_new_breadcrumb(NULL, funcmap.str().c_str()));
     }
     void LevelInitPreEntity()
     {

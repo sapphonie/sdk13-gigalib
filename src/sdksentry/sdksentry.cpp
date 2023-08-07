@@ -414,22 +414,20 @@ const std::vector<std::string> cvarList =
 
 void SentrySetTags()
 {
-    char mapname[128] = {};
-    UTIL_GetMap(mapname);
-    if (mapname && mapname[0])
+    std::string mapname = UTIL_GetMap();
+    if (mapname.c_str() && !mapname.empty())
     {
-        sentry_set_tag("current map", mapname);
+        sentry_set_tag("current map", mapname.c_str());
     }
     else
     {
         sentry_set_tag("current map", "none");
     }
 
-    char ipadr[64] = {};
-    UTIL_GetRealRemoteAddr(ipadr);
-    if (ipadr && ipadr[0])
+    std::string ipadr = UTIL_GetRealRemoteAddr();
+    if (ipadr.c_str() && !ipadr.empty())
     {
-        sentry_set_tag("server ip", ipadr);
+        sentry_set_tag("server ip", ipadr.c_str());
     }
     else
     {
@@ -455,12 +453,11 @@ void SentrySetTags()
 
 void SentryAddressBreadcrumb(void* address, const char* optionalName)
 {
-    char addyString[11] = {};
-    UTIL_AddrToString(address, addyString);
+    std::string addyString = UTIL_VarAddressToString(address);
     sentry_value_t addr_crumb = sentry_value_new_breadcrumb(NULL, NULL);
 
     sentry_value_t address_object = sentry_value_new_object();
-    sentry_value_set_by_key(address_object, optionalName ? optionalName : _OBFUSCATE("variable address"), sentry_value_new_string(addyString));
+    sentry_value_set_by_key(address_object, optionalName ? optionalName : _OBFUSCATE("variable address"), sentry_value_new_string(addyString.c_str()));
     sentry_value_set_by_key
     (
         addr_crumb, "data", address_object

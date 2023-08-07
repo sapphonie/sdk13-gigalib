@@ -16,9 +16,8 @@ bool UTIL_CheckRealRemoteAddr(netadr_t netadr)
     return false;
 }
 
-bool UTIL_GetRealRemoteAddr(char* ipadr)
+std::string UTIL_GetRealRemoteAddr()
 {
-	// memset(ipadr, 0x0, sizeof(ipadr));
     INetChannel* netchan = static_cast<INetChannel*>(engine->GetNetChannelInfo());
     if (netchan)
     {
@@ -26,12 +25,11 @@ bool UTIL_GetRealRemoteAddr(char* ipadr)
         if (UTIL_CheckRealRemoteAddr(remaddr))
         {
             // ToString is always a char[64];
-            V_strncpy(ipadr, remaddr.ToString(), 64);
-            return true;
+			std::string ipadr(remaddr.ToString());
+			return ipadr;
         }
     }
-	ipadr[0] = 0x0;
-    return false;
+    return std::string();
 }
 
 #endif
@@ -61,11 +59,11 @@ bool UTIL_IsFakePlayer(CBasePlayer* inplayer)
 
 	return false;
 }
-
-bool UTIL_IsVTFValid(const char* fileloc)
+#include <memory>
+bool UTIL_IsVTFValid(std::string fileloc)
 {
 	int len = 0;
-	byte* bytes = UTIL_LoadFileForMe(fileloc, &len);
+	std::unique_ptr<byte> bytes = UTIL_SmartLoadFileForMe(fileloc.c_str(), &len);
 
 	if (!len)
 	{
@@ -81,19 +79,18 @@ bool UTIL_IsVTFValid(const char* fileloc)
 	}
 
 	// Get our header
-	VTFFileHeader_t* vtfheader = (VTFFileHeader_t*)calloc(1, sizeof(VTFFileHeader_t));
+	std::unique_ptr vtfheader = std::unique_ptr<VTFFileHeader_t>( new VTFFileHeader_t );
 	// will never happen
 	if (!vtfheader)
 	{
 		return true;
 	}
-	memcpy(vtfheader, bytes, sizeof(VTFFileHeader_t));
+	memcpy(vtfheader.get(), bytes.get(), sizeof(VTFFileHeader_t));
 
 	// Duh
 	if (!vtfheader || !vtfheader->headerSize)
 	{
 		AssertMsg(NULL, "[VTF] Invalid header/headerSize");
-		free(vtfheader);
 		return false;
 	}
 
@@ -101,7 +98,6 @@ bool UTIL_IsVTFValid(const char* fileloc)
 	if (memcmp(vtfheader->fileTypeString, "VTF\0", 4))
 	{
 		AssertMsg(NULL, "[VTF] Invalid header magic");
-		free(vtfheader);
 		return false;
 	}
 
@@ -109,63 +105,58 @@ bool UTIL_IsVTFValid(const char* fileloc)
 	if (vtfheader->version[0] > 7 || vtfheader->version[1] > 5)
 	{
 		AssertMsg(NULL, "[VTF] Invalid vtf version");
-		free(vtfheader);
 		return false;
 	}
 
 	// basic size checks
 	if
 		(
-			vtfheader->width < 0
+			   vtfheader->width  < 0
 			|| vtfheader->width  > 8192
 			|| vtfheader->height < 0
 			|| vtfheader->height > 8192
 			)
 	{
 		AssertMsg(NULL, "[VTF] Invalid vtf dimensions");
-		free(vtfheader);
 		return false;
 	}
 
 	// basic flag checks
 	if
+	(
+		vtfheader->flags &
 		(
-			vtfheader->flags &
-			(
-				TEXTUREFLAGS_RENDERTARGET
-				| TEXTUREFLAGS_DEPTHRENDERTARGET
-				| TEXTUREFLAGS_NODEPTHBUFFER
-				| TEXTUREFLAGS_UNUSED_00400000
-				| TEXTUREFLAGS_UNUSED_01000000
-				| TEXTUREFLAGS_UNUSED_10000000
-				| TEXTUREFLAGS_UNUSED_40000000
-				| TEXTUREFLAGS_UNUSED_80000000
-				)
-			)
+			  TEXTUREFLAGS_RENDERTARGET
+			| TEXTUREFLAGS_DEPTHRENDERTARGET
+			| TEXTUREFLAGS_NODEPTHBUFFER
+			| TEXTUREFLAGS_UNUSED_00400000
+			| TEXTUREFLAGS_UNUSED_01000000
+			| TEXTUREFLAGS_UNUSED_10000000
+			| TEXTUREFLAGS_UNUSED_40000000
+			| TEXTUREFLAGS_UNUSED_80000000
+		)
+	)
 	{
 		AssertMsg1(NULL, "[VTF] Invalid vtf flags = %x", vtfheader->flags);
-		free(vtfheader);
 		return false;
 	}
 
-	free(vtfheader);
 	return true;
 }
 
-void UTIL_AddrToString(void* inAddr, char outAddrStr[11])
+std::string UTIL_VarAddressToString(void* inAddr)
 {
-	// sizeof doesn't work for params
-	memset(outAddrStr, 0x0, 11);
+	char outAddrStr[32] = {};
 	if (!inAddr)
 	{
-		V_snprintf(outAddrStr, 11, "(nil)");
+		V_snprintf(outAddrStr, sizeof(outAddrStr), "(nil)");
 	}
 	else
 	{
-		V_snprintf(outAddrStr, 11, "%p", inAddr);
+		V_snprintf(outAddrStr, sizeof(outAddrStr), "%p", inAddr);
 	}
 
-	return;
+	return std::string(outAddrStr);
 }
 
 std::vector<std::string> UTIL_SplitSTDString(const std::string& i_str, const std::string& i_delim)
@@ -244,11 +235,50 @@ uint64_t nanos()
 }
 
 #ifdef CLIENT_DLL
-void UTIL_GetMap(char mapname[128])
+std::string UTIL_GetMap()
 {
 	// sizeof doesn't work for params
-	memset(mapname, 0x0, 128);
-	V_FileBase(engine->GetLevelName(), mapname, 128);
+	char mapname[128]{};
+	V_FileBase(engine->GetLevelName(), mapname, sizeof(mapname));
 	V_strlower(mapname);
+	return std::string(mapname);
 }
 #endif
+
+
+
+
+#include <filesystem.h>
+
+#include <filesystem_helpers.h>
+std::unique_ptr<byte> UTIL_SmartLoadFileForMe(const char* filename, int* pLength)
+{
+	FileHandle_t file;
+	file = filesystem->Open(filename, "rb", "GAME");
+	if (FILESYSTEM_INVALID_HANDLE == file)
+	{
+		if (pLength) *pLength = 0;
+		return NULL;
+	}
+
+	int size = filesystem->Size(file);
+	std::unique_ptr<byte> buffer( new byte[size + 1] );
+	if (!buffer)
+	{
+		Warning("UTIL_SmartLoadFileForMe:  Couldn't allocate buffer of size %i for file %s\n", size + 1, filename);
+		filesystem->Close(file);
+		return NULL;
+	}
+	filesystem->Read(buffer.get(), size, file);
+	filesystem->Close(file);
+
+	// Ensure null terminator
+	buffer.get()[size] = 0;
+
+	if (pLength)
+	{
+		*pLength = size;
+	}
+
+	return buffer;
+}
