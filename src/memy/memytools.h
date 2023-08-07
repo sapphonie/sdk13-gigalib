@@ -31,11 +31,14 @@ typedef unsigned char byte;
 #ifdef PostMessage
 	#undef PostMessage
 #endif
-
+#ifdef CreateEvent
+#undef CreateEvent
+#endif
 struct modbin
 {
     uintptr_t addr = NULL;
-    size_t    size = 0;
+	size_t    size = 0;
+    uintptr_t end  = NULL;
     char      binpath[MAX_PATH] = {};
 };
 
@@ -76,13 +79,21 @@ class memy
         #if defined (POSIX)
         static int          GetModuleInformation(const char* name, void** base, size_t* length, char path[MAX_PATH]);
         #endif
+		static bool         IsAddrInsideBin(modbin* mbin, uintptr_t address)
+		{
+			if (address >= mbin->addr && address <= mbin->end)
+			{
+				return true;
+			}
+			return false;
+		}
+
     private:
 
         static bool         InitSingleBin(const char* binname, modbin* mbin);
 
 
         static inline bool  comparedata(const byte* addr, const char* pattern, const size_t sigsize);
-
 };
 
 
