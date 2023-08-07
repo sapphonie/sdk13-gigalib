@@ -146,7 +146,7 @@ bool memy::InitSingleBin(const char* binname, modbin* mbin)
 
         mbin->addr = reinterpret_cast<uintptr_t>(minfo.lpBaseOfDll);
         mbin->size = minfo.SizeOfImage;
-
+        mbin->end  = mbin->addr + mbin->size;
         GetModuleFileName(mhandle, mbin->binpath, MAX_PATH);
 
         if (!mbin->addr || !mbin->size || !mbin->binpath)
@@ -214,6 +214,7 @@ bool memy::InitSingleBin(const char* binname, modbin* mbin)
 
         mbin->addr      = reinterpret_cast<uintptr_t>(mbase);
         mbin->size      = msize;
+		mbin->end       = mbin->addr + mbin->size;
 
         V_strncpy(mbin->binpath, path, MAX_PATH);
 
