@@ -119,17 +119,6 @@ void populateAndInitDetour(sdkdetour* detour, void* callback)
 #include <inetmsghandler.h>
 
 
-struct GIGAplayerStruct
-{
-    int                     entindex;
-    CBasePlayer*            basePlayerParent;
-    int 					m_iLastProcessPacketTick;
-    int 					m_iThisProcessPacketTick;
-    double 					m_dflProcessPacketTime;
-};
-
-static GIGAplayerStruct* thePlayers[MAX_PLAYERS] = {};
-
 ConVar net_chan_proctime_limit_ms("net_chan_proctime_limit_ms", "128", FCVAR_NONE,
     "Max amount of time per tick a client is allowed to make the server spend processing network packets, in msec.\n"
     "Similar to TF2's net_chan_limit_msec, but uses a different calculation method.");
@@ -349,7 +338,7 @@ void mbrcallconv CNetChan__ProcessPacket_CB(CNetChan__ProcessPacket_vars)
         CNetChan__ProcessPacket_origfunc;
         return;
     }
-    thePlayers[client]->basePlayerParent = bPlayer;
+    thePlayers[client].basePlayerParent = bPlayer;
 
     uint64_t start  = nanos();
 
@@ -364,34 +353,38 @@ void mbrcallconv CNetChan__ProcessPacket_CB(CNetChan__ProcessPacket_vars)
 
     if (spew_procpacket)
     {
-        Warning("time = %fms lasttick=%i thistick=%i\n", proctime_ms, thePlayers[client]->m_iLastProcessPacketTick, thePlayers[client]->m_iThisProcessPacketTick);
+        Warning("time = %fms lasttick=%i thistick=%i\n",
+            proctime_ms,
+            thePlayers[client].m_iLastProcessPacketTick,
+            thePlayers[client].m_iThisProcessPacketTick
+        );
     }
 
-    thePlayers[client]->m_iLastProcessPacketTick = thePlayers[client]->m_iThisProcessPacketTick;
-    thePlayers[client]->m_iThisProcessPacketTick = gpGlobals->tickcount;
+    thePlayers[client].m_iLastProcessPacketTick = thePlayers[client].m_iThisProcessPacketTick;
+    thePlayers[client].m_iThisProcessPacketTick = gpGlobals->tickcount;
 
     int delta = 0;
     // 1 or more ticks ahead
-    if (thePlayers[client]->m_iThisProcessPacketTick > thePlayers[client]->m_iLastProcessPacketTick)
+    if (thePlayers[client].m_iThisProcessPacketTick > thePlayers[client].m_iLastProcessPacketTick)
     {
-        delta = thePlayers[client]->m_iThisProcessPacketTick - thePlayers[client]->m_iLastProcessPacketTick;
+        delta = thePlayers[client].m_iThisProcessPacketTick - thePlayers[client].m_iLastProcessPacketTick;
         // scale our processing time by the delta
-        thePlayers[client]->m_dflProcessPacketTime = (proctime_ms * (1.0/delta));
+        thePlayers[client].m_dflProcessPacketTime = (proctime_ms * (1.0/delta));
 
         if (spew_procpacket)
         {
-            Warning("ahead. delta %i, proctime = %f\n", delta, thePlayers[client]->m_dflProcessPacketTime);
+            Warning("ahead. delta %i, proctime = %f\n", delta, thePlayers[client].m_dflProcessPacketTime);
         }
     }
     // same tick (monkaS)
-    else if (thePlayers[client]->m_iThisProcessPacketTick == thePlayers[client]->m_iLastProcessPacketTick)
+    else if (thePlayers[client].m_iThisProcessPacketTick == thePlayers[client].m_iLastProcessPacketTick)
     {
         // scale our processing time by adding each "same tick" time to our running total
-        thePlayers[client]->m_dflProcessPacketTime += proctime_ms;
+        thePlayers[client].m_dflProcessPacketTime += proctime_ms;
     
         if (spew_procpacket)
         {
-            Warning("same. delta = %i, proctime = %f\n", 0, thePlayers[client]->m_dflProcessPacketTime);
+            Warning("same. delta = %i, proctime = %f\n", 0, thePlayers[client].m_dflProcessPacketTime);
         }
     }
     // something has gone bad
@@ -404,11 +397,12 @@ void mbrcallconv CNetChan__ProcessPacket_CB(CNetChan__ProcessPacket_vars)
         return;
     }
 
-    if (thePlayers[client]->m_dflProcessPacketTime >= max_proc_time)
+    if (thePlayers[client].m_dflProcessPacketTime >= max_proc_time)
     {
         //if (spew_procpacket)
         //{
-        Warning("Client %s exceeded processing time. (Theirs) %.2fms >= %.2fms (Max)\n", bPlayer->GetPlayerName(), thePlayers[client]->m_dflProcessPacketTime, max_proc_time);
+        Warning("Client %s exceeded processing time. (Theirs) %.2fms >= %.2fms (Max)\n",
+            bPlayer->GetPlayerName(), thePlayers[client].m_dflProcessPacketTime, max_proc_time);
         //}
 
         // could maybe be abused if clients send a CHONKY packet and then immediately dc?
@@ -717,8 +711,6 @@ void CEngineDetours::PostInit()
         CBaseServer__ConnectClient_Init();
     }
 }
-
-
 
 // client detours
 #elif defined(CLIENT_DLL)
