@@ -885,7 +885,7 @@ void CNetChan__Shutdown_Init()
 
 #ifdef _WIN32
 #include <Windows.h>
-int win32_HARDENING() {
+void win32_HARDENING() {
     /*
         DWORD ProhibitDynamicCode : 1;
         DWORD AllowThreadOptOut : 1;
@@ -938,8 +938,6 @@ int win32_HARDENING() {
     if (!SetProcessDEPPolicy(PROCESS_DEP_ENABLE | PROCESS_DEP_DISABLE_ATL_THUNK_EMULATION))
     {
     }
-
-    return 1;
 }
 #endif
 
@@ -948,7 +946,7 @@ void CEngineDetours::PostInit()
     CClientState__FullConnect_Init();
     CNetChan__Shutdown_Init();
 #ifdef _WIN32
-    win32_HARDENING();
+    RUN_THIS_FUNC_WHEN_STEAM_INITS( &win32_HARDENING );
 #endif
 }
 #endif // client
