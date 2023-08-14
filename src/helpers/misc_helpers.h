@@ -23,7 +23,7 @@
 #include <cdll_int.h>
 #include <valve_minmax_off.h>
 #include <chrono>
-
+#include <memory>
 #include <vector>
 #include <string>
 #include <algorithm>

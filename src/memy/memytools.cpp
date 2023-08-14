@@ -5,11 +5,6 @@
 
 // #define memydbg yep
 
-memy_init _memy_init;
-memy_init::memy_init() : CAutoGameSystem("")
-{
-}
-
 // shared between client and server
 modbin* engine_bin          = new modbin();
 modbin* server_bin          = new modbin();
@@ -62,10 +57,9 @@ memy::memy()
 
 #include <sdkCURL/sdkCURL.h>
 
-bool memy_init::Init()
+bool memy::Init()
 {
-    // memy();
-    memy::InitAllBins();
+    InitAllBins();
 
 #ifdef SDKCURL
     new sdkCURL;
@@ -231,139 +225,80 @@ bool memy::InitSingleBin(const char* binname, modbin* mbin)
     return true;
 }
 
-inline bool memy::comparedata(const byte* data, const char* pattern, const size_t sigsize)
-{
-    if (!data || !pattern || !sigsize)
-    {
-        #ifdef memydbg
-            Warning("memy::DataCompare -> Couldn't grab data %p, pattern %p, nor patternsize %i\n", data, pattern, sigsize);
-        #endif
-        return false;
-    }
-
-    for
-    (
-        size_t head = 0;
-        head < sigsize; // sigsize doesn't start from 0 so we don't need to <=
-        (head++, pattern++, data++)
-    )
-    {
-        // char at this pos in our pattern
-        byte pattern_byte = *(pattern);
-
-        #ifdef memydbg
-        if (head >= sigsize - 6)
-        {
-            Warning("memy::DataCompare -> head = %i; char = %.2x\n", head, pattern_byte);
-        }
-        #endif
-
-        // if it's a wildcard just skip it
-        if ( pattern_byte == '\x2A' )
-        {
-            continue;
-        }
-
-        // char at this pos in our memory
-        byte data_byte = *(data);
-
-        // if it doesn't match it's bunk; go to the next byte
-        if ( pattern_byte != data_byte )
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 //---------------------------------------------------------------------------------------------------------
-// Finds a pattern of bytes in the engine memory given a signature and a mask
+// Finds a pattern of bytes in the engine memory given a signature
 // Returns the address of the first (and hopefully only) match with an optional offset, otherwise nullptr
+// Copied from https://cs.alliedmods.net/sourcemod/source/core/logic/MemoryUtils.cpp#79 because it's faster than anything I've come up with yet
 //---------------------------------------------------------------------------------------------------------    
 uintptr_t memy::FindPattern(const uintptr_t startaddr, const size_t searchsize, const char* pattern, const size_t sigsize, const size_t offset)
 {
-    #ifdef memydbg
-        char hexstr[128] = {};
-        V_binarytohex
-        (
-            reinterpret_cast<const byte*>(pattern),
-            (sigsize * 2) + 1, // sigsize -> bytes + nullterm
-            hexstr,
-            (sigsize * 2) + 1
-        );
-    #endif
+    char* ptr   = (char*)startaddr;
+    char* end   = (ptr + searchsize) - sigsize;
 
-    if (!startaddr || !searchsize || !pattern)
+    bool found;
+    while (ptr < end)
     {
-        #ifdef memydbg
-            Warning("memy::FindPattern -> Couldn't grab modbase %x, modsize %i, or pattern %p = %s\n", startaddr, searchsize, pattern, hexstr);
-        #endif
-
-        return NULL;
-    }
-
-    // iterate thru memory, starting at modbase + i, up to (modsize + searchsize) - sigsize
-    for (size_t i = 0; i <= (searchsize - sigsize); i++)
-    {
-        byte* addr = reinterpret_cast<byte*>(startaddr) + i;
-
-        if (comparedata(addr, pattern , sigsize))
+        found = true;
+        for (size_t i = 0; i < sigsize; i++)
         {
-            #ifdef memydbg
-                Warning("memy::FindPattern -> found pattern %s, %i, %i!\n", hexstr, sigsize, offset);
-            #endif
-
-            return reinterpret_cast<uintptr_t>(addr + offset);
+            if (pattern[i] != '\x2A' && pattern[i] != ptr[i])
+            {
+                found = false;
+                break;
+            }
         }
-    }
 
-    #ifdef memydbg
-        Warning("memy::FindPattern -> Failed, pattern %s, %i, %i!\n", hexstr, sigsize, offset);
-    #endif
+        // Translate the found offset into the actual live binary memory space.
+        if (found)
+        {
+            return static_cast<uintptr_t>( (uintptr_t)ptr + offset );
+            break;
+        }
+
+        ptr++;
+    }
 
     return NULL;
 }
 
-
-bool memy::SetMemoryProtection(void* addr, size_t protlen, int wantprot)
+// getting the old protection only works on windows...
+bool memy::SetMemoryProtection(void* addr, size_t protlen, int wantprot, int* oldprotection)
 {
-    #ifdef _WIN32
-        // VirtualProtect requires a valid pointer to store the old protection value
-        DWORD tmp;
-        DWORD prot;
-
-        switch (wantprot)
+#ifdef _WIN32
+    // VirtualProtect requires a valid pointer to store the old protection value
+    DWORD prot;
+    
+    switch (wantprot)
+    {
+        case (MEM_READ):
         {
-            case (MEM_READ):
-            {
-                prot = PAGE_READONLY;
-                break;
-            }
-            case (MEM_READ | MEM_WRITE):
-            {
-                prot = PAGE_READWRITE;
-                break;
-            }
-            case (MEM_READ | MEM_EXEC):
-            {
-                prot = PAGE_EXECUTE_READ;
-                break;
-            }
-            case (MEM_READ | MEM_WRITE | MEM_EXEC):
-            default:
-            {
-                prot = PAGE_EXECUTE_READWRITE;
-                break;
-            }
+            prot = PAGE_READONLY;
+            break;
         }
-
-        // BOOL is typedef'd as an int on Windows, sometimes (lol), bang bang it to convert it to a bool proper
-        return !!(VirtualProtect(addr, protlen, prot, &tmp));
-    #else
-    // POSIX
-        return mprotect( LALIGN(addr), protlen + LALDIF(addr), wantprot) == 0;
-    #endif
+        case (MEM_READ | MEM_WRITE):
+        {
+            prot = PAGE_READWRITE;
+            break;
+        }
+        case (MEM_READ | MEM_EXEC):
+        {
+            prot = PAGE_EXECUTE_READ;
+            break;
+        }
+        case (MEM_READ | MEM_WRITE | MEM_EXEC):
+        default:
+        {
+            prot = PAGE_EXECUTE_READWRITE;
+            break;
+        }
+    }
+    
+    // BOOL is typedef'd as an int on Windows, sometimes (lol), bang bang it to convert it to a bool proper
+    return !!(VirtualProtect(addr, protlen, prot, (PDWORD)oldprotection));
+#else
+    // POSIX - i do not care enough to scrape proc self maps again just for every instance of this operation
+    return !!mprotect(LALIGN(addr), protlen + LALDIF(addr), wantprot, 0);
+#endif
 }
 
 

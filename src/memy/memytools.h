@@ -54,17 +54,12 @@ extern struct modbin* client_bin;
 extern struct modbin* gameui_bin;
 
 #include <igamesystem.h>
-class memy_init : public CAutoGameSystem
-{
-public:
-    memy_init();
-    bool                    Init() override;
-};
 
-class memy
+class memy : public CAutoGameSystem
 {
     public:
         memy();
+        bool                Init() override;
 
         static bool         InitAllBins();
 
@@ -75,7 +70,7 @@ class memy
             return          FindPattern(mbin->addr, mbin->size, pattern, sigsize, offset);
         }
 
-        static bool         SetMemoryProtection(void* addr, size_t protlen, int wantprot);
+        static bool         SetMemoryProtection(void* addr, size_t protlen, int wantprot, int* oldprotection);
         #if defined (POSIX)
         static int          GetModuleInformation(const char* name, void** base, size_t* length, char path[MAX_PATH]);
         #endif
@@ -91,9 +86,6 @@ class memy
     private:
 
         static bool         InitSingleBin(const char* binname, modbin* mbin);
-
-
-        static inline bool  comparedata(const byte* addr, const char* pattern, const size_t sigsize);
 };
 
 
