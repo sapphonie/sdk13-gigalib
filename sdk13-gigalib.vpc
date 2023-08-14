@@ -20,7 +20,7 @@ $Configuration
         $SymbolVisibility               "default" [$POSIX]
 
         // Enable modern CURL
-        $PreprocessorDefinitions        "$BASE;CURL_STATICLIB"
+        $PreprocessorDefinitions        "$BASE;CURL_STATICLIB;_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING"
 
         // $Create/UsePrecompiledHeader "Not Using Precompiled Headers"
     }
@@ -37,6 +37,26 @@ $Configuration
 
 $Project
 {
+    $Folder "Protobuf Files"
+	{
+		$File "$gigalibloc/networking/messages.proto"
+		$Folder "Generated Files" [!$OSXALL]
+		{
+			$DynamicFile "$GENERATED_PROTO_DIR/messages.pb.h"
+			$DynamicFile "$GENERATED_PROTO_DIR/messages.pb.cc"
+			{
+				$Configuration
+				{
+					$Compiler 
+					{
+						$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+						$AdditionalOptions				"$BASE /D_HAS_EXCEPTIONS=0"
+					}
+				}
+			}
+		}
+	}
+
     $Folder "Source Files"
     {
         $Folder "sdk13-gigalib"
@@ -61,7 +81,14 @@ $Project
 
                 $File "$gigalibloc/memy/vtblhook.h"
             }
+            $Folder "networking"
+            {
+                $File   "$gigalibloc/networking/networking.cpp"
+                $File   "$gigalibloc/networking/networking.h"
 
+                $File   "$gigalibloc/networking/messages.cpp"
+                $File   "$gigalibloc/networking/messages.h"
+            }
             $Folder "engine hacks"
             {
                 $File   "$gigalibloc/engine_hacks/engine_detours.cpp"
