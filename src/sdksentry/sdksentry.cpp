@@ -129,7 +129,6 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
 
     if (cl_send_error_reports.GetInt() <= 0 || !g_Sentry.didinit)
     {
-        // Warning("NOT SENDING CRASH TO SENTRY.IO DUE TO USER NONCONSENT OR INIT FAILING! BUHBYE!\n");
         sentry_value_decref(event);
         return sentry_value_new_null();
     }
@@ -405,22 +404,13 @@ void _SentryEventThreaded(const char* level, const char* logger, const char* mes
     sentry_capture_event(event);
 
     sentry_flush(9999);
-
-    /*
-    for (int i = 0; i < 1000000; i++)
-    {
-        void* junk = malloc(100);
-        memset(junk, 0x42, 100);
-        // free(junk);
-    }
-    */
-
-    // void* junk = malloc(100);
-    // memset(junk, 0x42, 100);
-    // junk = malloc(100);
-
-    return;
 }
+
+const std::vector<std::string> cvarList =
+{
+    "mat_dxlevel",
+};
+
 
 void SentrySetTags()
 {
@@ -445,9 +435,25 @@ void SentrySetTags()
     {
         sentry_set_tag("server ip", "none");
     }
+
+	for (auto& element : cvarList)
+	{
+        ConVarRef cRef(element.c_str(), true);
+        
+        if (cRef.IsValid() && cRef.GetName() && cRef.GetString())
+        {
+            sentry_set_tag(cRef.GetName(), cRef.GetString());
+        }
+        else
+        {
+            Warning("Failed getting sentry tag for %s\n", element.c_str());
+        }
+	}
+
+
 }
 
-void SentryAddressBreadcrumb(void* address, const char* optionalName )
+void SentryAddressBreadcrumb(void* address, const char* optionalName)
 {
     char addyString[11] = {};
     UTIL_AddrToString(address, addyString);

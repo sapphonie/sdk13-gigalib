@@ -8,7 +8,7 @@
     #pragma once
 #endif
 
-#ifdef ENGINE_DETOURS
+#if defined (BIN_PATCHES) && defined(ENGINE_DETOURS)
 #include <engine_hacks/engine_detours.h>
 
 #ifdef _WIN32
@@ -24,27 +24,7 @@
     #define mbrcallconv __cdecl
 #endif
 
-#ifdef _WIN32
-    // hack because theres no macro for DEBUG that i can find
-    // feel free to PR to add it to vpc if you know of one
-    #ifdef DEBUG
-        #pragma comment( lib, "../shared/sdk13-gigalib/src/polyhook/bin/debug/PolyHook_2.lib" )
-        #pragma comment( lib, "../shared/sdk13-gigalib/src/polyhook/bin/debug/Zydis.lib" )
-    #else
-        #pragma comment( lib, "../shared/sdk13-gigalib/src/polyhook/bin/release/PolyHook_2.lib" )
-        #pragma comment( lib, "../shared/sdk13-gigalib/src/polyhook/bin/release/Zydis.lib" )
-    #endif
-#endif
 
-#undef NOINLINE
-#undef FASTCALL
-#define __thiscall
-#include <valve_minmax_off.h>
-#define ZYDIS_DEPRECATED
-#include <polyhook2/IHook.hpp>
-#include <polyhook2/Detour/x86Detour.hpp>
-
-#include <valve_minmax_on.h>
 
 /*
     TODO:
@@ -53,62 +33,7 @@
 
     HOOK_CALLBACK etc
 */
-CEngineDetours g_CEngineDetours;
 
-CEngineDetours::CEngineDetours() : CAutoGameSystem("CEngineDetours")
-{
-}
-
-class sdkdetour
-{
-public:
-    void whackVars()
-    {
-        patternSize         = {};
-        pattern             = {};
-        patternAddr         = {};
-        detourPtr           = {};
-        // callbackAddr     = {};
-        detourTrampoline    = {};
-    };
-
-    sdkdetour()
-    {
-        //Warning("test");
-        whackVars();
-    };
-    ~sdkdetour()
-    {
-        //Warning("untest");
-        //detourPtr->unHook(); // broken by dynamic code policy on windows...?
-        //whackVars();
-    };
-    size_t patternSize          = {};
-    const char* pattern         = {};
-    uintptr_t patternAddr       = {};
-    PLH::x86Detour* detourPtr   = {};
-    //uint64_t callbackAddr       = {};
-    uint64_t detourTrampoline   = {};
-};
-
-void populateAndInitDetour(sdkdetour* detour, void* callback)
-{
-    detour->patternAddr = memy::FindPattern
-    (
-        engine_bin,
-        detour->pattern,
-        detour->patternSize,
-        0
-    );
-
-    detour->detourPtr = new PLH::x86Detour
-    (
-        (const uint64_t)detour->patternAddr,
-        (const uint64_t)(callback),
-        &detour->detourTrampoline
-    );
-    detour->detourPtr->hook();
-}
 
 // server detours
 #if defined (GAME_DLL)
@@ -701,7 +626,7 @@ Signature for _ZN17CGameEventManager13RegisterEventEP9KeyValues:
 
 
 
-void CEngineDetours::PostInit()
+CEngineDetours::CEngineDetours()
 {
     // ONLY run these on dedis!
     if (engine->IsDedicatedServer())
@@ -889,7 +814,7 @@ void CNetChan__Shutdown_Init()
 
 #ifdef _WIN32
 #include <Windows.h>
-int win32_HARDENING() {
+void win32_HARDENING() {
     /*
         DWORD ProhibitDynamicCode : 1;
         DWORD AllowThreadOptOut : 1;
@@ -942,15 +867,15 @@ int win32_HARDENING() {
     if (!SetProcessDEPPolicy(PROCESS_DEP_ENABLE | PROCESS_DEP_DISABLE_ATL_THUNK_EMULATION))
     {
     }
-
-    return 1;
 }
 #endif
 
-void CEngineDetours::PostInit()
+
+CEngineDetours::CEngineDetours()
 {
     CClientState__FullConnect_Init();
     CNetChan__Shutdown_Init();
+
 #ifdef _WIN32
     win32_HARDENING();
 #endif
