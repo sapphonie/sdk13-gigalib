@@ -49,7 +49,6 @@ struct GIGAplayerStruct
 };
 
 
-GIGAplayerStruct thePlayers[MAX_PLAYERS] = {};
 #endif
 
 

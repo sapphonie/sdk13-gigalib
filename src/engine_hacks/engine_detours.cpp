@@ -44,6 +44,9 @@
 #include <inetmsghandler.h>
 
 
+GIGAplayerStruct thePlayers[MAX_PLAYERS] = {};
+
+
 ConVar net_chan_proctime_limit_ms("net_chan_proctime_limit_ms", "128", FCVAR_NONE,
     "Max amount of time per tick a client is allowed to make the server spend processing network packets, in msec.\n"
     "Similar to TF2's net_chan_limit_msec, but uses a different calculation method.");
