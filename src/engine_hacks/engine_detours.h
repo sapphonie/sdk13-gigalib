@@ -36,6 +36,22 @@
 #endif
 #endif
 
+#ifdef GAME_DLL
+
+
+struct GIGAplayerStruct
+{
+    int                     entindex                    = -1;
+    CBasePlayer*            basePlayerParent            = nullptr;
+    int 					m_iLastProcessPacketTick    = 0;
+    int 					m_iThisProcessPacketTick    = 0;
+    double 					m_dflProcessPacketTime      = 0.0;
+};
+
+
+GIGAplayerStruct thePlayers[MAX_PLAYERS] = {};
+#endif
+
 
 #ifdef SDKSENTRY
     #include <sdksentry/sdksentry.h>
