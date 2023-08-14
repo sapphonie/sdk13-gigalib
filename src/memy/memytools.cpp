@@ -112,7 +112,11 @@ bool memy::InitAllBins()
     V_StripLastDir(engpath, MAX_PATH);
     V_StripTrailingSlash(engpath);
 
-    ConVarRef sdkpath = ConVarRef("_sdkpath", false);
+#if defined (CLIENT_DLL)
+    ConVarRef sdkpath = ConVarRef("_sdkpath_cli", false);
+#elif defined (GAME_DLL)
+    ConVarRef sdkpath = ConVarRef("_sdkpath_srv", false);
+#endif
     if (sdkpath.IsValid())
     {
         sdkpath.SetValue(engpath);
