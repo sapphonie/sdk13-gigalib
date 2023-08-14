@@ -41,12 +41,13 @@ public:
     CBinPatch(char*, size_t, size_t, bool, int);
     CBinPatch(char*, size_t, size_t, bool, float);
     CBinPatch(char*, size_t, size_t, bool, char*);
+    ~CBinPatch();
 
     bool ApplyPatch(modbin* mbin);
 
 private:
     char *m_pSignature;
-    char *m_pPatch;
+    std::unique_ptr<char> m_pPatch;
     size_t m_iSize;
 
     size_t m_iOffset;

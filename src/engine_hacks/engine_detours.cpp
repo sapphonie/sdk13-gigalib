@@ -8,7 +8,7 @@
     #pragma once
 #endif
 
-#ifdef ENGINE_DETOURS
+#if defined (BIN_PATCHES) && defined(ENGINE_DETOURS)
 #include <engine_hacks/engine_detours.h>
 
 #ifdef _WIN32
@@ -33,11 +33,7 @@
 
     HOOK_CALLBACK etc
 */
-CEngineDetours g_CEngineDetours;
 
-CEngineDetours::CEngineDetours() : CAutoGameSystem("CEngineDetours")
-{
-}
 
 // server detours
 #if defined (GAME_DLL)
@@ -624,7 +620,7 @@ Signature for _ZN17CGameEventManager13RegisterEventEP9KeyValues:
 
 
 
-void CEngineDetours::PostInit()
+CEngineDetours::CEngineDetours()
 {
     // ONLY run these on dedis!
     if (engine->IsDedicatedServer())
@@ -870,12 +866,14 @@ void win32_HARDENING() {
 }
 #endif
 
-void CEngineDetours::PostInit()
+
+CEngineDetours::CEngineDetours()
 {
     CClientState__FullConnect_Init();
     CNetChan__Shutdown_Init();
+
 #ifdef _WIN32
-    RUN_THIS_FUNC_WHEN_STEAM_INITS( &win32_HARDENING );
+    win32_HARDENING();
 #endif
 }
 #endif // client
