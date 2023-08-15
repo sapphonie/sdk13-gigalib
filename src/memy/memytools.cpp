@@ -264,6 +264,7 @@ uintptr_t memy::FindPattern(const uintptr_t startaddr, const size_t searchsize, 
 // getting the old protection only works on windows...
 bool memy::SetMemoryProtection(void* addr, size_t protlen, int wantprot, int* oldprotection)
 {
+    *oldprotection = 0;
 #ifdef _WIN32
     // VirtualProtect requires a valid pointer to store the old protection value
     DWORD prot;
@@ -297,7 +298,7 @@ bool memy::SetMemoryProtection(void* addr, size_t protlen, int wantprot, int* ol
     return !!(VirtualProtect(addr, protlen, prot, (PDWORD)oldprotection));
 #else
     // POSIX - i do not care enough to scrape proc self maps again just for every instance of this operation
-    return !!mprotect(LALIGN(addr), protlen + LALDIF(addr), wantprot, 0);
+    return !!mprotect(LALIGN(addr), protlen + LALDIF(addr), wantprot);
 #endif
 }
 
