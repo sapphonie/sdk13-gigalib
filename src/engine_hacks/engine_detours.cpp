@@ -899,5 +899,6 @@ void CEngineDetours::Shutdown()
         delete CBaseServer__ConnectClient;
     }
 #endif
+    // delete gCEngineDetours;
 }
 #endif

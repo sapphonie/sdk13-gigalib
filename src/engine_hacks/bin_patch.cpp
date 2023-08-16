@@ -13,6 +13,7 @@
 #if defined (BIN_PATCHES) && defined(ENGINE_DETOURS)
 #include <engine_hacks/bin_patch.h>
 #include <engine_hacks/engine_detours.h>
+CEngineDetours* gCEngineDetours = nullptr;
 
 #ifdef dbging
     #define goodcolor   Color(90, 240, 90, 255) // green
