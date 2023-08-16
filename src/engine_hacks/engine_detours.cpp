@@ -8,113 +8,7 @@
     #pragma once
 #endif
 
-
-#ifdef _WIN32
-#include <Windows.h>
-int protection_up() {
-    PROCESS_MITIGATION_DYNAMIC_CODE_POLICY policy1;
-    policy1.ProhibitDynamicCode = 1;
-    policy1.AllowThreadOptOut = 0;
-    policy1.AllowRemoteDowngrade = 0;
-    policy1.AuditProhibitDynamicCode = 0;
-    policy1.ReservedFlags = 0;
-
-    if (!SetProcessMitigationPolicy(ProcessDynamicCodePolicy, &policy1, sizeof(policy1))) {
-        //Warning("Policy PROCESS_MITIGATION_DYNAMIC_CODE_POLICY change error: 0x%08x\n", GetLastError());
-        //return 0;
-    }
-
-    PROCESS_MITIGATION_CONTROL_FLOW_GUARD_POLICY policy2;
-    policy2.EnableControlFlowGuard = 1;
-    policy2.EnableExportSuppression = 0;  // or else we'll need GetProcAddress for every function we want to invoke...
-    policy2.StrictMode = 1;
-    policy2.ReservedFlags = 0;
-
-    if (!SetProcessMitigationPolicy(ProcessControlFlowGuardPolicy, &policy2, sizeof(policy2))) {
-        //Warning("Policy PROCESS_MITIGATION_CONTROL_FLOW_GUARD_POLICY change error: 0x%08x\n", GetLastError());
-        //return 0;
-    }
-
-    /*
-    PROCESS_MITIGATION_STRICT_HANDLE_CHECK_POLICY policy3;
-    policy3.RaiseExceptionOnInvalidHandleReference = 1;
-    policy3.HandleExceptionsPermanentlyEnabled = 1;
-    policy3.ReservedFlags = 0;
-
-    if (!SetProcessMitigationPolicy(ProcessStrictHandleCheckPolicy, &policy3, sizeof(policy3))) {
-        //Warning("Policy PROCESS_MITIGATION_STRICT_HANDLE_CHECK_POLICY change error: 0x%08x\n", GetLastError());
-        //return 0;
-    }
-    */
-
-    PROCESS_MITIGATION_EXTENSION_POINT_DISABLE_POLICY policy5;
-    policy5.DisableExtensionPoints = 1;
-    policy5.ReservedFlags = 0;
-
-    if (!SetProcessMitigationPolicy(ProcessExtensionPointDisablePolicy, &policy5, sizeof(policy5))) {
-        //Warning("Policy PROCESS_MITIGATION_EXTENSION_POINT_DISABLE_POLICY change error: 0x%08x\n", GetLastError());
-        //return 0;
-    }
-    /*
-        PROCESS_MITIGATION_BINARY_SIGNATURE_POLICY policy6;
-        memset(&policy6, 0, sizeof(policy6));
-        policy6.MicrosoftSignedOnly = 1;
-        policy6.ReservedFlags = 0;
-
-        if (!SetProcessMitigationPolicy(ProcessSignaturePolicy, &policy6, sizeof(policy6))) {
-            printf("Policy PROCESS_MITIGATION_BINARY_SIGNATURE_POLICY change error: 0x%08x\n", GetLastError());
-            return 0;
-        }
-    */
-    /*
-        PROCESS_MITIGATION_FONT_DISABLE_POLICY policy7;
-        memset(&policy7, 0, sizeof(policy7));
-        policy7.DisableNonSystemFonts = 1;
-        policy7.AuditNonSystemFontLoading = 0;
-        policy7.ReservedFlags = 0;
-
-        if (!SetProcessMitigationPolicy(ProcessFontDisablePolicy, &policy7, sizeof(policy7))) {
-            Warning("Policy PROCESS_MITIGATION_FONT_DISABLE_POLICY change error: 0x%08x\n", GetLastError());
-            return 0;
-        }
-        PROCESS_MITIGATION_IMAGE_LOAD_POLICY policy8;
-        memset(&policy8, 0, sizeof(policy8));
-        policy8.NoRemoteImages = 1;
-        policy8.NoLowMandatoryLabelImages = 1;
-        policy8.PreferSystem32Images = 1;
-        policy8.ReservedFlags = 0;
-
-        if (!SetProcessMitigationPolicy(ProcessImageLoadPolicy, &policy8, sizeof(policy8))) {
-            Warning("Policy PROCESS_MITIGATION_IMAGE_LOAD_POLICY change error: 0x%08x\n", GetLastError());
-            return 0;
-        }
-    */
-
-    // Error 0x00000057 The parameter is incorrect.
-    PROCESS_MITIGATION_ASLR_POLICY policy9;
-    memset(&policy9, 0, sizeof(policy9));
-    policy9.EnableBottomUpRandomization = 1;
-    policy9.EnableForceRelocateImages = 1;
-    policy9.EnableHighEntropy = 1;
-    policy9.DisallowStrippedImages = 1;
-    policy9.ReservedFlags = 0;
-
-    if (!SetProcessMitigationPolicy(ProcessASLRPolicy, &policy9, sizeof(policy9))) {
-        //Warning("Policy PROCESS_MITIGATION_ASLR_POLICY change error: 0x%08x\n", GetLastError());
-        //return 0;
-    }
-
-    bool success = SetProcessDEPPolicy(PROCESS_DEP_ENABLE | PROCESS_DEP_DISABLE_ATL_THUNK_EMULATION);
-    if (!success)
-    {
-        //Warning("Policy SetProcessDEPPolicy change error: 0x%08x\n", GetLastError());
-    }
-    //Warning("-> succ = %i\n", success);
-
-    return 1;
-}
-#endif
-#ifdef ENGINE_DETOURS
+#if defined (BIN_PATCHES) && defined(ENGINE_DETOURS)
 #include <engine_hacks/engine_detours.h>
 
 #ifdef _WIN32
@@ -130,28 +24,7 @@ int protection_up() {
     #define mbrcallconv __cdecl
 #endif
 
-#ifdef _WIN32
-    // hack because theres no macro for DEBUG that i can find
-    // feel free to PR to add it to vpc if you know of one
-    #ifdef DEBUG
-        #pragma comment( lib, "../shared/sdk13-gigalib/src/polyhook/bin/debug/PolyHook_2.lib" )
-        #pragma comment( lib, "../shared/sdk13-gigalib/src/polyhook/bin/debug/Zydis.lib" )
 
-    #else
-        #pragma comment( lib, "../shared/sdk13-gigalib/src/polyhook/bin/release/PolyHook_2.lib" )
-        #pragma comment( lib, "../shared/sdk13-gigalib/src/polyhook/bin/release/Zydis.lib" )
-    #endif
-#endif
-
-#undef NOINLINE
-#undef FASTCALL
-#define __thiscall
-#include <valve_minmax_off.h>
-#define ZYDIS_DEPRECATED
-#include <polyhook2/IHook.hpp>
-#include <polyhook2/Detour/x86Detour.hpp>
-
-#include <valve_minmax_on.h>
 
 /*
     TODO:
@@ -160,41 +33,7 @@ int protection_up() {
 
     HOOK_CALLBACK etc
 */
-CEngineDetours g_CEngineDetours;
 
-CEngineDetours::CEngineDetours() : CAutoGameSystem("CEngineDetours")
-{
-}
-
-
-struct sdkdetour
-{
-    size_t patternSize          = {};
-    const char* pattern         = {};
-    uintptr_t patternAddr       = {};
-    PLH::x86Detour* detourPtr   = {};
-    //uint64_t callbackAddr       = {};
-    uint64_t detourTrampoline   = {};
-};
-
-void populateAndInitDetour(sdkdetour* detour, void* callback)
-{
-    detour->patternAddr = memy::FindPattern
-    (
-        engine_bin,
-        detour->pattern,
-        detour->patternSize,
-        0
-    );
-
-    detour->detourPtr = new PLH::x86Detour
-    (
-        (const uint64_t)detour->patternAddr,
-        (const uint64_t)(callback),
-        &detour->detourTrampoline
-    );
-    detour->detourPtr->hook();
-}
 
 // server detours
 #if defined (GAME_DLL)
@@ -203,6 +42,10 @@ void populateAndInitDetour(sdkdetour* detour, void* callback)
 #include <iclient.h>
 #include <inetchannel.h>
 #include <inetmsghandler.h>
+
+
+GIGAplayerStruct thePlayers[MAX_PLAYERS] = {};
+
 
 ConVar net_chan_proctime_limit_ms("net_chan_proctime_limit_ms", "128", FCVAR_NONE,
     "Max amount of time per tick a client is allowed to make the server spend processing network packets, in msec.\n"
@@ -273,7 +116,6 @@ typedef struct netpacket_s
     struct netpacket_s* pNext;	// for internal use, should be NULL in public
 } netpacket_t;
 */
-
 
 sdkdetour* CNetChan__ProcessPacket = {};
 
@@ -424,6 +266,7 @@ void mbrcallconv CNetChan__ProcessPacket_CB(CNetChan__ProcessPacket_vars)
         CNetChan__ProcessPacket_origfunc;
         return;
     }
+    thePlayers[client].basePlayerParent = bPlayer;
 
     uint64_t start  = nanos();
 
@@ -438,34 +281,38 @@ void mbrcallconv CNetChan__ProcessPacket_CB(CNetChan__ProcessPacket_vars)
 
     if (spew_procpacket)
     {
-        Warning("time = %fms lasttick=%i thistick=%i\n", proctime_ms, bPlayer->m_iLastProcessPacketTick, bPlayer->m_iThisProcessPacketTick);
+        Warning("time = %fms lasttick=%i thistick=%i\n",
+            proctime_ms,
+            thePlayers[client].m_iLastProcessPacketTick,
+            thePlayers[client].m_iThisProcessPacketTick
+        );
     }
 
-    bPlayer->m_iLastProcessPacketTick = bPlayer->m_iThisProcessPacketTick;
-    bPlayer->m_iThisProcessPacketTick = gpGlobals->tickcount;
+    thePlayers[client].m_iLastProcessPacketTick = thePlayers[client].m_iThisProcessPacketTick;
+    thePlayers[client].m_iThisProcessPacketTick = gpGlobals->tickcount;
 
     int delta = 0;
     // 1 or more ticks ahead
-    if (bPlayer->m_iThisProcessPacketTick > bPlayer->m_iLastProcessPacketTick)
+    if (thePlayers[client].m_iThisProcessPacketTick > thePlayers[client].m_iLastProcessPacketTick)
     {
-        delta = bPlayer->m_iThisProcessPacketTick - bPlayer->m_iLastProcessPacketTick;
+        delta = thePlayers[client].m_iThisProcessPacketTick - thePlayers[client].m_iLastProcessPacketTick;
         // scale our processing time by the delta
-        bPlayer->m_dflProcessPacketTime = (proctime_ms * (1.0/delta));
+        thePlayers[client].m_dflProcessPacketTime = (proctime_ms * (1.0/delta));
 
         if (spew_procpacket)
         {
-            Warning("ahead. delta %i, proctime = %f\n", delta, bPlayer->m_dflProcessPacketTime);
+            Warning("ahead. delta %i, proctime = %f\n", delta, thePlayers[client].m_dflProcessPacketTime);
         }
     }
     // same tick (monkaS)
-    else if (bPlayer->m_iThisProcessPacketTick == bPlayer->m_iLastProcessPacketTick)
+    else if (thePlayers[client].m_iThisProcessPacketTick == thePlayers[client].m_iLastProcessPacketTick)
     {
         // scale our processing time by adding each "same tick" time to our running total
-        bPlayer->m_dflProcessPacketTime += proctime_ms;
+        thePlayers[client].m_dflProcessPacketTime += proctime_ms;
     
         if (spew_procpacket)
         {
-            Warning("same. delta = %i, proctime = %f\n", 0, bPlayer->m_dflProcessPacketTime);
+            Warning("same. delta = %i, proctime = %f\n", 0, thePlayers[client].m_dflProcessPacketTime);
         }
     }
     // something has gone bad
@@ -478,11 +325,12 @@ void mbrcallconv CNetChan__ProcessPacket_CB(CNetChan__ProcessPacket_vars)
         return;
     }
 
-    if (bPlayer->m_dflProcessPacketTime >= max_proc_time)
+    if (thePlayers[client].m_dflProcessPacketTime >= max_proc_time)
     {
         //if (spew_procpacket)
         //{
-        Warning("Client %s exceeded processing time. (Theirs) %.2fms >= %.2fms (Max)\n", bPlayer->GetPlayerName(), bPlayer->m_dflProcessPacketTime, max_proc_time);
+        Warning("Client %s exceeded processing time. (Theirs) %.2fms >= %.2fms (Max)\n",
+            bPlayer->GetPlayerName(), thePlayers[client].m_dflProcessPacketTime, max_proc_time);
         //}
 
         // could maybe be abused if clients send a CHONKY packet and then immediately dc?
@@ -722,11 +570,11 @@ uintptr_t* mbrcallconv CBaseServer__ConnectClient_CB(CBaseServer__ConnectClient_
         return nullptr;
     }
 
-    void* pvTicket      = (void*)((intptr_t)clcookie + sizeof(uint64));
-    int cbTicket        = callbackcookie - sizeof(uint64);
+    // void* pvTicket      = (void*)((intptr_t)clcookie + sizeof(uint64));
+    // int cbTicket        = callbackcookie - sizeof(uint64);
 
-    Warning("pvticket = %p\n", pvTicket);
-    Warning("cbTicket = %i\n", cbTicket);
+    // Warning("pvticket = %p\n", pvTicket);
+    // Warning("cbTicket = %i\n", cbTicket);
     /*
     Aggrevating nonsense with anonymous servers not being able to call steamgameserverapi funcs? 
     will eventually fuck around with it in steam helpers but right now i dont care
@@ -781,7 +629,7 @@ Signature for _ZN17CGameEventManager13RegisterEventEP9KeyValues:
 
 
 
-void CEngineDetours::PostInit()
+CEngineDetours::CEngineDetours()
 {
     // ONLY run these on dedis!
     if (engine->IsDedicatedServer())
@@ -791,8 +639,6 @@ void CEngineDetours::PostInit()
         CBaseServer__ConnectClient_Init();
     }
 }
-
-
 
 // client detours
 #elif defined(CLIENT_DLL)
@@ -929,11 +775,11 @@ void mbrcallconv CNetChan__Shutdown_CB(CNetChan__Shutdown_vars)
     // no cvar, sorry
     engine->ClientCmd_Unrestricted("flush_map_overrides\n");
 
-    if (cvar->FindVar("cl_flush_downloads_on_dc")->GetBool())
+    if (cvar->FindVar("cl_auto_flush_downloads")->GetBool())
     {
         engine->ClientCmd_Unrestricted("flush_dls\n");
     }
-    else if (cvar->FindVar("cl_flush_sprays_on_dc")->GetBool())
+    else if (cvar->FindVar("cl_auto_flush_sprays")->GetBool())
     {
         engine->ClientCmd_Unrestricted("flush_sprays\n");
     }
@@ -969,18 +815,89 @@ void CNetChan__Shutdown_Init()
 
 
 
+#ifdef _WIN32
+#include <Windows.h>
+void win32_HARDENING() {
+    /*
+        DWORD ProhibitDynamicCode : 1;
+        DWORD AllowThreadOptOut : 1;
+        DWORD AllowRemoteDowngrade : 1;
+        DWORD AuditProhibitDynamicCode : 1;
+        DWORD ReservedFlags : 28;
+    */
+    PROCESS_MITIGATION_DYNAMIC_CODE_POLICY dynCode;
+    dynCode.ProhibitDynamicCode             = 1;
+    dynCode.AllowThreadOptOut               = 0;
+    dynCode.AllowRemoteDowngrade            = 0;
+    dynCode.AuditProhibitDynamicCode        = 0;
+    dynCode.ReservedFlags                   = 0;
+
+    if (!SetProcessMitigationPolicy(ProcessDynamicCodePolicy, &dynCode, sizeof(dynCode)))
+    {
+    }
+
+    PROCESS_MITIGATION_CONTROL_FLOW_GUARD_POLICY cfGuard;
+    cfGuard.EnableControlFlowGuard      = 1;
+    cfGuard.EnableExportSuppression     = 0;
+    cfGuard.StrictMode                  = 1;
+    cfGuard.ReservedFlags               = 0;
+
+    if (!SetProcessMitigationPolicy(ProcessControlFlowGuardPolicy, &cfGuard, sizeof(cfGuard)))
+    {
+    }
+
+    PROCESS_MITIGATION_EXTENSION_POINT_DISABLE_POLICY exPtDisable;
+    exPtDisable.DisableExtensionPoints  = 1;
+    exPtDisable.ReservedFlags           = 0;
+
+    if (!SetProcessMitigationPolicy(ProcessExtensionPointDisablePolicy, &exPtDisable, sizeof(exPtDisable)))
+    {
+    }
+
+    PROCESS_MITIGATION_ASLR_POLICY aslr;
+    memset(&aslr, 0, sizeof(aslr));
+    aslr.EnableBottomUpRandomization     = 1;
+    aslr.EnableForceRelocateImages       = 1;
+    aslr.EnableHighEntropy               = 1;
+    aslr.DisallowStrippedImages          = 1;
+    aslr.ReservedFlags                   = 0;
+
+    if (!SetProcessMitigationPolicy(ProcessASLRPolicy, &aslr, sizeof(aslr)))
+    {
+        Warning("-> Failed ASLR");
+    }
+
+    if (!SetProcessDEPPolicy(PROCESS_DEP_ENABLE | PROCESS_DEP_DISABLE_ATL_THUNK_EMULATION))
+    {
+    }
+}
+#endif
 
 
-
-void CEngineDetours::PostInit()
+CEngineDetours::CEngineDetours()
 {
     CClientState__FullConnect_Init();
     CNetChan__Shutdown_Init();
+
 #ifdef _WIN32
-    protection_up();
+    win32_HARDENING();
 #endif
 }
 #endif // client
 
-
+// dtors
+void CEngineDetours::Shutdown()
+{
+#ifdef CLIENT_DLL
+    delete CClientState__FullConnect;
+    delete CNetChan__Shutdown;
+#else
+    if (engine->IsDedicatedServer())
+    {
+        delete CNetChan__ProcessPacket;
+        delete CBaseServer__RejectConnection;
+        delete CBaseServer__ConnectClient;
+    }
+#endif
+}
 #endif

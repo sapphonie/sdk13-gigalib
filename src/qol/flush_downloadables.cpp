@@ -1,6 +1,13 @@
 #include <cbase.h>
 
 #if defined (CLIENT_DLL) && defined(ENGINE_DETOURS)
+class flushDLS : public CAutoGameSystem
+{
+public:
+	flushDLS();
+	bool Init() override;
+	void PostInit() override;
+};
 
 #include <filesystem.h>
 
@@ -34,7 +41,7 @@ void FlushContent(FLUSH_CUSTOM_CONTENT FLUSH)
 
 	if (FLUSH != FLUSH_MAP_OVERRIDES)
 	{
-		// set in sentry initialization. probably should move that someday
+		// set in memy init. probably should move that someday
 		ConVar* _modpath = cvar->FindVar("_modpath");
 		if (!_modpath)
 		{
@@ -153,20 +160,20 @@ void CC_FlushMapOverrides(const CCommand& args)
 static ConCommand flush_map_overrides("flush_map_overrides", CC_FlushMapOverrides,
 	"Delete all downloaded overrides for maps, including particles, soundscripts, and item schemas."
 	"This does not delete maps with packed content, only \"bare\" .txt files."
-	"This command is automatically run every time the client disconnects from a server.\n", FCVAR_NONE);
+	"This command is automatically run every time the client disconnects from a server, and on game boot.\n", FCVAR_NONE);
 
 void CC_FlushSprays(const CCommand& args)
 {
 	FlushContent(FLUSH_SPRAYS);
 }
-ConVar tf2c_flush_sprays_on_dc("cl_flush_sprays_on_dc", "1", FCVAR_ARCHIVE, "Flush all sprays on client disconnect.\n");
+ConVar cl_auto_flush_sprays("cl_auto_flush_sprays", "1", FCVAR_ARCHIVE, "Flush all sprays on client disconnect, and on game boot.\n");
 static ConCommand flush_sprays("flush_sprays", CC_FlushSprays, "Delete all downloaded client sprays.\n", FCVAR_NONE);
 
 void CC_FlushDLs(const CCommand& args)
 {
 	FlushContent(FLUSH_ALL);
 }
-ConVar tf2c_flush_downloads_on_dc("cl_flush_downloads_on_dc", "0", FCVAR_ARCHIVE, "Flush all downloaded files on client disconnect.\n");
+ConVar cl_auto_flush_downloads("cl_auto_flush_downloads", "0", FCVAR_ARCHIVE, "Flush all downloaded files on client disconnect, and on game boot.\n");
 static ConCommand flush_dls("flush_dls", CC_FlushDLs, "Delete all third party custom content downloaded from servers. This is irreversible!\n", FCVAR_NONE);
 
 #if 0
@@ -396,5 +403,28 @@ void CheckDLValidity()
 static ConCommand verify_dls("verify_dls", CheckDLValidity, "Verify integrity of files downloaded from community servers.\n", FCVAR_NONE);
 #endif
 
+static flushDLS g_flushDLS;
+flushDLS::flushDLS() : CAutoGameSystem("flushDLS")
+{
+}
+bool flushDLS::Init()
+{
+	return true;
+}
+
+void flushDLS::PostInit()
+{
+	// we want to do this asap... but we need to wait on memy...
+	FlushContent(FLUSH_MAP_OVERRIDES);
+
+	if (cvar->FindVar("cl_auto_flush_downloads")->GetBool())
+	{
+		engine->ClientCmd_Unrestricted("flush_dls\n");
+	}
+	else if (cvar->FindVar("cl_auto_flush_sprays")->GetBool())
+	{
+		engine->ClientCmd_Unrestricted("flush_sprays\n");
+	}
+}
 // </sappho>
 #endif

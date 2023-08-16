@@ -4,15 +4,15 @@
 #include <helpers/steam_helpers.h>
 
 
-
+#include <string>
+#include <sstream>
 
 #ifdef _WIN32
 #include <icommandline.h>
 #include <Windows.h>
-void restartWithFixedCmdline()
+
+void restartWithFixedCmdline(std::stringstream &newCmdLine)
 {
-    const char* cmdline = CommandLine()->GetCmdLine();
-    DevMsg(2, "%s\n", cmdline);
 
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
@@ -23,48 +23,54 @@ void restartWithFixedCmdline()
 
     // Start the child process. 
     if
+    (
+        !CreateProcess
         (
-            !CreateProcess
-            (
-                NULL,				// No module name (use command line)
-                (LPSTR)cmdline,		// Command line
-                NULL,				// Process handle not inheritable
-                NULL,				// Thread handle not inheritable
-                FALSE,				// Set handle inheritance to FALSE
-                0,					// No creation flags
-                NULL,				// Use parent's environment block
-                NULL,				// Use parent's starting directory 
-                &si,				// Pointer to STARTUPINFO structure
-                &pi					// Pointer to PROCESS_INFORMATION structure
-            )
-            )
+            nullptr,                            // No module name (use command line)
+            (LPSTR)newCmdLine.str().c_str(),    // Command line
+            nullptr,				            // Process handle not inheritable
+            nullptr,				            // Thread handle not inheritable
+            FALSE,				                // Set handle inheritance to FALSE
+            0,					                // No creation flags
+            nullptr,				            // Use parent's environment block
+            nullptr,				            // Use parent's starting directory 
+            &si,				                // Pointer to STARTUPINFO structure
+            &pi					                // Pointer to PROCESS_INFORMATION structure
+        )
+    )
     {
-        Warning("CreateProcess failed (%d).\n", GetLastError());
+        Warning("CreateProcess failed, Steam overlay probably won't work! Error: %i.\n", GetLastError());
         return;
     }
-
-
-    exit(0);
+     
+    abort();
 }
-
 
 
 void rmSourceTest()
 {
-    if (V_stristr(GetCommandLineA(), "sourcetest"))
+    const char* Win32CmdLine = GetCommandLineA();
+    std::string StrWin32CmdLine(Win32CmdLine);
+    if (V_stristr(Win32CmdLine, "hijack"))
     {
-        CommandLine()->RemoveParm("-game sourcetest");
-        CommandLine()->AppendParm("-novid",         "");
-        CommandLine()->AppendParm("-multirun", "");
-#ifdef SDKSENTRY
-        //CommandLine()->AppendParm("-nobreakpad", "");
-#endif
+        return;
+    }
+    if (V_stristr(Win32CmdLine, "norelaunch"))
+    {
+        return;
+    }
+    if (V_stristr(Win32CmdLine, "sourcetest"))
+    {
+        UTIL_ReplaceAll(StrWin32CmdLine, "-game sourcetest", "");
+        std::stringstream newCmdLine;
+        newCmdLine << StrWin32CmdLine << " " << "-novid -multirun";
+
         Sleep(1);
-        restartWithFixedCmdline();
+        restartWithFixedCmdline(newCmdLine);
+        return;
     }
 }
 #endif // WIN32
-
 
 // run our ctor
 CSteamHelpers g_SteamHelpers;

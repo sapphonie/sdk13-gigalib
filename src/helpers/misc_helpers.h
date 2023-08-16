@@ -26,8 +26,6 @@
 #include <eiface.h>
 #include <cdll_int.h>
 
-
-
 #ifdef CLIENT_DLL
 #include <cdll_client_int.h>
 #include <icommandline.h>

@@ -8,13 +8,14 @@
 #endif
 #include <cbase.h>
 // You probably do not need this
-#define dbging yep //////////
+// #define dbging yep
 
-#ifdef BIN_PATCHES
+
+#if defined (BIN_PATCHES) && defined(ENGINE_DETOURS)
+#include <engine_detours.h>
 
 #include "tier0/valve_minmax_off.h"
 #include <engine_hacks/bin_patch.h>
-
 #include "tier0/valve_minmax_on.h"
 
 #ifdef dbging
@@ -43,7 +44,7 @@ CBinary::CBinary() : CAutoGameSystem("")
 // FOR THE RECORD THIS IS SDK2013 BINS NOT TF2 ONES
 //
 // -sappho
-CBinPatch g_EnginePatches[] =
+CBinPatch g_EnginePatches[] = 
 {
     #ifdef _WIN32
         #ifdef GAME_DLL
@@ -271,6 +272,10 @@ void CBinary::PostInit()
         #endif
 
     #endif
+
+    // now run engine detours
+    gCEngineDetours = new CEngineDetours;
+
     return;
 }
 
@@ -323,15 +328,20 @@ bool CBinPatch::ApplyPatch(modbin* mbin)
 
     if (addr)
     {
-        auto pMemory = m_bImmediate ? (uintptr_t*)addr : *reinterpret_cast<uintptr_t**>(addr);
+        void* pMemory = m_bImmediate ? (uintptr_t*)addr : *reinterpret_cast<uintptr_t**>(addr);
 
         // Memory is write-protected so it needs to be lifted before the patch is applied
-        if (memy::SetMemoryProtection(pMemory, m_iPatchLength, MEM_READ | MEM_WRITE | MEM_EXEC))
+        int prot = NULL;
+        if (memy::SetMemoryProtection(pMemory, m_iPatchLength, MEM_READ | MEM_WRITE | MEM_EXEC, &prot))
         {
-            V_memcpy(pMemory, m_pPatch, m_iPatchLength);
+            V_memcpy(pMemory, m_pPatch.get(), m_iPatchLength);
 
-            memy::SetMemoryProtection(pMemory, m_iPatchLength, MEM_READ | MEM_EXEC);
-
+            int _ = {};
+#ifdef _WIN32
+            memy::SetMemoryProtection(pMemory, m_iPatchLength, prot, &_);
+#else
+            memy::SetMemoryProtection(pMemory, m_iPatchLength, MEM_READ | MEM_EXEC, &_);
+#endif
             // Success!
             return true;
         }
@@ -340,6 +350,7 @@ bool CBinPatch::ApplyPatch(modbin* mbin)
             #ifdef dbging
                 Warning("CBinPatch::ApplyPatch -> Couldn't override mem protection for pattern %s, size %i, offs %i\n", m_pSignature, m_iSize, m_iOffset);
             #endif
+
             return false;
         }
     }
@@ -363,24 +374,28 @@ CBinPatch::CBinPatch(char* signature, size_t sigsize, size_t offset, bool immedi
     m_iPatchLength  = 0;
 }
 
+CBinPatch::~CBinPatch()
+{
+}
+
+
 // Converting numeric types into bytes
-// Wait, isn't this new a memory leak?
-// -sappho
 CBinPatch:: CBinPatch(char* signature, size_t sigsize, size_t offset, bool immediate, int value)
     :       CBinPatch(signature, sigsize, offset, immediate)
 {
     m_iPatchLength = sizeof(value);
-    m_pPatch = new char[m_iPatchLength];
-    Q_memcpy(m_pPatch, &value, m_iPatchLength);
+    m_pPatch = std::make_unique<char>( m_iPatchLength );
+    memcpy(m_pPatch.get(), &value, m_iPatchLength);
 }
 
 CBinPatch:: CBinPatch(char* signature, size_t sigsize, size_t offset, bool immediate, float value)
     :       CBinPatch(signature, sigsize, offset, immediate)
 {
     m_iPatchLength = sizeof(value);
-    m_pPatch = new char[m_iPatchLength];
-    Q_memcpy(m_pPatch, &value, m_iPatchLength);
+    m_pPatch = std::make_unique<char>(m_iPatchLength);
+    memcpy(m_pPatch.get(), &value, m_iPatchLength);
 }
+
 
 // BUGBUG!!!!
 // SIZEOF ISN'T CORRECT IF YOU HAVE NULL BYTES IN THE PATCH??
@@ -388,6 +403,8 @@ CBinPatch:: CBinPatch(char* signature, size_t sigsize, size_t offset, bool immed
     :       CBinPatch(signature, sigsize, offset, immediate)
 {
     m_iPatchLength = strlen(bytes);
+    m_pPatch = std::make_unique<char>(m_iPatchLength);
+    memcpy(m_pPatch.get(), bytes, m_iPatchLength);
 
     #ifdef dbging
         char hexstr[128] = {};
@@ -401,7 +418,5 @@ CBinPatch:: CBinPatch(char* signature, size_t sigsize, size_t offset, bool immed
 
         Warning("patchlen %s = %i / %i \n", hexstr, sizeof(bytes), strlen(bytes));
     #endif
-
-    m_pPatch = bytes;
 }
 #endif

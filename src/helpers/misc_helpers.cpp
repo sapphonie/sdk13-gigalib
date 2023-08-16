@@ -2,7 +2,11 @@
 
 
 #include <helpers/misc_helpers.h>
-ConVar _sdkpath("_sdkpath", "", FCVAR_HIDDEN);
+#ifdef GAME_DLL
+ConVar _sdkpath("_sdkpath_srv", "", FCVAR_HIDDEN | FCVAR_GAMEDLL);
+#else
+ConVar _sdkpath("_sdkpath_cli", "", FCVAR_HIDDEN | FCVAR_CLIENTDLL);
+#endif
 
 #ifdef CLIENT_DLL
 ConVar _modpath("_modpath", "", FCVAR_HIDDEN);
