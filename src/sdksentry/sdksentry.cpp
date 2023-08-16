@@ -1,11 +1,7 @@
 #include <cbase.h>
 
 #if defined(CLIENT_DLL) && defined(SDKCURL) && defined(SDKSENTRY)
-
-#include "tier0/valve_minmax_off.h"
-#include <sstream>
-#include <string>
-#include "tier0/valve_minmax_on.h"
+#include <misc_helpers.h>
 #include <sdkCURL/sdkCURL.h>
 #include <sdksentry/sdksentry.h>
 
