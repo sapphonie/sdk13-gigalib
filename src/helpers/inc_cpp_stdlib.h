@@ -14,6 +14,7 @@
 	#undef max
 #endif
 
+#include <memdbgoff.h>
 
 
 #include <chrono>
@@ -41,6 +42,8 @@
 	#define offsetof(s,m)	(size_t)&(((s *)0)->m)
 #endif
 
+
+#include <memdbgon.h>
 
 
 #endif
