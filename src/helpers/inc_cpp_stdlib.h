@@ -22,6 +22,7 @@
 #include <sstream>
 #include <memory>
 #include <algorithm>
+#include <thread>
 
 #ifndef min
 	#define min(a,b)  (((a) < (b)) ? (a) : (b))
