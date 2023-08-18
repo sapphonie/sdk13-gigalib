@@ -1,4 +1,5 @@
 #pragma once
+const char* const Engine_GetSpew();
 
 #ifdef GAME_DLL
 int UTIL_GetSignonState(CBasePlayer* basePlayer);

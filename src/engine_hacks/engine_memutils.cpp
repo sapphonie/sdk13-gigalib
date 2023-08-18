@@ -2,6 +2,28 @@
 
 
 #include <engine_memutils.h>
+#include <memytools.h>
+
+
+typedef void GetSpew(char* buffer, unsigned int length);
+// max 256kb
+char spewBuffer[256000] = {};
+
+// return is a ptr to the 256kb const static spew buffer. you do not need to and should not free it or delete it
+const char* const Engine_GetSpew()
+{
+	//Signature for GetSpew_sub_101FC3A0:
+	//55 8B EC 53 FF 15 ? ? ? ? 8B D0 BB ? ? ? ? 3B 15 ? ? ? ? 74 ? 8B CA 33 C0 F0 0F B1 0B 85 C0 74 ? F3 90 6A 00 52 8B CB FF 15 ? ? ? ? EB ? FF 05 ? ? ? ? 0F B7 05 ? ? ? ?
+	//
+	static constexpr const char*	pattern				= "\x55\x8B\xEC\x53\xFF\x15\x2A\x2A\x2A\x2A\x8B\xD0\xBB\x2A\x2A\x2A\x2A\x3B\x15\x2A\x2A\x2A\x2A\x74\x2A\x8B\xCA\x33\xC0\xF0\x0F\xB1\x0B\x85\xC0\x74\x2A\xF3\x90\x6A\x00\x52\x8B\xCB\xFF\x15\x2A\x2A\x2A\x2A\xEB\x2A\xFF\x05\x2A\x2A\x2A\x2A\x0F\xB7\x05\x2A\x2A\x2A\x2A";
+	static const uintptr_t			GetSpewPtr			= memy::FindPattern(engine_bin, pattern, 65, 0);
+	static							GetSpew* SpewFunc	= (GetSpew*)GetSpewPtr;
+
+	memset(spewBuffer, 0x0, sizeof(spewBuffer));
+	SpewFunc(spewBuffer, sizeof(spewBuffer));
+	return spewBuffer;
+}
+
 #ifdef GAME_DLL
 #include <iclient.h>
 #include <inetchannel.h>
