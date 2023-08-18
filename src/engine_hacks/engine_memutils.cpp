@@ -12,7 +12,7 @@ char spewBuffer[256000] = {};
 // return is a ptr to the 256kb const static spew buffer. you do not need to and should not free it or delete it
 const char* const Engine_GetSpew()
 {
-	/*								v-- unique string -------------v
+	/*                              v-- unique string -------------v
 		sub_10246FC0(Destination, "\nConsole History (reversed)\n\n", 95000, -1);
 		v16 = strlen(Destination);
 		if (v16 < 0x17318)
@@ -25,26 +25,26 @@ const char* const Engine_GetSpew()
 #ifdef _WIN32
 	//Signature for GetSpew_sub_101FC3A0:
 	//55 8B EC 53 FF 15 ? ? ? ? 8B D0 BB ? ? ? ? 3B 15 ? ? ? ? 74 ? 8B CA 33 C0 F0 0F B1 0B 85 C0 74 ? F3 90 6A 00 52 8B CB FF 15 ? ? ? ? EB ? FF 05 ? ? ? ? 0F B7 05 ? ? ? ?
-	static constexpr const char*	pattern		= "\x55\x8B\xEC\x53\xFF\x15\x2A\x2A\x2A\x2A\x8B\xD0\xBB\x2A\x2A\x2A\x2A\x3B\x15\x2A\x2A\x2A\x2A\x74\x2A\x8B\xCA\x33\xC0\xF0\x0F\xB1\x0B\x85\xC0\x74\x2A\xF3\x90\x6A\x00\x52\x8B\xCB\xFF\x15\x2A\x2A\x2A\x2A\xEB\x2A\xFF\x05\x2A\x2A\x2A\x2A\x0F\xB7\x05\x2A\x2A\x2A\x2A";
-	static constexpr size_t			patternSize = 65;
+	static constexpr const char* pattern = "\x55\x8B\xEC\x53\xFF\x15\x2A\x2A\x2A\x2A\x8B\xD0\xBB\x2A\x2A\x2A\x2A\x3B\x15\x2A\x2A\x2A\x2A\x74\x2A\x8B\xCA\x33\xC0\xF0\x0F\xB1\x0B\x85\xC0\x74\x2A\xF3\x90\x6A\x00\x52\x8B\xCB\xFF\x15\x2A\x2A\x2A\x2A\xEB\x2A\xFF\x05\x2A\x2A\x2A\x2A\x0F\xB7\x05\x2A\x2A\x2A\x2A";
+	static constexpr size_t         patternSize = 65;
 #else // LINUX
 
 	// for now these sigs are the same
 	// -sappho
 //#ifdef GAME_DLL
-//	// Signature for _Z7GetSpewPcj:
-//	// 55 89 E5 57 56 53 83 EC 2C 8B 7D 08 8B 75 0C E8 ? ? ? ?
-//	static constexpr const char*	pattern		= "\x55\x89\xE5\x57\x56\x53\x83\xEC\x2C\x8B\x7D\x08\x8B\x75\x0C\xE8\x2A\x2A\x2A\x2A";
-//	static constexpr size_t			patternSize = 20;
+//  // Signature for _Z7GetSpewPcj:
+//  // 55 89 E5 57 56 53 83 EC 2C 8B 7D 08 8B 75 0C E8 ? ? ? ?
+//  static constexpr const char*    pattern     = "\x55\x89\xE5\x57\x56\x53\x83\xEC\x2C\x8B\x7D\x08\x8B\x75\x0C\xE8\x2A\x2A\x2A\x2A";
+//  static constexpr size_t         patternSize = 20;
 //#else
 	// Signature for sub_5742E0:
 	// 55 89 E5 57 56 53 83 EC 2C 8B 7D 08 8B 75 0C E8 ? ? ? ?
-	static constexpr const char*	pattern		= "\x55\x89\xE5\x57\x56\x53\x83\xEC\x2C\x8B\x7D\x08\x8B\x75\x0C\xE8\x2A\x2A\x2A\x2A";
-	static constexpr size_t			patternSize = 20;		
+	static constexpr const char* pattern = "\x55\x89\xE5\x57\x56\x53\x83\xEC\x2C\x8B\x7D\x08\x8B\x75\x0C\xE8\x2A\x2A\x2A\x2A";
+	static constexpr size_t         patternSize = 20;
 #endif
 
-	static const uintptr_t			GetSpewPtr			= memy::FindPattern(engine_bin, pattern, patternSize, 0);
-	static							GetSpew* SpewFunc	= (GetSpew*)GetSpewPtr;
+	static const uintptr_t          GetSpewPtr = memy::FindPattern(engine_bin, pattern, patternSize, 0);
+	static                          GetSpew* SpewFunc = (GetSpew*)GetSpewPtr;
 
 	memset(spewBuffer, 0x0, sizeof(spewBuffer));
 	SpewFunc(spewBuffer, sizeof(spewBuffer));
