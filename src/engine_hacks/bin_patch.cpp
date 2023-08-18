@@ -10,13 +10,10 @@
 // You probably do not need this
 // #define dbging yep
 
-
 #if defined (BIN_PATCHES) && defined(ENGINE_DETOURS)
-#include <engine_detours.h>
-
-#include "tier0/valve_minmax_off.h"
 #include <engine_hacks/bin_patch.h>
-#include "tier0/valve_minmax_on.h"
+#include <engine_hacks/engine_detours.h>
+CEngineDetours* gCEngineDetours = nullptr;
 
 #ifdef dbging
     #define goodcolor   Color(90, 240, 90, 255) // green

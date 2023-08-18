@@ -121,6 +121,6 @@ public:
 
 };
 
-CEngineDetours* gCEngineDetours = nullptr;
+extern CEngineDetours* gCEngineDetours;
 
 #endif

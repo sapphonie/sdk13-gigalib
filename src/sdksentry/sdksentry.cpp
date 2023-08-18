@@ -1,7 +1,7 @@
 #include <cbase.h>
 
 #if defined(CLIENT_DLL) && defined(SDKCURL) && defined(SDKSENTRY)
-
+#include <misc_helpers.h>
 #include <sdkCURL/sdkCURL.h>
 #include <sdksentry/sdksentry.h>
 #include <engine_memutils.h>
@@ -132,22 +132,11 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
 
     const char* const spew = Engine_GetSpew();
 
-
     std::ofstream confile;
     confile.open(g_Sentry.sentry_conlog.str());
-    confile << "test";
-
-
-    //sentry_value_t          consoleSpew = sentry_value_new_object();
-    //sentry_value_set_by_key(event, "spew", sentry_value_new_string(spew));
-    //sentry_set_context("spew", event);
-
-
-    sentry_value_t character = sentry_value_new_object();
-    //sentry_value_set_by_key(character, "name", sentry_value_new_string("Mighty Fighter"));
-   // sentry_value_set_by_key(character, "age", sentry_value_new_int32(19));
-    sentry_value_set_by_key(character, "attack_type", sentry_value_new_string(spew));
-    sentry_set_context("character 1", character);
+    confile << spew;
+    confile.flush();
+    confile.close();
 
     sentry_flush(9999);
     sentry_close();
@@ -218,8 +207,9 @@ void CSentry::SentryInit()
     //sentry_reinstall_backend();
 
     sentry_conlog = {};
-    sentry_conlog << sentry_db.str() << "con.log";
+    sentry_conlog << sentry_db.str() << CORRECT_PATH_SEPARATOR << "last_crash_console_log.txt";
     sentry_options_add_attachment(options, sentry_conlog.str().c_str());
+ 
 /*
     char inventorypath[MAX_PATH] = {};
     V_snprintf(inventorypath, MAX_PATH, "%stf_inventory.txt", last_element);

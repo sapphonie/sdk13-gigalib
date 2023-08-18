@@ -4,6 +4,7 @@
 #ifdef _WIN32
 #pragma once
 #endif
+
 #include <cbase.h>
 
 // If you use $QUOTE in VPCs, linux needs stringified to get the value as a string, windows does not
@@ -14,6 +15,9 @@
 	#define VPC_QUOTE_STRINGIFY(x) V_STRINGIFY(x)
 #endif
 
+
+#include <inc_cpp_stdlib.h>
+
 #include <obfuscate.h>
 #include <vtf/vtf.h>
 #include <netadr.h>
@@ -21,13 +25,6 @@
 #include <inetchannel.h>
 #include <eiface.h>
 #include <cdll_int.h>
-#include <valve_minmax_off.h>
-#include <chrono>
-#include <memory>
-#include <vector>
-#include <string>
-#include <algorithm>
-#include <valve_minmax_on.h>
 
 #ifdef CLIENT_DLL
 #include <cdll_client_int.h>
