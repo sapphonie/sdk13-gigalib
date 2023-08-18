@@ -57,6 +57,8 @@ public:
     static sentry_value_t nowCTX;
     static const char*    nowFUNC;
 
+    std::stringstream   sentry_conlog;
+
     void                SentryURLCB(const curlResponse* curlRepsonseStruct);
 };
 

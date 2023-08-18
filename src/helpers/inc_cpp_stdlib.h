@@ -24,6 +24,8 @@
 #include <memory>
 #include <algorithm>
 #include <thread>
+#include <fstream>
+#include <filesystem>
 
 #ifndef min
 	#define min(a,b)  (((a) < (b)) ? (a) : (b))

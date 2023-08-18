@@ -4,7 +4,7 @@
 #include <misc_helpers.h>
 #include <sdkCURL/sdkCURL.h>
 #include <sdksentry/sdksentry.h>
-
+#include <engine_memutils.h>
 CSentry g_Sentry;
 
 CSentry::CSentry()
@@ -92,6 +92,7 @@ void CSentry::Shutdown()
 // DO NOT THREAD THIS OR ANY FUNCTIONS CALLED BY IT UNDER ANY CIRCUMSTANCES
 sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t event, void* closure)
 {
+    SentrySetTags();
     sentry_flush(9999);
 
     #ifndef _WIN32
@@ -129,9 +130,17 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
         return sentry_value_new_null();
     }
 
-    sentry_flush(9999);
+    const char* const spew = Engine_GetSpew();
 
-    // sentry_close();
+    std::ofstream confile;
+    confile.open(g_Sentry.sentry_conlog.str());
+    confile << spew;
+    confile.flush();
+    confile.close();
+
+    sentry_flush(9999);
+    sentry_close();
+    //abort();
     return event;
 }
 
@@ -166,13 +175,13 @@ void CSentry::SentryInit()
     std::stringstream crash_exe;
     crash_exe << modpath_ss << CORRECT_PATH_SEPARATOR << "bin" << CORRECT_PATH_SEPARATOR << "crashpad_handler.exe";
 #endif
-    // location of the sentry workdir (we're just gonna stick it in mod dir/cache)
+    // location of the sentry workdir (we're just gonna stick it in mod dir/cache/sentry)
     std::stringstream sentry_db;
-    sentry_db << modpath_ss << CORRECT_PATH_SEPARATOR << "cache";
+    sentry_db << modpath_ss << CORRECT_PATH_SEPARATOR << "cache" << CORRECT_PATH_SEPARATOR << "sentry";
 
     // Suprisingly, this just works to disable built in Valve crash stuff for linux
-    CommandLine()->AppendParm("-nominidumps", "");
-    CommandLine()->AppendParm("-nobreakpad", "");
+    CommandLine()->AppendParm("-nominidumps",   "");
+    CommandLine()->AppendParm("-nobreakpad",    "");
 #ifdef _WIN32
     EnableCrashingOnCrashes();
 #endif
@@ -197,8 +206,11 @@ void CSentry::SentryInit()
 
     //sentry_reinstall_backend();
 
-    /*
-    // attachments !!
+    sentry_conlog = {};
+    sentry_conlog << sentry_db.str() << CORRECT_PATH_SEPARATOR << "last_crash_console_log.txt";
+    sentry_options_add_attachment(options, sentry_conlog.str().c_str());
+ 
+/*
     char inventorypath[MAX_PATH] = {};
     V_snprintf(inventorypath, MAX_PATH, "%stf_inventory.txt", last_element);
     sentry_options_add_attachment(options, inventorypath);
@@ -405,6 +417,8 @@ void _SentryEventThreaded(const char* level, const char* logger, const char* mes
 const std::vector<std::string> cvarList =
 {
     "mat_dxlevel",
+    "host_timescale",
+    "sv_cheats",
 };
 
 
