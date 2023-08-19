@@ -298,7 +298,7 @@ bool memy::SetMemoryProtection(void* addr, size_t protlen, int wantprot, int* ol
     return !!(VirtualProtect(addr, protlen, prot, (PDWORD)oldprotection));
 #else
     // POSIX - i do not care enough to scrape proc self maps again just for every instance of this operation
-    return !!mprotect(LALIGN(addr), protlen + LALDIF(addr), wantprot);
+    return !(mprotect(LALIGN(addr), protlen + LALDIF(addr), wantprot));
 #endif
 }
 
