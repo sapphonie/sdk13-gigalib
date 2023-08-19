@@ -8,7 +8,7 @@
 #endif
 #include <cbase.h>
 // You probably do not need this
-// #define dbging yep
+#define dbging yep
 
 #if defined (BIN_PATCHES) && defined(ENGINE_DETOURS)
 #include <engine_hacks/bin_patch.h>
@@ -333,7 +333,7 @@ bool CBinPatch::ApplyPatch(modbin* mbin)
         {
             V_memcpy(pMemory, m_pPatch.get(), m_iPatchLength);
 
-            int _ = {};
+            int _ = 0;
 #ifdef _WIN32
             memy::SetMemoryProtection(pMemory, m_iPatchLength, prot, &_);
 #else
