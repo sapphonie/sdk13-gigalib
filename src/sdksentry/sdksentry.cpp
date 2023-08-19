@@ -84,6 +84,7 @@ void CSentry::Shutdown()
 #ifndef _WIN32
     didshutdown = true;
 #endif
+    LevelBreadcrumbs(__FUNCTION__);
 }
 
 #ifndef _WIN32
@@ -92,8 +93,9 @@ void CSentry::Shutdown()
 // DO NOT THREAD THIS OR ANY FUNCTIONS CALLED BY IT UNDER ANY CIRCUMSTANCES
 sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t event, void* closure)
 {
+    Assert(0);
     SentrySetTags();
-    sentry_flush(9999);
+    sentry_flush(1000);
 
     #ifndef _WIN32
     if (g_Sentry.didshutdown)
@@ -115,14 +117,11 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
 
 
 #ifdef _WIN32
-    MessageBoxA(NULL, crashdialogue, crashtitle, MB_OK | MB_SETFOREGROUND | MB_TOPMOST);
+    MessageBoxA(NULL, crashdialogue, crashtitle, \
+        MB_OK | MB_SETFOREGROUND | MB_TOPMOST);
 #else
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, crashtitle, crashdialogue, NULL);
 #endif
-
-    // sentry_value_t ctxinfo = sentry_value_new_object();
-    // sentry_value_set_by_key(ctxinfo, "test", sentry_value_new_string("test str"));
-    // SentryEvent("info", __FUNCTION__, "testEvent", ctxinfo);
 
     if (cl_send_error_reports.GetInt() <= 0 || !g_Sentry.didinit)
     {
@@ -138,32 +137,27 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
     confile.flush();
     confile.close();
 
-    sentry_flush(9999);
-    sentry_close();
-    //abort();
+    sentry_flush(1000);
+    // sentry_close();
+    // abort();
     return event;
 }
-
 
 
 // #define sentry_id_debug
 // #define sentry_id_spewhashes
 
-
-// Why? Well, some steam changes require that we manually hook into the minidump sys and override it.
-// handle_exception tosses it over to the sentry crash handler.
-#ifdef _WIN32
 #include <minidump.h>
-void mini(unsigned int uStructuredExceptionCode, _EXCEPTION_POINTERS* pExceptionInfo, const char* pszFilenameSuffix)
-{
-    sentry_handle_exception( (sentry_ucontext_t*)pExceptionInfo);
-    sentry_flush(9999);
-}
-#endif
+
 
 void CSentry::SentryInit()
 {
     DevMsg(2, "Sentry init!\n");
+
+#ifdef _WIN32
+    //EnableCrashingOnCrashes();
+#endif
+
     const char* mpath = ConVarRef("_modpath", false).GetString();
     if (!mpath)
     {
@@ -179,16 +173,8 @@ void CSentry::SentryInit()
     std::stringstream sentry_db;
     sentry_db << modpath_ss << CORRECT_PATH_SEPARATOR << "cache" << CORRECT_PATH_SEPARATOR << "sentry";
 
-    // Suprisingly, this just works to disable built in Valve crash stuff for linux
-    CommandLine()->AppendParm("-nominidumps",   "");
-    CommandLine()->AppendParm("-nobreakpad",    "");
-#ifdef _WIN32
-    EnableCrashingOnCrashes();
-#endif
-
     sentry_options_t* options               = sentry_options_new();
-
-    constexpr char releaseVers[256] = VPC_QUOTE_STRINGIFY(SENTRY_RELEASE_VERSION);
+    constexpr char releaseVers[256]         = VPC_QUOTE_STRINGIFY(SENTRY_RELEASE_VERSION);
     sentry_options_set_traces_sample_rate   (options, 1);
     sentry_options_set_on_crash             (options, SENTRY_CRASHFUNC, (void*)NULL);
     sentry_options_set_dsn                  (options, real_sentry_url.c_str());
@@ -198,13 +184,11 @@ void CSentry::SentryInit()
 
     // only windows needs the crashpad exe
 #ifdef _WIN32
-    sentry_options_set_handler_path     (options, crash_exe.str().c_str());
-    SetMiniDumpFunction(mini);
+    sentry_options_set_handler_path         (options, crash_exe.str().c_str() );
 #endif
-    sentry_options_set_database_path    (options, sentry_db.str().c_str());
-    sentry_options_set_shutdown_timeout (options, 9999);
 
-    //sentry_reinstall_backend();
+    sentry_options_set_database_path        (options, sentry_db.str().c_str());
+    sentry_options_set_shutdown_timeout     (options, 9999);
 
     sentry_conlog = {};
     sentry_conlog << sentry_db.str() << CORRECT_PATH_SEPARATOR << "last_crash_console_log.txt";
@@ -226,8 +210,29 @@ void CSentry::SentryInit()
     char badipspath[MAX_PATH] = {};
     V_snprintf(badipspath, MAX_PATH, "%scfg/badips.txt", last_element);
     sentry_options_add_attachment(options, badipspath);
-    */
+*/
 
+    // Suprisingly, this just works to disable built in Valve crash stuff for linux, unfortunately on windows we need to do hacky stuff like relaunching the game
+#ifndef _WIN32
+    CommandLine()->AppendParm("-nominidumps",   "");
+    CommandLine()->AppendParm("-nobreakpad",    "");
+#endif
+
+#if 0
+#ifdef _WIN32
+    HMODULE mod = GetModuleHandle("crashhandler.dll");
+    if (mod)
+    {
+        bool freed = FreeLibrary(mod))
+        if (freed)
+        {
+            Warning("freed\n");
+        }
+    }
+#endif
+#endif
+
+    sentry_reinstall_backend();
     int sentryinit = sentry_init(options);
     if (sentryinit != 0)
     {
@@ -235,7 +240,7 @@ void CSentry::SentryInit()
         CSentry::didinit = false;
         return;
     }
-
+    sentry_reinstall_backend();
 
     CSentry::didinit = true;
 
@@ -318,6 +323,7 @@ void CSentry::SentryInit()
         cl_send_error_reports.SetValue(-1);
     }
 #endif
+    sentry_reinstall_backend();
 }
 
 void SetSteamID()

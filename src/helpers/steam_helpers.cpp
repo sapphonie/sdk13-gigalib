@@ -47,7 +47,7 @@ void restartWithFixedCmdline(std::stringstream &newCmdLine)
 }
 
 
-void rmSourceTest()
+void relaunch()
 {
     const char* Win32CmdLine = GetCommandLineA();
     std::string StrWin32CmdLine(Win32CmdLine);
@@ -59,12 +59,15 @@ void rmSourceTest()
     {
         return;
     }
-    if (V_stristr(Win32CmdLine, "sourcetest"))
+    if ( !V_stristr(Win32CmdLine, "isrelaunching") )
     {
         UTIL_ReplaceAll(StrWin32CmdLine, "-game sourcetest", "");
         std::stringstream newCmdLine;
         newCmdLine << StrWin32CmdLine << " " << "-novid -multirun";
-
+#ifdef SDKSENTRY
+        newCmdLine << " -nobreakpad -nominidumps";
+#endif
+        newCmdLine << " -isrelaunching";
         Sleep(1);
         restartWithFixedCmdline(newCmdLine);
         return;
@@ -79,7 +82,7 @@ CSteamHelpers::CSteamHelpers()
     DevMsg(2, "CSteamHelpers CTOR->\n");
 
 #ifdef _WIN32
-    rmSourceTest();
+    relaunch();
 #endif
 
     // spin off a thread and wait until steam is up before we call any of our funcs
