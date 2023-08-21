@@ -825,6 +825,8 @@ void win32_HARDENING() {
         DWORD AuditProhibitDynamicCode : 1;
         DWORD ReservedFlags : 28;
     */
+
+    /*
     PROCESS_MITIGATION_DYNAMIC_CODE_POLICY dynCode;
     dynCode.ProhibitDynamicCode             = 1;
     dynCode.AllowThreadOptOut               = 0;
@@ -835,7 +837,7 @@ void win32_HARDENING() {
     if (!SetProcessMitigationPolicy(ProcessDynamicCodePolicy, &dynCode, sizeof(dynCode)))
     {
     }
-
+    */
     PROCESS_MITIGATION_CONTROL_FLOW_GUARD_POLICY cfGuard;
     cfGuard.EnableControlFlowGuard      = 1;
     cfGuard.EnableExportSuppression     = 0;
@@ -880,7 +882,7 @@ CEngineDetours::CEngineDetours()
     CNetChan__Shutdown_Init();
 
 #ifdef _WIN32
-    win32_HARDENING();
+    // win32_HARDENING();
 #endif
 }
 #endif // client
