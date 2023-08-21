@@ -1,5 +1,9 @@
 #pragma once
-const char* const Engine_GetSpew();
+
+#include <signal.h>
+#include <csignal>
+bool initEngineSpew();
+char* Engine_GetSpew();
 
 #ifdef GAME_DLL
 int UTIL_GetSignonState(CBasePlayer* basePlayer);

@@ -7,19 +7,31 @@
 #include <sdkCURL/sdkCURL.h>
 #include <helpers/misc_helpers.h>
 #include <helpers/steam_helpers.h>
+#include <csignal>
+#include <signal.h>
+
+void SetSteamID();
+void SentryMsg(const char* logger, const char* text, bool forcesend = false);
+void SentryEvent(const char* level, const char* logger, const char* message, sentry_value_t ctx, bool forcesend = false);
+// void sdk13_version_callback(IConVar* var, const char* pOldValue, float flOldValue);
+void SentrySetTags();
+
 
 class CSentry : public CAutoGameSystem
 {
 public:
     CSentry();
 
-    bool                didinit;
-    bool                didshutdown;
+    volatile sig_atomic_t    didinit;
+    volatile sig_atomic_t    didshutdown;
+    volatile sig_atomic_t    conFileDescriptor;
+    volatile sig_atomic_t    conFileFilePtr;
 
     void                PostInit() override;
     void                Shutdown() override;
     void                LevelBreadcrumbs(const char* function)
     {
+        SentrySetTags();
         char map[128];
         UTIL_GetMap(map);
         char funcmap[256] = {};
@@ -62,11 +74,6 @@ public:
     void                SentryURLCB(const curlResponse* curlRepsonseStruct);
 };
 
-void SetSteamID();
-void SentryMsg(const char* logger, const char* text, bool forcesend = false);
-void SentryEvent(const char* level, const char* logger, const char* message, sentry_value_t ctx, bool forcesend = false);
-// void sdk13_version_callback(IConVar* var, const char* pOldValue, float flOldValue);
-void SentrySetTags();
 
 void SentryAddressBreadcrumb(void* address, const char* optionalName);
 
