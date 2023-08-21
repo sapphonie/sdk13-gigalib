@@ -171,10 +171,6 @@ void CSentry::SentryInit()
 {
     DevMsg(2, "Sentry init!\n");
 
-#ifdef _WIN32
-    //EnableCrashingOnCrashes();
-#endif
-
     const char* mpath = ConVarRef("_modpath", false).GetString();
     if (!mpath)
     {
@@ -190,10 +186,6 @@ void CSentry::SentryInit()
     std::stringstream sentry_db;
     sentry_db << modpath_ss << CORRECT_PATH_SEPARATOR << "cache" << CORRECT_PATH_SEPARATOR << "sentry";
 
-
-#ifdef _WIN32
-    EnableCrashingOnCrashes();
-#endif
 
     sentry_options_t* options               = sentry_options_new();
     constexpr char releaseVers[256]         = VPC_QUOTE_STRINGIFY(SENTRY_RELEASE_VERSION);
