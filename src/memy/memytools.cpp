@@ -2,7 +2,7 @@
 
 #include <memy/memytools.h>
 #include <helpers/misc_helpers.h>
-
+#include <engine_memutils.h>
 // #define memydbg yep
 
 // shared between client and server
@@ -119,6 +119,8 @@ bool memy::InitAllBins()
     {
         Error("Failed getting SDK2013 path!");
     }
+
+    initEngineSpew();
     return true;
 }
 

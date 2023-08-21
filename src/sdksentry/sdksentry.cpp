@@ -9,8 +9,10 @@ CSentry g_Sentry;
 
 CSentry::CSentry()
 {
-    didinit     = false;
-    didshutdown = false;
+    didinit             = false;
+    didshutdown         = false;
+    conFileDescriptor   = NULL;
+    conFileFilePtr      = NULL;
     //RUN_THIS_FUNC_WHEN_STEAM_INITS(&SetSteamID);
 }
 
@@ -25,9 +27,24 @@ void CC_SentryTest(const CCommand& args)
 ConCommand sentry_test("sentry_test", CC_SentryTest, "\n", FCVAR_NONE );
 // #endif
 
-
 void sentry_callback(IConVar* var, const char* pOldValue, float flOldValue)
 {
+    int consent = ((ConVar*)(var))->GetInt();
+
+    if (consent == 1)
+    {
+        sentry_user_consent_give();
+    }
+    else if (consent == 0)
+    {
+        sentry_user_consent_revoke();
+    }
+    else
+    {
+        sentry_user_consent_reset();
+    
+    }
+
     engine->ExecuteClientCmd("host_writeconfig");
 }
 
@@ -81,28 +98,27 @@ void CSentry::SentryURLCB(const curlResponse* resp)
 // then you can remove this
 void CSentry::Shutdown()
 {
-#ifndef _WIN32
-    didshutdown = true;
-#endif
-}
+    sentry_add_breadcrumb(sentry_value_new_breadcrumb(NULL, __FUNCTION__));
 
+    didshutdown = true;
+}
 #ifndef _WIN32
      #include <SDL.h>
 #endif
+
 // DO NOT THREAD THIS OR ANY FUNCTIONS CALLED BY IT UNDER ANY CIRCUMSTANCES
+// THIS NEEDS TO BE SIGNAL SAFE ALSO
+// I MEAN NOT REALLY ON WINDOWS ITS CALLED IN A SEH BUT
+// PLEASE DONT TOUCH UNLESS YOU KNOW WHAT YOU'RE DOING
 sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t event, void* closure)
 {
-    SentrySetTags();
-    sentry_flush(9999);
-
-    #ifndef _WIN32
+    AssertMsg(0, "CRASHED - WE'RE IN THE SIGNAL HANDLER NOW SO BREAK IF YOU WANT");
     if (g_Sentry.didshutdown)
     {
         // Warning("NOT SENDING CRASH TO SENTRY.IO BECAUSE THIS IS A NORMAL SHUTDOWN! BUHBYE!\n");
         sentry_value_decref(event);
         return sentry_value_new_null();
     }
-    #endif
 
     const char* crashdialogue =
     "\"BONK!\"\n\n"
@@ -120,27 +136,18 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, crashtitle, crashdialogue, NULL);
 #endif
 
-    // sentry_value_t ctxinfo = sentry_value_new_object();
-    // sentry_value_set_by_key(ctxinfo, "test", sentry_value_new_string("test str"));
-    // SentryEvent("info", __FUNCTION__, "testEvent", ctxinfo);
-
-    if (cl_send_error_reports.GetInt() <= 0 || !g_Sentry.didinit)
+    if (!g_Sentry.didinit)
     {
         sentry_value_decref(event);
         return sentry_value_new_null();
     }
-
-    const char* const spew = Engine_GetSpew();
-
-    std::ofstream confile;
-    confile.open(g_Sentry.sentry_conlog.str());
-    confile << spew;
-    confile.flush();
-    confile.close();
-
-    sentry_flush(9999);
-    sentry_close();
-    //abort();
+    // global char[256000]
+    char* spew = Engine_GetSpew();
+    size_t len = Min( strlen(spew), (size_t)256000 );
+    // not signal safe but whatever - on windows we're in a SEH anyway
+    fwrite( spew, 1, len, (FILE*)g_Sentry.conFileFilePtr );
+    fflush( (FILE*)g_Sentry.conFileFilePtr );
+    fclose( (FILE*)g_Sentry.conFileFilePtr );
     return event;
 }
 
@@ -149,16 +156,16 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
 // #define sentry_id_debug
 // #define sentry_id_spewhashes
 
-
-// Why? Well, some steam changes require that we manually hook into the minidump sys and override it.
-// handle_exception tosses it over to the sentry crash handler.
+/*
+void sentry_logger(sentry_level_t level, const char* message, va_list args, void* userdata)
+{    
+    //Warning("[SENTRY] %i - ", level);
+    Warning(message, args);
+   // Warning("\n");
+}
+*/
 #ifdef _WIN32
 #include <minidump.h>
-void mini(unsigned int uStructuredExceptionCode, _EXCEPTION_POINTERS* pExceptionInfo, const char* pszFilenameSuffix)
-{
-    sentry_handle_exception( (sentry_ucontext_t*)pExceptionInfo);
-    sentry_flush(9999);
-}
 #endif
 
 void CSentry::SentryInit()
@@ -179,9 +186,6 @@ void CSentry::SentryInit()
     std::stringstream sentry_db;
     sentry_db << modpath_ss << CORRECT_PATH_SEPARATOR << "cache" << CORRECT_PATH_SEPARATOR << "sentry";
 
-    // Suprisingly, this just works to disable built in Valve crash stuff for linux
-    CommandLine()->AppendParm("-nominidumps",   "");
-    CommandLine()->AppendParm("-nobreakpad",    "");
 #ifdef _WIN32
     EnableCrashingOnCrashes();
 #endif
@@ -195,11 +199,12 @@ void CSentry::SentryInit()
     sentry_options_set_release              (options, releaseVers);
     sentry_options_set_debug                (options, 1);
     sentry_options_set_max_breadcrumbs      (options, 1024);
+    sentry_options_set_require_user_consent (options, 1);
+    // sentry_options_set_logger               (options, sentry_logger, NULL);
 
     // only windows needs the crashpad exe
 #ifdef _WIN32
     sentry_options_set_handler_path     (options, crash_exe.str().c_str());
-    SetMiniDumpFunction(mini);
 #endif
     sentry_options_set_database_path    (options, sentry_db.str().c_str());
     sentry_options_set_shutdown_timeout (options, 9999);
@@ -209,7 +214,8 @@ void CSentry::SentryInit()
     sentry_conlog = {};
     sentry_conlog << sentry_db.str() << CORRECT_PATH_SEPARATOR << "last_crash_console_log.txt";
     sentry_options_add_attachment(options, sentry_conlog.str().c_str());
- 
+
+
 /*
     char inventorypath[MAX_PATH] = {};
     V_snprintf(inventorypath, MAX_PATH, "%stf_inventory.txt", last_element);
@@ -238,15 +244,27 @@ void CSentry::SentryInit()
 
 
     CSentry::didinit = true;
+    
+    // using C here because we have to set up for our signal handler later
+    char conLogLoc[MAX_PATH] = {};
+    snprintf(conLogLoc, MAX_PATH, "%s", sentry_conlog.str().c_str());
+    FILE* conlog        = fopen(conLogLoc, "w+");
+    conFileFilePtr      = (uintptr_t)conlog;
+    conFileDescriptor   = fileno( (FILE*)conFileFilePtr );
 
     // HAS TO RUN AFTER SENTRY INIT!!!
     SetSteamID();
 
-    sentry_add_breadcrumb(sentry_value_new_breadcrumb(NULL, "SentryInit"));
+    sentry_add_breadcrumb(sentry_value_new_breadcrumb(NULL, __FUNCTION__));
     DevMsg(2, "Sentry initialization success!\n");
 
 
+
     ConVarRef cl_send_error_reports("cl_send_error_reports");
+    // get the current version of our consent
+    sentry_user_consent_reset();
+    sentry_callback(cl_send_error_reports.GetLinkedConVar(), "", -2.0);
+    
     // already asked
     if (cl_send_error_reports.GetInt() >= 0)
     {

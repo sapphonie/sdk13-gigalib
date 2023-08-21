@@ -59,12 +59,15 @@ void rmSourceTest()
     {
         return;
     }
-    if (V_stristr(Win32CmdLine, "sourcetest"))
+    if ( !V_stristr(Win32CmdLine, "isrelaunching"))
     {
         UTIL_ReplaceAll(StrWin32CmdLine, "-game sourcetest", "");
         std::stringstream newCmdLine;
-        newCmdLine << StrWin32CmdLine << " " << "-novid -multirun";
+        newCmdLine << StrWin32CmdLine << " " << "-novid -multirun -isrelaunching";
 
+#ifdef SDKSENTRY
+        newCmdLine << " -nobreakpad -nominidumps";
+#endif
         Sleep(1);
         restartWithFixedCmdline(newCmdLine);
         return;

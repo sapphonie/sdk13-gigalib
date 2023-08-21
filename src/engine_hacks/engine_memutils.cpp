@@ -3,16 +3,13 @@
 
 #include <engine_memutils.h>
 #include <memytools.h>
+#include <atomic>
+#include <csignal>
 
-
-typedef void GetSpew(char* buffer, unsigned int length);
-// max 256kb
-char spewBuffer[256000] = {};
-
-// return is a ptr to the 256kb const static spew buffer. you do not need to and should not free it or delete it
-const char* const Engine_GetSpew()
+volatile sig_atomic_t GetSpewPtr = NULL;
+bool initEngineSpew()
 {
-    /*                              v-- unique string -------------v
+	    /*                              v-- unique string -------------v
         sub_10246FC0(Destination, "\nConsole History (reversed)\n\n", 95000, -1);
         v16 = strlen(Destination);
         if (v16 < 0x17318)
@@ -43,12 +40,18 @@ const char* const Engine_GetSpew()
     static constexpr size_t         patternSize = 20;       
 #endif
 
-    static const uintptr_t          GetSpewPtr          = memy::FindPattern(engine_bin, pattern, patternSize, 0);
-    static                          GetSpew* SpewFunc   = (GetSpew*)GetSpewPtr;
+	GetSpewPtr = memy::FindPattern(engine_bin, pattern, patternSize, 0);
+	return true;
+}
 
-    memset(spewBuffer, 0x0, sizeof(spewBuffer));
-    SpewFunc(spewBuffer, sizeof(spewBuffer));
-    return spewBuffer;
+char SpewOut[256000] = {};
+// THIS NEEDS TO BE SIGNAL SAFE SO WE CANT MALLOC
+char* Engine_GetSpew()
+{
+	typedef void GetSpew(char* buffer, unsigned int length);
+	GetSpew* SpewFunc = (GetSpew*)GetSpewPtr;
+    SpewFunc( (char*)SpewOut, 256000 );
+	return SpewOut;
 }
 
 #ifdef GAME_DLL
