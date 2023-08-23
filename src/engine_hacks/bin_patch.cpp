@@ -8,7 +8,7 @@
 #endif
 #include <cbase.h>
 // You probably do not need this
-#define dbging yep
+// #define dbging yep
 
 #if defined (BIN_PATCHES) && defined(ENGINE_DETOURS)
 #include <engine_hacks/bin_patch.h>
