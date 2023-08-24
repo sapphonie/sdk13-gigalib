@@ -10,9 +10,9 @@
 #ifdef _WIN32
 #include <icommandline.h>
 #include <Windows.h>
-
 #include <engine_hacks/engine_detours.h>
-bool checkWine(void)
+
+bool checkWine()
 {
     static const char * (__cdecl *pwine_get_version)(void);
     HMODULE hntdll = GetModuleHandle("ntdll.dll");
@@ -24,7 +24,7 @@ bool checkWine(void)
     FARPROC fp = GetProcAddress(hntdll, "wine_get_version");
 
     pwine_get_version = PLH::FnCast(fp, pwine_get_version);
-    if(pwine_get_version)
+    if (pwine_get_version)
     {
         Warning("Running on Wine... %s\n",pwine_get_version());
         return true;
@@ -34,7 +34,6 @@ bool checkWine(void)
         Warning("did not detect Wine.\n");
         return false;
     }
-    return 0;
 }
 
 
@@ -55,39 +54,40 @@ void restartWithFixedCmdline(std::stringstream &newCmdLine)
         (
             nullptr,                            // No module name (use command line)
             (LPSTR)newCmdLine.str().c_str(),    // Command line
-            nullptr,				            // Process handle not inheritable
-            nullptr,				            // Thread handle not inheritable
-            FALSE,				                // Set handle inheritance to FALSE
-            0,					                // No creation flags
-            nullptr,				            // Use parent's environment block
-            nullptr,				            // Use parent's starting directory 
-            &si,				                // Pointer to STARTUPINFO structure
-            &pi					                // Pointer to PROCESS_INFORMATION structure
+            nullptr,                            // Process handle not inheritable
+            nullptr,                            // Thread handle not inheritable
+            FALSE,                              // Set handle inheritance to FALSE
+            0,                                  // No creation flags
+            nullptr,                            // Use parent's environment block
+            nullptr,                            // Use parent's starting directory 
+            &si,                                // Pointer to STARTUPINFO structure
+            &pi                                 // Pointer to PROCESS_INFORMATION structure
         )
     )
     {
-        Warning("CreateProcess failed, Steam overlay probably won't work! Error: %i.\n", GetLastError());
+        Warning("CreateProcess failed, Steam overlay and tons of other things probably won't work! Error: %i.\n", GetLastError());
         return;
     }
-     
+    CloseHandle( pi.hProcess );
+    CloseHandle( pi.hThread );
     abort();
 }
 
-
-void relaunch()
+// return true to abort running the rest of the steam ctors
+bool relaunch()
 {
     const char* Win32CmdLine = GetCommandLineA();
     std::string StrWin32CmdLine(Win32CmdLine);
 
     if (V_stristr(Win32CmdLine, "hijack"))
     {
-        return;
+        return false;
     }
     if (V_stristr(Win32CmdLine, "norelaunch"))
     {
-        return;
+        return false;
     }
-    if ( !V_stristr(Win32CmdLine, "isrelaunching"))
+    if (!V_stristr(Win32CmdLine, "isrelaunching"))
     {
         UTIL_ReplaceAll(StrWin32CmdLine, "-game sourcetest", "");
         std::stringstream newCmdLine;
@@ -99,14 +99,14 @@ void relaunch()
 
         if (checkWine())
         {
-            newCmdLine << " -isproton";
+            newCmdLine << " -iswine";
         }
-
 
         Sleep(1);
         restartWithFixedCmdline(newCmdLine);
-        return;
+        return true;
     }
+    return false;
 }
 #endif // WIN32
 
@@ -116,7 +116,10 @@ CSteamHelpers::CSteamHelpers()
 {
     DevMsg(2, "CSteamHelpers CTOR->\n");
 #ifdef _WIN32
-    relaunch();
+    if (relaunch())
+    {
+        return;
+    }
 #endif
 
     // spin off a thread and wait until steam is up before we call any of our funcs
@@ -138,7 +141,6 @@ void CSteamHelpers::SpinUntilSteamIsAlive()
         }
         DevMsg(2, "Failed getting Steam interfaces! Attempt #%i...\n", tries);
         std::this_thread::sleep_for(std::chrono::seconds(1));
-        continue;
     }
     Error("Failed getting Steam interfaces! Try restarting Steam!");
 }
