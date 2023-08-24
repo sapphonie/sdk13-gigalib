@@ -151,6 +151,7 @@ bool sdkCURL::CURLGet_Thread(std::string inURL, curlResponse* resp)
     setopt_errwrap(curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
     setopt_errwrap(curl, CURLOPT_TRANSFER_ENCODING, 1L);
 
+    // not built in
     // setopt_errwrap(curl, CURLOPT_DNS_SERVERS, "1.1.1.1,1.0.0.1,8.8.8.8,8.8.4.4");
 
     setopt_errwrap(curl, CURLOPT_DOH_URL, "https://cloudflare-dns.com/dns-query");

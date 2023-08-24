@@ -13,6 +13,7 @@ CSentry::CSentry()
     didshutdown         = false;
     sentryLogFilePtr    = NULL;
     conFileFilePtr      = NULL;
+    crashed             = false;
 }
 
 // #ifdef _DEBUG
@@ -111,6 +112,8 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
 {
     AssertMsg(0, "CRASHED - WE'RE IN THE SIGNAL HANDLER NOW SO BREAK IF YOU WANT");
 
+    g_Sentry.crashed = true;
+
     // do our logging no matter what
     // global char[256000]
     char* spew = Engine_GetSpew();
@@ -160,7 +163,7 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
 void sentry_logger(sentry_level_t level, const char* message, va_list args, void* userdata)
 {
     constexpr const size_t bufSize = 1024;
-    char* buffer = new char[bufSize + 1] {};
+    char* buffer = (char*)(calloc(1, bufSize + 1));
     vsnprintf(buffer, bufSize, message, args);
 
     fprintf((FILE*)g_Sentry.sentryLogFilePtr, "%i - %s\n", level, buffer);
@@ -171,15 +174,21 @@ void sentry_logger(sentry_level_t level, const char* message, va_list args, void
 /*
 
 typedef enum sentry_level_e {
-    SENTRY_LEVEL_DEBUG = -1,
-    SENTRY_LEVEL_INFO = 0,
-    SENTRY_LEVEL_WARNING = 1,
-    SENTRY_LEVEL_ERROR = 2,
-    SENTRY_LEVEL_FATAL = 3,
+    SENTRY_LEVEL_DEBUG      = -1,
+    SENTRY_LEVEL_INFO       = 0,
+    SENTRY_LEVEL_WARNING    = 1,
+    SENTRY_LEVEL_ERROR      = 2,
+    SENTRY_LEVEL_FATAL      = 3,
 } sentry_level_t;
 
 
 */
+    // don't do valve functions if we already crashed
+    if (g_Sentry.crashed)
+    {
+        free(buffer);
+        return;
+    }
     switch (level)
     {
         case SENTRY_LEVEL_DEBUG:
@@ -214,7 +223,7 @@ typedef enum sentry_level_e {
         }
     }
 
-    delete [] buffer;
+    free(buffer);
 }
 
 #ifdef _WIN32
@@ -314,7 +323,7 @@ void CSentry::SentryInit()
 
     // HAS TO RUN AFTER SENTRY INIT!!!
     SetSteamID();
-
+    SentrySetTags();
     sentry_add_breadcrumb(sentry_value_new_breadcrumb(NULL, __FUNCTION__));
     DevMsg(2, "Sentry initialization success!\n");
 

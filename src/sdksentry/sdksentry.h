@@ -26,6 +26,7 @@ public:
     volatile sig_atomic_t    didshutdown;
     volatile sig_atomic_t    sentryLogFilePtr;
     volatile sig_atomic_t    conFileFilePtr;
+    volatile sig_atomic_t    crashed;
 
     void                PostInit() override;
     void                Shutdown() override;
