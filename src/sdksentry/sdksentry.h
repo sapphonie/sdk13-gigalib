@@ -24,7 +24,7 @@ public:
 
     volatile sig_atomic_t    didinit;
     volatile sig_atomic_t    didshutdown;
-    volatile sig_atomic_t    conFileDescriptor;
+    volatile sig_atomic_t    sentryLogFilePtr;
     volatile sig_atomic_t    conFileFilePtr;
 
     void                PostInit() override;

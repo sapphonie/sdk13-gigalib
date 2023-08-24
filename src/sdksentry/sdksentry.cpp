@@ -11,9 +11,8 @@ CSentry::CSentry()
 {
     didinit             = false;
     didshutdown         = false;
-    conFileDescriptor   = NULL;
+    sentryLogFilePtr    = NULL;
     conFileFilePtr      = NULL;
-    //RUN_THIS_FUNC_WHEN_STEAM_INITS(&SetSteamID);
 }
 
 // #ifdef _DEBUG
@@ -42,7 +41,6 @@ void sentry_callback(IConVar* var, const char* pOldValue, float flOldValue)
     else
     {
         sentry_user_consent_reset();
-    
     }
 
     engine->ExecuteClientCmd("host_writeconfig");
@@ -112,6 +110,20 @@ void CSentry::Shutdown()
 sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t event, void* closure)
 {
     AssertMsg(0, "CRASHED - WE'RE IN THE SIGNAL HANDLER NOW SO BREAK IF YOU WANT");
+
+    // do our logging no matter what
+    // global char[256000]
+    char* spew = Engine_GetSpew();
+    size_t len = Min( strlen(spew), (size_t)256000 );
+    // not signal safe but whatever - on windows we're in a SEH anyway
+    fwrite( spew, 1, len, (FILE*)g_Sentry.conFileFilePtr );
+    fflush( (FILE*)g_Sentry.conFileFilePtr );
+    fclose( (FILE*)g_Sentry.conFileFilePtr );
+
+    fflush( (FILE*)g_Sentry.sentryLogFilePtr );
+    // we want this open no matter what so DONT close it
+    // fclose((FILE*)g_Sentry.sentryLogFilePtr);
+
     if (g_Sentry.didshutdown)
     {
         // Warning("NOT SENDING CRASH TO SENTRY.IO BECAUSE THIS IS A NORMAL SHUTDOWN! BUHBYE!\n");
@@ -141,28 +153,70 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
         sentry_value_decref(event);
         return sentry_value_new_null();
     }
-    // global char[256000]
-    char* spew = Engine_GetSpew();
-    size_t len = Min( strlen(spew), (size_t)256000 );
-    // not signal safe but whatever - on windows we're in a SEH anyway
-    fwrite( spew, 1, len, (FILE*)g_Sentry.conFileFilePtr );
-    fflush( (FILE*)g_Sentry.conFileFilePtr );
-    fclose( (FILE*)g_Sentry.conFileFilePtr );
     return event;
 }
 
 
-// #define sentry_id_debug
-// #define sentry_id_spewhashes
+void sentry_logger(sentry_level_t level, const char* message, va_list args, void* userdata)
+{
+    constexpr const size_t bufSize = 1024;
+    char* buffer = new char[bufSize + 1] {};
+    vsnprintf(buffer, bufSize, message, args);
+
+    fprintf((FILE*)g_Sentry.sentryLogFilePtr, "%i - %s\n", level, buffer);
+    // if we don't flush we can lose data so we're taking the perf hit and doing it every message
+    fflush((FILE*)g_Sentry.sentryLogFilePtr);
+
 
 /*
-void sentry_logger(sentry_level_t level, const char* message, va_list args, void* userdata)
-{    
-    //Warning("[SENTRY] %i - ", level);
-    Warning(message, args);
-   // Warning("\n");
-}
+
+typedef enum sentry_level_e {
+    SENTRY_LEVEL_DEBUG = -1,
+    SENTRY_LEVEL_INFO = 0,
+    SENTRY_LEVEL_WARNING = 1,
+    SENTRY_LEVEL_ERROR = 2,
+    SENTRY_LEVEL_FATAL = 3,
+} sentry_level_t;
+
+
 */
+    switch (level)
+    {
+        case SENTRY_LEVEL_DEBUG:
+        {
+            DevMsg(1, "[SENTRY] DEBUG - %s\n", buffer);
+            break;
+        }
+        case SENTRY_LEVEL_INFO:
+        {
+            Msg("[SENTRY] INFO - %s\n", buffer);
+            break;
+        }
+        case SENTRY_LEVEL_WARNING:
+        {
+            Warning("[SENTRY] WARNING - %s\n", buffer);
+            break;
+        }
+        case SENTRY_LEVEL_ERROR:
+        {
+            Warning("[SENTRY] ERROR - %s\n", buffer);
+            break;
+        }
+        case SENTRY_LEVEL_FATAL:
+        {
+            Warning("[SENTRY] FATAL - %s\n", buffer);
+            break;
+        }
+        default:
+        {
+            Warning("[SENTRY] UNKNOWN LOGGING LEVEL %i - %s\n", level, buffer);
+            break;
+        }
+    }
+
+    delete [] buffer;
+}
+
 #ifdef _WIN32
 #include <minidump.h>
 #endif
@@ -196,7 +250,7 @@ void CSentry::SentryInit()
     sentry_options_set_debug                (options, 1);
     sentry_options_set_max_breadcrumbs      (options, 1024);
     sentry_options_set_require_user_consent (options, 1);
-    // sentry_options_set_logger               (options, sentry_logger, NULL);
+    sentry_options_set_logger               (options, sentry_logger, NULL);
 
     // only windows needs the crashpad exe
 #ifdef _WIN32
@@ -229,27 +283,24 @@ void CSentry::SentryInit()
     sentry_options_add_attachment(options, badipspath);
 */
 
-    // Suprisingly, this just works to disable built in Valve crash stuff for linux, unfortunately on windows we need to do hacky stuff like relaunching the game
-#ifndef _WIN32
-    CommandLine()->AppendParm("-nominidumps",   "");
-    CommandLine()->AppendParm("-nobreakpad",    "");
-#endif
 
-#if 0
-#ifdef _WIN32
-    HMODULE mod = GetModuleHandle("crashhandler.dll");
-    if (mod)
-    {
-        bool freed = FreeLibrary(mod))
-        if (freed)
-        {
-            Warning("freed\n");
-        }
-    }
-#endif
-#endif
+    
+    // using C here because we have to set up for our signal handler later
+    char conLogLoc[MAX_PATH] = {};
+    snprintf(conLogLoc, MAX_PATH, "%s", sentry_conlog.str().c_str());
+    FILE* conlog        = fopen(conLogLoc, "w+");
+    conFileFilePtr      = (uintptr_t)conlog;
 
-    sentry_reinstall_backend();
+
+    std::stringstream sentry_loglog = {};
+    sentry_loglog << sentry_db.str() << CORRECT_PATH_SEPARATOR << "_sentry.log";
+
+    char sentryLogLoc[MAX_PATH] = {};
+    snprintf(sentryLogLoc, MAX_PATH, "%s", sentry_loglog.str().c_str());
+    FILE* senlog            = fopen(sentryLogLoc, "w+");
+    sentryLogFilePtr        = (uintptr_t)senlog;
+
+
     int sentryinit = sentry_init(options);
     if (sentryinit != 0)
     {
@@ -257,16 +308,9 @@ void CSentry::SentryInit()
         CSentry::didinit = false;
         return;
     }
-    sentry_reinstall_backend();
-
+    // sentry_reinstall_backend();
     CSentry::didinit = true;
-    
-    // using C here because we have to set up for our signal handler later
-    char conLogLoc[MAX_PATH] = {};
-    snprintf(conLogLoc, MAX_PATH, "%s", sentry_conlog.str().c_str());
-    FILE* conlog        = fopen(conLogLoc, "w+");
-    conFileFilePtr      = (uintptr_t)conlog;
-    conFileDescriptor   = fileno( (FILE*)conFileFilePtr );
+
 
     // HAS TO RUN AFTER SENTRY INIT!!!
     SetSteamID();
@@ -352,7 +396,6 @@ void CSentry::SentryInit()
         cl_send_error_reports.SetValue(-1);
     }
 #endif
-    sentry_reinstall_backend();
 }
 
 void SetSteamID()
