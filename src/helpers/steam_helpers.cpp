@@ -11,6 +11,33 @@
 #include <icommandline.h>
 #include <Windows.h>
 
+#include <engine_hacks/engine_detours.h>
+bool checkWine(void)
+{
+    static const char * (__cdecl *pwine_get_version)(void);
+    HMODULE hntdll = GetModuleHandle("ntdll.dll");
+    if(!hntdll)
+    {
+        Error("Not running on NT.");
+        return false;
+    }
+    FARPROC fp = GetProcAddress(hntdll, "wine_get_version");
+
+    pwine_get_version = PLH::FnCast(fp, pwine_get_version);
+    if(pwine_get_version)
+    {
+        Warning("Running on Wine... %s\n",pwine_get_version());
+        return true;
+    }
+    else
+    {
+        Warning("did not detect Wine.\n");
+        return false;
+    }
+    return 0;
+}
+
+
 void restartWithFixedCmdline(std::stringstream &newCmdLine)
 {
 
@@ -51,6 +78,7 @@ void relaunch()
 {
     const char* Win32CmdLine = GetCommandLineA();
     std::string StrWin32CmdLine(Win32CmdLine);
+
     if (V_stristr(Win32CmdLine, "hijack"))
     {
         return;
@@ -63,11 +91,18 @@ void relaunch()
     {
         UTIL_ReplaceAll(StrWin32CmdLine, "-game sourcetest", "");
         std::stringstream newCmdLine;
-        newCmdLine << StrWin32CmdLine << " " << "-novid -multirun -isrelaunching";
+        newCmdLine << StrWin32CmdLine << " -novid -multirun -isrelaunching";
 
 #ifdef SDKSENTRY
         newCmdLine << " -nobreakpad -nominidumps";
 #endif
+
+        if (checkWine())
+        {
+            newCmdLine << " -isproton";
+        }
+
+
         Sleep(1);
         restartWithFixedCmdline(newCmdLine);
         return;
@@ -80,7 +115,6 @@ CSteamHelpers g_SteamHelpers;
 CSteamHelpers::CSteamHelpers()
 {
     DevMsg(2, "CSteamHelpers CTOR->\n");
-
 #ifdef _WIN32
     relaunch();
 #endif
