@@ -92,17 +92,47 @@ void CSentry::SentryURLCB(const curlResponse* resp)
     SentryInit();
 }
 
-// We ignore any crashes whenever the engine shuts down on linux.
+
+FORCEINLINE void DoDyingStuff()
+{
+    // do our logging no matter what
+    // global char[256000]
+    char* spew = Engine_GetSpew();
+    constexpr const size_t spewSize = 256000;
+
+    // remove trailing nulls because GetSpew gives us a string with null chars in it (???)
+    size_t ch = spewSize - 1;
+    while (spew[ch] == 0x0)
+    {
+        ch--;
+    }
+
+    // not signal safe but whatever - on windows we're in a SEH anyway
+    fwrite( spew, 1, ch+1, \
+            (FILE*)g_Sentry.conFileFilePtr );
+    fflush( (FILE*)g_Sentry.conFileFilePtr );
+    fclose( (FILE*)g_Sentry.conFileFilePtr );
+
+    fflush( (FILE*)g_Sentry.sentryLogFilePtr );
+    // we want this open no matter what so DONT close it
+    // fclose((FILE*)g_Sentry.sentryLogFilePtr);
+}
+
+// We ignore any crashes whenever the engine shuts down
 // We shouldn't, but we do. Feel free to fix all the shutdown crashes if you want,
 // then you can remove this
 void CSentry::Shutdown()
 {
     sentry_add_breadcrumb(sentry_value_new_breadcrumb(NULL, __FUNCTION__));
     didshutdown = true;
+    DoDyingStuff();
+    sentry_close();
 }
+
 #ifndef _WIN32
      #include <SDL.h>
 #endif
+
 
 // DO NOT THREAD THIS OR ANY FUNCTIONS CALLED BY IT UNDER ANY CIRCUMSTANCES
 // THIS NEEDS TO BE SIGNAL SAFE ALSO
@@ -113,19 +143,8 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
     AssertMsg(0, "CRASHED - WE'RE IN THE SIGNAL HANDLER NOW SO BREAK IF YOU WANT");
 
     g_Sentry.crashed = true;
+    DoDyingStuff();
 
-    // do our logging no matter what
-    // global char[256000]
-    char* spew = Engine_GetSpew();
-    size_t len = Min( strlen(spew), (size_t)256000 );
-    // not signal safe but whatever - on windows we're in a SEH anyway
-    fwrite( spew, 1, len, (FILE*)g_Sentry.conFileFilePtr );
-    fflush( (FILE*)g_Sentry.conFileFilePtr );
-    fclose( (FILE*)g_Sentry.conFileFilePtr );
-
-    fflush( (FILE*)g_Sentry.sentryLogFilePtr );
-    // we want this open no matter what so DONT close it
-    // fclose((FILE*)g_Sentry.sentryLogFilePtr);
 
     if (g_Sentry.didshutdown)
     {
