@@ -28,6 +28,10 @@ public:
     volatile sig_atomic_t    conFileFilePtr;
     volatile sig_atomic_t    crashed;
 
+#ifdef _WIN32
+    volatile sig_atomic_t    mainWindowHandle;
+#endif
+
     void                PostInit() override;
     void                Shutdown() override;
     void                LevelBreadcrumbs(const char* function)

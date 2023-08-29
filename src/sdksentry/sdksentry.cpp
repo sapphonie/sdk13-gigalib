@@ -14,6 +14,9 @@ CSentry::CSentry()
     sentryLogFilePtr    = NULL;
     conFileFilePtr      = NULL;
     crashed             = false;
+#ifdef _WIN32
+    mainWindowHandle    = NULL;
+#endif
 }
 
 // #ifdef _DEBUG
@@ -164,6 +167,9 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
 
 
 #ifdef _WIN32
+    // hide the window since we can be in fullscreen and if so it'll just hang forever
+    ShowWindow((HWND)g_Sentry.mainWindowHandle, SW_HIDE);
+
     MessageBoxA(NULL, crashdialogue, crashtitle, \
         MB_OK | MB_SETFOREGROUND | MB_TOPMOST);
 #else
@@ -360,7 +366,9 @@ void CSentry::SentryInit()
     sentry_add_breadcrumb(sentry_value_new_breadcrumb(NULL, __FUNCTION__));
     DevMsg(2, "Sentry initialization success!\n");
 
-
+#ifdef _WIN32
+    mainWindowHandle = (sig_atomic_t)FindWindow("Valve001", NULL);
+#endif
 
     ConVarRef cl_send_error_reports("cl_send_error_reports");
     // get the current version of our consent
@@ -384,10 +392,7 @@ void CSentry::SentryInit()
 
 #ifdef _WIN32
 
-
-    HWND hwnd = FindWindow("Valve001", NULL);
-
-    ShowWindow(hwnd, SW_HIDE);
+    ShowWindow((HWND)mainWindowHandle, SW_HIDE);
 
     int msgboxID = MessageBoxA(
         NULL,
@@ -404,7 +409,7 @@ void CSentry::SentryInit()
         cl_send_error_reports.SetValue(0);
         break;
     }
-    ShowWindow(hwnd, SW_RESTORE);
+    ShowWindow((HWND)mainWindowHandle, SW_RESTORE);
 
 #else
 
