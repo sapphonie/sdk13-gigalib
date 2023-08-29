@@ -52,7 +52,7 @@ void sentry_callback(IConVar* var, const char* pOldValue, float flOldValue)
 
 ConVar cl_send_error_reports("cl_send_error_reports", "-1", FCVAR_ARCHIVE,
     "Enables/disables sending error reports to the developers to help improve the game.\n"
-    "Error reports will include your SteamID, and any pertinent game info (class, loadout, current map, etc.) - we do not store any personally identifiable information.\n"
+    "Error reports will include your SteamID, and any pertinent game info (class, loadout, current map, convars, console spew, etc.) - we do not store any personally identifiable information.\n"
     "Read more at " VPC_QUOTE_STRINGIFY(SENTRY_PRIVACY_POLICY_URL) "\n"
     "-1 asks you again on game boot and disables reporting, 0 disables reporting and does not ask you again, 1 enables reporting.\n",
     sentry_callback
@@ -381,10 +381,13 @@ void CSentry::SentryInit()
         return;
     }
 
+    //     "Error reports will include your SteamID, and any pertinent game info (class, loadout, current map, etc.) - we do not store any personally identifiable information.\n"
+
     // localize these with translations eventually
     const char* windowText = \
         "Do you want to send error reports to the developers?\n"
-        "We collect no personally identifiable info, but check out our privacy policy at " VPC_QUOTE_STRINGIFY(SENTRY_PRIVACY_POLICY_URL) "\n"
+        "Error reports will include your SteamID, and any pertinent game info (class, loadout, current map, convars, console spew, etc.)\n"
+        "We do not store any personally identifiable information, but check out our privacy policy at " VPC_QUOTE_STRINGIFY(SENTRY_PRIVACY_POLICY_URL) "\n"
         "You can change this later by changing the cl_send_error_reports cvar.";
 
     const char* windowTitle = \
