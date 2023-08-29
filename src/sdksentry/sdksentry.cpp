@@ -268,6 +268,20 @@ void CSentry::SentryInit()
     std::stringstream sentry_db;
     sentry_db << modpath_ss << CORRECT_PATH_SEPARATOR << "cache" << CORRECT_PATH_SEPARATOR << "sentry";
 
+    // prevent a crash if cache dir doesnt exist
+    bool exists = std::filesystem::exists(sentry_db.str());
+    if (!exists)
+    {
+        bool mkdir = std::filesystem::create_directories(sentry_db.str());
+        if (mkdir)
+        {
+            Msg("Successfully created sentry cache folder at %s.\n", sentry_db.str().c_str());
+        }
+        else
+        {
+            Warning("Failed to create sentry cache folder at %s! Your game might crash.\n", sentry_db.str().c_str());
+        }
+    }
 
     sentry_options_t* options               = sentry_options_new();
     constexpr char releaseVers[256]         = VPC_QUOTE_STRINGIFY(SENTRY_RELEASE_VERSION);
