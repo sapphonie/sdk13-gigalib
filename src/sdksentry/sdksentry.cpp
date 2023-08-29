@@ -383,13 +383,18 @@ void CSentry::SentryInit()
         "Error reporting consent popup";
 
 #ifdef _WIN32
-    int msgboxID = MessageBox(
+
+
+    HWND hwnd = FindWindow("Valve001", NULL);
+
+    ShowWindow(hwnd, SW_HIDE);
+
+    int msgboxID = MessageBoxA(
         NULL,
         windowText,
         windowTitle,
         MB_YESNO | MB_SETFOREGROUND | MB_TOPMOST
     );
-
     switch (msgboxID)
     {
     case IDYES:
@@ -399,6 +404,8 @@ void CSentry::SentryInit()
         cl_send_error_reports.SetValue(0);
         break;
     }
+    ShowWindow(hwnd, SW_RESTORE);
+
 #else
 
     SDL_MessageBoxData messageboxdata   = {};
