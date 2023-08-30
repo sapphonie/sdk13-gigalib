@@ -381,8 +381,6 @@ void CSentry::SentryInit()
         return;
     }
 
-    //     "Error reports will include your SteamID, and any pertinent game info (class, loadout, current map, etc.) - we do not store any personally identifiable information.\n"
-
     // localize these with translations eventually
     const char* windowText = \
         "Do you want to send error reports to the developers?\n"
