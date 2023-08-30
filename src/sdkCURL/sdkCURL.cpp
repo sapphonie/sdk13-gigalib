@@ -115,6 +115,7 @@ bool sdkCURL::InitCURL()
         const curl_easyoption* ezoptinfo = curl_easy_option_by_id(opt); \
         Warning("curl_easy_setopt (%s) failed: %s\n",                   \
         curl_easy_strerror(ccode), ezoptinfo->name);                    \
+        Assert(ccode == CURLE_OK);                                      \
         curl_easy_cleanup(chand);                                       \
         return false;                                                   \
     }
@@ -181,6 +182,7 @@ bool sdkCURL::CURLGet_Thread(std::string inURL, curlResponse* resp)
     if (ccode != CURLE_OK)
     {
         Warning("curl_easy_perform() failed: %s\n", curl_easy_strerror(ccode));
+        Assert(ccode == CURLE_OK);
         curl_easy_cleanup(curl);
         return false;
     }
@@ -207,6 +209,9 @@ bool sdkCURL::CURLGet_Thread(std::string inURL, curlResponse* resp)
 
     resp->failed    = false;
     resp->completed = true;
+
+    reqs.push_back(resp);
+
     return true;
 }
 
@@ -214,7 +219,6 @@ bool sdkCURL::CURLGet(std::string inURL, curlCallback ccb)
 {
     curlResponse* r = new curlResponse;
     r->callback = (void*)ccb;
-    reqs.push_back(r);
     std::thread t(&sdkCURL::CURLGet_Thread, g_sdkCURL, inURL, r);
     t.detach();
     return true;

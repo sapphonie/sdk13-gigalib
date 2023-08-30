@@ -16,7 +16,7 @@ CBlacklists::CBlacklists()
 {
 }
 
-void CBlacklists__SentryURLCB__THUNK(const curlResponse* curlRepsonseStruct)
+void CBlacklists__BlacklistsURLCB__THUNK(const curlResponse* curlRepsonseStruct)
 {
     g_CBlacklists.BlacklistsURLCB(curlRepsonseStruct);
 }
@@ -25,7 +25,7 @@ void CBlacklists::PostInit()
 {
     DevMsg(2, "Blacklists Postinit!\n");
 
-    g_sdkCURL->CURLGet(VPC_QUOTE_STRINGIFY(BLACKLISTS_URL), CBlacklists__SentryURLCB__THUNK);
+    g_sdkCURL->CURLGet(VPC_QUOTE_STRINGIFY(BLACKLISTS_URL), CBlacklists__BlacklistsURLCB__THUNK);
 }
 
 #define maxBlacklistsLen 1024
