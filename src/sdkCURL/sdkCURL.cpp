@@ -148,14 +148,9 @@ bool sdkCURL::CURLGet_Thread(std::string inURL, curlResponse* resp)
         return false;
     }
 
-    CURLcode ccode;
+    CURLcode ccode = {};
     setopt_errwrap(curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
     setopt_errwrap(curl, CURLOPT_TRANSFER_ENCODING, 1L);
-
-    // not built in
-    // setopt_errwrap(curl, CURLOPT_DNS_SERVERS, "1.1.1.1,1.0.0.1,8.8.8.8,8.8.4.4");
-
-    setopt_errwrap(curl, CURLOPT_DOH_URL, "https://cloudflare-dns.com/dns-query");
 
     setopt_errwrap(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_3);
 
@@ -164,19 +159,19 @@ bool sdkCURL::CURLGet_Thread(std::string inURL, curlResponse* resp)
 
     // send all response data to this func
     setopt_errwrap(curl, CURLOPT_WRITEFUNCTION, response_callback);
-    setopt_errwrap(curl, CURLOPT_WRITEDATA, resp);
+    setopt_errwrap(curl, CURLOPT_WRITEDATA, (void*)resp);
 
     // send all headers to this func
     setopt_errwrap(curl, CURLOPT_HEADERFUNCTION, header_callback);
-    setopt_errwrap(curl, CURLOPT_HEADERDATA, resp);
+    setopt_errwrap(curl, CURLOPT_HEADERDATA, (void*)resp);
 
-    /* enable progress meter */
-    setopt_errwrap(curl, CURLOPT_NOPROGRESS, 0L);
+    // disable progress meter for now
+    setopt_errwrap(curl, CURLOPT_NOPROGRESS, 1L);
 
     // setopt_errwrap(curl, CURLOPT_XFERINFODATA, canary);
     // setopt_errwrap(curl, CURLOPT_XFERINFOFUNCTION, progress_callback);
 
-    setopt_errwrap(curl, CURLOPT_USERAGENT, "sdk2013 CURL implementation by sappho.io - github.com/sapphonie/sdk13-sappholib");
+    setopt_errwrap(curl, CURLOPT_USERAGENT, "sdk2013 CURL implementation by sappho.io");
 
     ccode = curl_easy_perform(curl);
     if (ccode != CURLE_OK)
