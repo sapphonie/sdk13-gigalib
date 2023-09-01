@@ -27,6 +27,8 @@
 #include <fstream>
 #include <filesystem>
 
+#include <fmt/format.h>
+
 #ifndef min
 	#define min(a,b)  (((a) < (b)) ? (a) : (b))
 #endif
