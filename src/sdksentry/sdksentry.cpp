@@ -385,7 +385,7 @@ void CSentry::SentryInit()
     const char* windowText = \
         "Do you want to send error reports to the developers?\n"
         "Error reports will include your SteamID, and any pertinent game info (class, loadout, current map, convars, console spew, etc.)\n"
-        "We do not store any personally identifiable information, but check out our privacy policy at " VPC_QUOTE_STRINGIFY(SENTRY_PRIVACY_POLICY_URL) "\n"
+        "Check out our privacy policy at " VPC_QUOTE_STRINGIFY(SENTRY_PRIVACY_POLICY_URL) "\n"
         "You can change this later by changing the cl_send_error_reports cvar.";
 
     const char* windowTitle = \
