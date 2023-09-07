@@ -101,24 +101,49 @@ FORCEINLINE void DoDyingStuff()
     // do our logging no matter what
     // global char[256000]
     char* spew = Engine_GetSpew();
-    constexpr const size_t spewSize = 256000;
+    const size_t spewSize = 256000;
 
-    // remove trailing nulls because GetSpew gives us a string with null chars in it (???)
-    size_t chars = spewSize - 1;
-    while (spew[chars] == 0x0)
+    if (!spew || spew[0] == 0x0)
     {
-        chars--;
+        fflush((FILE*)g_Sentry.sentryLogFilePtr);
+        return;
     }
 
-    // not signal safe but whatever - on windows we're in a SEH anyway
-    fwrite( spew, chars+1, 1, \
-            (FILE*)g_Sentry.conFileFilePtr );
+    // guaruntee that there's a nul at the end
+    spew[spewSize - 1] = 0x0;
+
+    // iterate starting from the end of the array
+    // we want to find the first non null character
+    size_t lastNonNullCharPos = spewSize - 1;
+    while (spew[lastNonNullCharPos] == 0x0)
+    {
+        lastNonNullCharPos--;
+    }
+
+    // now we're starting from the beginning of the array
+    // and putting each char directly into our file,
+    // sanitizing nulls as we go
+    for (size_t c = 0; c <= lastNonNullCharPos; c++)
+    {
+        char thisChar = spew[c];
+        if (thisChar == 0x0)
+        {
+            fputs("<NULL>", (FILE*)g_Sentry.conFileFilePtr);
+        }
+        else
+        {
+            fputc(thisChar, (FILE*)g_Sentry.conFileFilePtr);
+        }
+    }
+
     fflush( (FILE*)g_Sentry.conFileFilePtr );
     fclose( (FILE*)g_Sentry.conFileFilePtr );
 
     fflush( (FILE*)g_Sentry.sentryLogFilePtr );
+
     // we want this open no matter what so DONT close it
     // fclose((FILE*)g_Sentry.sentryLogFilePtr);
+    return;
 }
 
 // We ignore any crashes whenever the engine shuts down

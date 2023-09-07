@@ -41,7 +41,17 @@ bool initEngineSpew()
 #endif
 
     GetSpewPtr = memy::FindPattern(engine_bin, pattern, patternSize, 0);
-    return true;
+    ConVarRef sys_minidumpspewlines("sys_minidumpspewlines", false);
+    if (sys_minidumpspewlines.IsValid())
+    {
+        // will never be null if valid
+        ConVar* spewCvar = static_cast<ConVar*>(sys_minidumpspewlines.GetLinkedConVar());
+        // up defaults from 512 to 2048
+        spewCvar->SetDefault("2048");
+        spewCvar->SetValue(2048);
+        return true;
+    }
+    return false;
 }
 
 char SpewOut[256000] = {};
