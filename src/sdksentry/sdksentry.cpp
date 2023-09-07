@@ -111,7 +111,7 @@ FORCEINLINE void DoDyingStuff()
     }
 
     // not signal safe but whatever - on windows we're in a SEH anyway
-    fwrite( spew, 1, ch+1, \
+    fwrite( spew, ch+1, 1, \
             (FILE*)g_Sentry.conFileFilePtr );
     fflush( (FILE*)g_Sentry.conFileFilePtr );
     fclose( (FILE*)g_Sentry.conFileFilePtr );
