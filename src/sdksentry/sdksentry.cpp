@@ -104,14 +104,14 @@ FORCEINLINE void DoDyingStuff()
     constexpr const size_t spewSize = 256000;
 
     // remove trailing nulls because GetSpew gives us a string with null chars in it (???)
-    size_t ch = spewSize - 1;
-    while (spew[ch] == 0x0)
+    size_t chars = spewSize - 1;
+    while (spew[chars] == 0x0)
     {
-        ch--;
+        chars--;
     }
 
     // not signal safe but whatever - on windows we're in a SEH anyway
-    fwrite( spew, ch+1, 1, \
+    fwrite( spew, chars+1, 1, \
             (FILE*)g_Sentry.conFileFilePtr );
     fflush( (FILE*)g_Sentry.conFileFilePtr );
     fclose( (FILE*)g_Sentry.conFileFilePtr );
