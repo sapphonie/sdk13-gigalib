@@ -5,15 +5,22 @@
 #include <sdkCURL/sdkCURL.h>
 #include <sdksentry/sdksentry.h>
 #include <engine_memutils.h>
+#include <engine_detours.h>
 CSentry g_Sentry;
+
+// warning C4805: '==': unsafe mix of type 'volatile sig_atomic_t' and type 'bool' in operation
+// how many more qualifiers can I add? We will see...
+static constexpr const volatile sig_atomic_t sigtrue  = (sig_atomic_t)true;
+static constexpr const volatile sig_atomic_t sigfalse = (sig_atomic_t)false;
+
 
 CSentry::CSentry()
 {
-    didinit             = false;
-    didshutdown         = false;
+    didinit             = sigfalse;
+    didshutdown         = sigfalse;
     sentryLogFilePtr    = NULL;
     conFileFilePtr      = NULL;
-    crashed             = false;
+    crashed             = sigfalse;
 #ifdef _WIN32
     mainWindowHandle    = NULL;
 #endif
@@ -152,7 +159,7 @@ FORCEINLINE void DoDyingStuff()
 void CSentry::Shutdown()
 {
     sentry_add_breadcrumb(sentry_value_new_breadcrumb(NULL, __FUNCTION__));
-    didshutdown = true;
+    didshutdown = sigtrue;
     DoDyingStuff();
     sentry_close();
 }
@@ -162,6 +169,15 @@ void CSentry::Shutdown()
 #endif
 
 
+
+// we do t
+#define explodeImmediately()                \
+    __debugbreak();                         \
+    __fastfail(FAST_FAIL_FATAL_APP_EXIT);   \
+                                            \
+    sentry_value_decref(event);             \
+    return sentry_value_new_null();         \
+
 // DO NOT THREAD THIS OR ANY FUNCTIONS CALLED BY IT UNDER ANY CIRCUMSTANCES
 // THIS NEEDS TO BE SIGNAL SAFE ALSO
 // I MEAN NOT REALLY ON WINDOWS ITS CALLED IN A SEH BUT
@@ -170,15 +186,19 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
 {
     AssertMsg(0, "CRASHED - WE'RE IN THE SIGNAL HANDLER NOW SO BREAK IF YOU WANT");
 
+
+    // reentry guard
+    if (g_Sentry.crashed == sigtrue)
+    {
+        explodeImmediately();
+    }
+
     g_Sentry.crashed = true;
     DoDyingStuff();
 
-
-    if (g_Sentry.didshutdown)
+    if (g_Sentry.didshutdown == sigtrue)
     {
-        // Warning("NOT SENDING CRASH TO SENTRY.IO BECAUSE THIS IS A NORMAL SHUTDOWN! BUHBYE!\n");
-        sentry_value_decref(event);
-        return sentry_value_new_null();
+        explodeImmediately();
     }
 
     const char* crashdialogue =
@@ -201,10 +221,9 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, crashtitle, crashdialogue, NULL);
 #endif
 
-    if (!g_Sentry.didinit)
+    if (g_Sentry.didinit == sigfalse)
     {
-        sentry_value_decref(event);
-        return sentry_value_new_null();
+        explodeImmediately();
     }
     return event;
 }
@@ -234,7 +253,7 @@ typedef enum sentry_level_e {
 
 */
     // don't do valve functions if we already crashed
-    if (g_Sentry.crashed)
+    if (g_Sentry.crashed == sigtrue)
     {
         free(buffer);
         return;
@@ -275,6 +294,99 @@ typedef enum sentry_level_e {
 
     free(buffer);
 }
+
+
+
+
+
+
+
+CON_COMMAND_F(triggerError, "test", 0)
+{
+    Error("error message %i", RandomInt(34,46));
+}
+
+// int __cdecl sub_7920CAA0(char a1, char *Format, va_list ArgList)
+sdkdetour* InternalError{};
+#define InternalError_vars        bool makeDump, char* fmt, va_list arglist
+#define InternalError_novars      makeDump, fmt, arglist
+#define InternalError_origfunc    PLH::FnCast(InternalError->detourTrampoline, InternalError_CB)(InternalError_novars);
+void InternalError_CB(InternalError_vars)
+{
+    char errBuf[1024] = {};
+    vsnprintf(errBuf, sizeof(errBuf), fmt, arglist);
+    Warning("err at %s\n", errBuf);
+    // Maybe don't...?
+    SentrySetTags();
+    DoDyingStuff();
+
+    std::string errFmt = fmt::format("Error(): {:s}", errBuf);
+    sentry_value_t event = sentry_value_new_event();
+    sentry_value_set_by_key(event, "level", sentry_value_new_string("error"));
+    sentry_value_set_by_key(event, "logger", sentry_value_new_string(__FUNCTION__));
+    sentry_value_set_by_key(event, "message", sentry_value_new_string(errFmt.c_str()));
+
+    sentry_value_t thread = sentry_value_new_thread(GetCurrentThreadId(), "nada");
+    sentry_value_set_stacktrace(thread, NULL, 16);
+    sentry_event_add_thread(event, thread);
+
+    sentry_capture_event(event);
+
+    sentry_flush(9999);
+    sentry_close();
+
+    // SentryEvent("fatal", "Error()", errBuf, NULL, false);
+
+    const char* crashdialogue =
+    "\"KABOOM!\"\n\n"
+    "The engine has politely asked us to explode.\n"
+    "If you've enabled error reporting,\n"
+    "we'll take a look.\n";
+
+    const char* crashtitle = 
+    "Engine Error(!)";
+
+    std::string errWindow = fmt::format("{:s}\nThe error was:\n{:s}", crashdialogue, errBuf);
+
+#ifdef _WIN32
+    // hide the window since we can be in fullscreen and if so it'll just hang forever
+    ShowWindow((HWND)g_Sentry.mainWindowHandle, SW_HIDE);
+
+    MessageBoxA(NULL, errWindow.c_str(), crashtitle, \
+        MB_OK | MB_SETFOREGROUND | MB_TOPMOST);
+#else
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, crashtitle, crashdialogue, NULL);
+#endif
+    __debugbreak();
+    __fastfail(FAST_FAIL_FATAL_APP_EXIT);
+    return;
+}
+
+void InternalError_Init()
+{
+
+    InternalError = new sdkdetour{};
+
+    // Unique string: "NetChannel removed.", which calls Shutdown immediately after
+    #ifdef _WIN32
+        // Signature for sub_7920CAA0:
+        // 55 8B EC 6A FF 68 ? ? ? ? 68 ? ? ? ? 
+        InternalError->patternSize = 15;
+        InternalError->pattern     = "\x55\x8B\xEC\x6A\xFF\x68\x2A\x2A\x2A\x2A\x68\x2A\x2A\x2A\x2A";
+    #else
+        // Signature for sub_4DFAF0:
+        // 55 89 E5 57 56 53 83 EC 3C 8B 5D 08 8B 75 0C 8B 8B 8C 00 00 00
+        InternalError->patternSize = 1;
+        InternalError->pattern = "";
+    #endif
+
+    populateAndInitDetour(InternalError, (void*)InternalError_CB);
+}
+
+
+
+
+
 
 #ifdef _WIN32
 #include <minidump.h>
@@ -394,6 +506,7 @@ void CSentry::SentryInit()
 #ifdef _WIN32
     mainWindowHandle = (sig_atomic_t)FindWindow("Valve001", NULL);
 #endif
+    InternalError_Init();
 
     ConVarRef cl_send_error_reports("cl_send_error_reports");
     // get the current version of our consent
@@ -603,7 +716,10 @@ void SentrySetTags()
     {
         sentry_set_tag("server ip", "none");
     }
-
+    if (!cvar)
+    {
+        return;
+    }
 	for (auto& element : cvarList)
 	{
         ConVarRef cRef(element.c_str(), true);
