@@ -170,7 +170,10 @@ void CSentry::Shutdown()
 
 
 
-// we do t
+// we do this because sentry has stupid weird behavior
+// where we can
+// a) call sentry_shutdown() and the crash handler still gets called
+// b) crash multiple times and call its own crash handler - i.e. this function is reentrant!
 #define explodeImmediately()                \
     __debugbreak();                         \
     __fastfail(FAST_FAIL_FATAL_APP_EXIT);   \
