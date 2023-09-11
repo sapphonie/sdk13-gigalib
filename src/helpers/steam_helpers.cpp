@@ -12,6 +12,7 @@
 #include <Windows.h>
 #include <engine_hacks/engine_detours.h>
 
+
 bool checkWine()
 {
     static const char * (__cdecl *pwine_get_version)(void);
@@ -93,10 +94,10 @@ bool relaunch()
     {
         UTIL_ReplaceAll(StrWin32CmdLine, "-game sourcetest", "");
         std::stringstream newCmdLine;
-        newCmdLine << "cmd /C echo Restarting your game ... & ";
-        newCmdLine << "ping 127.0.0.1 -n 2 > nul & ";
+        newCmdLine << "cmd /C echo Hey! We're restarting your game to enable crash reporting and the Steam overlay! Just sit tight... & ";
+        newCmdLine << "ping 127.0.0.1 -n 4 > nul & ";
         newCmdLine << "start \"\" ";
-        newCmdLine << StrWin32CmdLine << " -novid -multirun -isrelaunching";
+        newCmdLine << StrWin32CmdLine << " -novid -isrelaunching";
 
 #ifdef SDKSENTRY
         newCmdLine << " -nobreakpad -nominidumps";
