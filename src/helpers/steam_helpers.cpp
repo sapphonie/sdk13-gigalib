@@ -70,7 +70,9 @@ void restartWithFixedCmdline(std::stringstream &newCmdLine)
     }
     CloseHandle( pi.hProcess );
     CloseHandle( pi.hThread );
-    abort();
+
+    __fastfail(FAST_FAIL_FATAL_APP_EXIT);
+    // abort();
 }
 
 // return true to abort running the rest of the steam ctors
@@ -91,6 +93,9 @@ bool relaunch()
     {
         UTIL_ReplaceAll(StrWin32CmdLine, "-game sourcetest", "");
         std::stringstream newCmdLine;
+        newCmdLine << "cmd /C echo Restarting your game ... & ";
+        newCmdLine << "ping 127.0.0.1 -n 2 > nul & ";
+        newCmdLine << "start \"\" ";
         newCmdLine << StrWin32CmdLine << " -novid -multirun -isrelaunching";
 
 #ifdef SDKSENTRY
@@ -101,8 +106,6 @@ bool relaunch()
         {
             newCmdLine << " -iswine";
         }
-
-        Sleep(1);
         restartWithFixedCmdline(newCmdLine);
         return true;
     }
