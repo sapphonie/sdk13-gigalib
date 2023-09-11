@@ -132,6 +132,7 @@ $Project
     {
         $ImpLib             "$gigalibloc\..\bin\sentry"                   [$WIN32]
         $ImpLib             "$gigalibloc\..\bin\libcurl"                  [$WIN32]
+        $ImpLib             "$gigalibloc\..\bin\fmt"                      [$WIN32]
 
         $Lib                "$gigalibloc\..\bin\libbreakpad_client"       [$LINUX]
         $Lib                "$gigalibloc\..\bin\libsentry"                [$LINUX]
