@@ -27,6 +27,7 @@
 #include <fstream>
 #include <filesystem>
 
+#define FMT_ENFORCE_COMPILE_STRING
 #include <fmt/format.h>
 
 #ifndef min

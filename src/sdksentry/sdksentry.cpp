@@ -331,7 +331,7 @@ void InternalError_CB(InternalError_vars)
 
     DoDyingStuff();
 
-    std::string errFmt = fmt::format("Error(): {:s}", errBuf);
+    std::string errFmt = fmt::format( FMT_STRING( "Error(): {:s}" ), errBuf);
     sentry_value_t event = sentry_value_new_event();
     sentry_value_set_by_key(event, "level", sentry_value_new_string("error"));
     sentry_value_set_by_key(event, "logger", sentry_value_new_string(__FUNCTION__));
@@ -360,7 +360,7 @@ void InternalError_CB(InternalError_vars)
     const char* crashtitle = 
     "Engine Error(!)";
 
-    std::string errWindow = fmt::format("{:s}\nThe error was:\n{:s}", crashdialogue, errBuf);
+    std::string errWindow = fmt::format( FMT_STRING( "{:s}\nThe error was:\n{:s}" ), crashdialogue, errBuf);
 
 #ifdef _WIN32
     // hide the window since we can be in fullscreen and if so it'll just hang forever
