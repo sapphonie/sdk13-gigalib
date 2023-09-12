@@ -8,19 +8,15 @@
 #include <engine_detours.h>
 CSentry g_Sentry;
 
-// warning C4805: '==': unsafe mix of type 'volatile sig_atomic_t' and type 'bool' in operation
-// how many more qualifiers can I add? We will see...
-static constexpr const volatile sig_atomic_t sigtrue  = (sig_atomic_t)true;
-static constexpr const volatile sig_atomic_t sigfalse = (sig_atomic_t)false;
-
 
 CSentry::CSentry()
 {
-    didinit             = sigfalse;
-    didshutdown         = sigfalse;
+    didinit.store(false);
+    didshutdown.store(false);
+    crashed.store(false);
+
     sentryLogFilePtr    = NULL;
     conFileFilePtr      = NULL;
-    crashed             = sigfalse;
 #ifdef _WIN32
     mainWindowHandle    = NULL;
 #endif
@@ -155,13 +151,24 @@ FORCEINLINE void DoDyingStuff()
 
 // We ignore any crashes whenever the engine shuts down
 // We shouldn't, but we do. Feel free to fix all the shutdown crashes if you want,
-// then you can remove this
+// then you can remove the ugly atomic part of this
 void CSentry::Shutdown()
 {
     sentry_add_breadcrumb(sentry_value_new_breadcrumb(NULL, __FUNCTION__));
-    didshutdown = sigtrue;
+
     DoDyingStuff();
+
+    int flushRet = sentry_flush(5000);
+    if (flushRet != 0)
+    {
+        Warning("-> Could not fully flush sentry queue, ret = %i\n", flushRet);
+    }
     sentry_close();
+    didshutdown.store(true);
+
+#ifdef _WIN32
+    SetUnhandledExceptionFilter(NULL);
+#endif
 }
 
 #ifndef _WIN32
@@ -179,7 +186,7 @@ void CSentry::Shutdown()
     __fastfail(FAST_FAIL_FATAL_APP_EXIT);   \
                                             \
     sentry_value_decref(event);             \
-    return sentry_value_new_null();         \
+    return sentry_value_new_null();
 
 // DO NOT THREAD THIS OR ANY FUNCTIONS CALLED BY IT UNDER ANY CIRCUMSTANCES
 // THIS NEEDS TO BE SIGNAL SAFE ALSO
@@ -191,15 +198,15 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
 
 
     // reentry guard
-    if (g_Sentry.crashed == sigtrue)
+    if ( g_Sentry.crashed.load() )
     {
         explodeImmediately();
     }
 
-    g_Sentry.crashed = true;
+    g_Sentry.crashed.store(true);
     DoDyingStuff();
 
-    if (g_Sentry.didshutdown == sigtrue)
+    if ( g_Sentry.didshutdown.load() )
     {
         explodeImmediately();
     }
@@ -224,7 +231,7 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, crashtitle, crashdialogue, NULL);
 #endif
 
-    if (g_Sentry.didinit == sigfalse)
+    if ( g_Sentry.didinit.load() )
     {
         explodeImmediately();
     }
@@ -256,7 +263,7 @@ typedef enum sentry_level_e {
 
 */
     // don't do valve functions if we already crashed
-    if (g_Sentry.crashed == sigtrue)
+    if ( g_Sentry.crashed.load() )
     {
         free(buffer);
         return;
@@ -320,7 +327,8 @@ void InternalError_CB(InternalError_vars)
     vsnprintf(errBuf, sizeof(errBuf), fmt, arglist);
     Warning("err at %s\n", errBuf);
     // Maybe don't...?
-    SentrySetTags();
+    // SentrySetTags();
+
     DoDyingStuff();
 
     std::string errFmt = fmt::format("Error(): {:s}", errBuf);
@@ -335,9 +343,12 @@ void InternalError_CB(InternalError_vars)
 
     sentry_capture_event(event);
 
-    sentry_flush(9999);
+    sentry_flush(5000);
     sentry_close();
-
+    // don't re-crash
+#ifdef _WIN32
+    SetUnhandledExceptionFilter(NULL);
+#endif
     // SentryEvent("fatal", "Error()", errBuf, NULL, false);
 
     const char* crashdialogue =
@@ -446,7 +457,7 @@ void CSentry::SentryInit()
 #endif
 
     sentry_options_set_database_path        (options, sentry_db.str().c_str());
-    sentry_options_set_shutdown_timeout     (options, 9999);
+    sentry_options_set_shutdown_timeout     (options, 5000);
 
     sentry_conlog = {};
     sentry_conlog << sentry_db.str() << CORRECT_PATH_SEPARATOR << "last_crash_console_log.txt";
@@ -493,11 +504,11 @@ void CSentry::SentryInit()
     if (sentryinit != 0)
     {
         Warning("Sentry initialization failed!\n");
-        CSentry::didinit = false;
+        didinit.store(false);
         return;
     }
     // sentry_reinstall_backend();
-    CSentry::didinit = true;
+    didinit.store(true);
 
 
     // HAS TO RUN AFTER SENTRY INIT!!!
@@ -628,7 +639,7 @@ void SetSteamID()
 #include <util_shared.h>
 void SentryMsg(const char* logger, const char* text, bool forcesend /* = false */)
 {
-    if ( (!forcesend && cl_send_error_reports.GetInt() <= 0) || !g_Sentry.didinit )
+    if ( (!forcesend && cl_send_error_reports.GetInt() <= 0) || !(g_Sentry.didinit.load(std::memory_order_relaxed)) )
     {
         // Warning("NOT SENDING!\n");
         return;
@@ -661,7 +672,7 @@ void _SentryMsgThreaded(const char* logger, const char* text, bool forcesend /* 
 // context info? You need to read the docs: https://docs.sentry.io/platforms/native/usage/#manual-events
 void SentryEvent(const char* level, const char* logger, const char* message, sentry_value_t ctxinfo, bool forcesend /* = false */)
 {
-    if ( (!forcesend && cl_send_error_reports.GetInt() <= 0) || !g_Sentry.didinit )
+    if ( (!forcesend && cl_send_error_reports.GetInt() <= 0) || !(g_Sentry.didinit.load(std::memory_order_relaxed)) )
     {
         // Warning("NOT SENDING!\n");
         return;

@@ -22,11 +22,11 @@ class CSentry : public CAutoGameSystem
 public:
     CSentry();
 
-    volatile sig_atomic_t    didinit;
-    volatile sig_atomic_t    didshutdown;
+    std::atomic_bool    didinit;
+    std::atomic_bool    didshutdown;
+    std::atomic_bool    crashed;
     volatile sig_atomic_t    sentryLogFilePtr;
     volatile sig_atomic_t    conFileFilePtr;
-    volatile sig_atomic_t    crashed;
 
 #ifdef _WIN32
     volatile sig_atomic_t    mainWindowHandle;
