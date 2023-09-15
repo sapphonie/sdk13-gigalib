@@ -22,9 +22,9 @@ class CSentry : public CAutoGameSystem
 public:
     CSentry();
 
-    std::atomic_bool    didinit;
-    std::atomic_bool    didshutdown;
-    std::atomic_bool    crashed;
+    std::atomic<bool>    didinit;
+    std::atomic<bool>    didshutdown;
+    std::atomic<bool>    crashed;
     volatile sig_atomic_t    sentryLogFilePtr;
     volatile sig_atomic_t    conFileFilePtr;
 

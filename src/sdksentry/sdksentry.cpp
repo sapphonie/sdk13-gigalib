@@ -181,13 +181,23 @@ void CSentry::Shutdown()
 // where we can
 // a) call sentry_shutdown() and the crash handler still gets called
 // b) crash multiple times and call its own crash handler - i.e. this function is reentrant!
+#ifdef _WIN32
 #define explodeImmediately()                \
     __debugbreak();                         \
     __fastfail(FAST_FAIL_FATAL_APP_EXIT);   \
                                             \
     sentry_value_decref(event);             \
     return sentry_value_new_null();
-
+#else
+// LINUX SUPPORT:
+//  _exit(2) closes the process "immediately", similary to fastfail, but more universal
+#define explodeImmediately()                \
+    __debugbreak();                         \
+    _exit(2);                               \
+                                            \
+    sentry_value_decref(event);             \
+    return sentry_value_new_null();
+#endif
 // DO NOT THREAD THIS OR ANY FUNCTIONS CALLED BY IT UNDER ANY CIRCUMSTANCES
 // THIS NEEDS TO BE SIGNAL SAFE ALSO
 // I MEAN NOT REALLY ON WINDOWS ITS CALLED IN A SEH BUT
