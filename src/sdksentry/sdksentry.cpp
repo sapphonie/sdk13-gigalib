@@ -175,6 +175,14 @@ void CSentry::Shutdown()
      #include <SDL.h>
 #endif
 
+#ifndef _WIN32
+#define __debugbreak() \
+    asm("0:"                              \
+        ".pushsection embed-breakpoints;" \
+        ".quad 0b;"                       \
+        ".popsection;")
+#endif
+
 
 
 // we do this because sentry has stupid weird behavior
@@ -347,7 +355,11 @@ void InternalError_CB(InternalError_vars)
     sentry_value_set_by_key(event, "logger", sentry_value_new_string(__FUNCTION__));
     sentry_value_set_by_key(event, "message", sentry_value_new_string(errFmt.c_str()));
 
-    sentry_value_t thread = sentry_value_new_thread(GetCurrentThreadId(), "nada");
+#ifndef _WIN32
+    sentry_value_t thread = sentry_value_new_thread(pthread_self(), "nada");
+#else
+	sentry_value_t thread = sentry_value_new_thread(GetCurrentThreadId(), "nada");
+#endif
     sentry_value_set_stacktrace(thread, NULL, 16);
     sentry_event_add_thread(event, thread);
 
