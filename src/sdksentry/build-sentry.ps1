@@ -13,6 +13,7 @@ cmake -B build `
 -DCMAKE_BUILD_TYPE=RelWithDebInfo `
 -DSENTRY_BUILD_SHARED_LIBS=ON `
 -DSENTRY_BUILD_FORCE32=ON `
+-DCRASHPAD_WER_ENABLED=ON `
 -DCMAKE_GENERATOR_PLATFORM=Win32
 
 cmake --build build --parallel
@@ -24,6 +25,8 @@ copy .\sentry-native\build\Debug\sentry.lib ..\..\bin\
 copy .\sentry-native\build\Debug\sentry.pdb ..\..\bin\
 copy .\sentry-native\build\crashpad_build\handler\Debug\crashpad_handler.exe ..\..\bin\
 copy .\sentry-native\build\crashpad_build\handler\Debug\crashpad_handler.pdb ..\..\bin\
+copy .\sentry-native\build\crashpad_build\handler\Debug\crashpad_wer.dll ..\..\bin\
+copy .\sentry-native\build\crashpad_build\handler\Debug\crashpad_wer.pdb ..\..\bin\
 
 rm -Recurse -Force sentry-native
 

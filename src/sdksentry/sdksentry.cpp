@@ -6,6 +6,19 @@
 #include <sdksentry/sdksentry.h>
 #include <engine_memutils.h>
 #include <engine_detours.h>
+
+
+__forceinline __declspec(noreturn) void TERMINATE_RIGHT_NOW()
+{
+#ifdef _WIN32
+    _exit(2);
+#else
+    _exit(2);
+#endif
+}
+
+
+
 CSentry g_Sentry;
 
 
@@ -176,18 +189,6 @@ void CSentry::Shutdown()
 #endif
 
 
-
-// we do this because sentry has stupid weird behavior
-// where we can
-// a) call sentry_shutdown() and the crash handler still gets called
-// b) crash multiple times and call its own crash handler - i.e. this function is reentrant!
-#define explodeImmediately()                \
-    __debugbreak();                         \
-    __fastfail(FAST_FAIL_FATAL_APP_EXIT);   \
-                                            \
-    sentry_value_decref(event);             \
-    return sentry_value_new_null();
-
 // DO NOT THREAD THIS OR ANY FUNCTIONS CALLED BY IT UNDER ANY CIRCUMSTANCES
 // THIS NEEDS TO BE SIGNAL SAFE ALSO
 // I MEAN NOT REALLY ON WINDOWS ITS CALLED IN A SEH BUT
@@ -200,7 +201,9 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
     // reentry guard
     if ( g_Sentry.crashed.load() )
     {
-        explodeImmediately();
+        TERMINATE_RIGHT_NOW();
+        sentry_value_decref(event);
+        return sentry_value_new_null();
     }
 
     g_Sentry.crashed.store(true);
@@ -208,7 +211,9 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
 
     if ( g_Sentry.didshutdown.load() )
     {
-        explodeImmediately();
+        TERMINATE_RIGHT_NOW();
+        sentry_value_decref(event);
+        return sentry_value_new_null();
     }
 
     const char* crashdialogue =
@@ -233,7 +238,9 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
 
     if ( g_Sentry.didinit.load() )
     {
-        explodeImmediately();
+        TERMINATE_RIGHT_NOW();
+        sentry_value_decref(event);
+        return sentry_value_new_null();
     }
     return event;
 }
@@ -345,6 +352,7 @@ void InternalError_CB(InternalError_vars)
 
     sentry_flush(5000);
     sentry_close();
+
     // don't re-crash
 #ifdef _WIN32
     SetUnhandledExceptionFilter(NULL);
@@ -371,8 +379,7 @@ void InternalError_CB(InternalError_vars)
 #else
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, crashtitle, crashdialogue, NULL);
 #endif
-    __debugbreak();
-    __fastfail(FAST_FAIL_FATAL_APP_EXIT);
+    TERMINATE_RIGHT_NOW();
     return;
 }
 
@@ -409,7 +416,6 @@ void InternalError_Init()
 void CSentry::SentryInit()
 {
     DevMsg(2, "Sentry init!\n");
-
     const char* mpath = ConVarRef("_modpath", false).GetString();
     if (!mpath)
     {
@@ -635,8 +641,6 @@ void SetSteamID()
     sentry_set_user(user);
 }
 
-#include <thread>
-#include <util_shared.h>
 void SentryMsg(const char* logger, const char* text, bool forcesend /* = false */)
 {
     if ( (!forcesend && cl_send_error_reports.GetInt() <= 0) || !(g_Sentry.didinit.load(std::memory_order_relaxed)) )
