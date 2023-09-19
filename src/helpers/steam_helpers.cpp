@@ -3,10 +3,6 @@
 #ifdef CLIENT_DLL
 #include <helpers/steam_helpers.h>
 
-
-#include <string>
-#include <sstream>
-
 #ifdef _WIN32
 #include <icommandline.h>
 #include <Windows.h>
@@ -58,7 +54,7 @@ void restartWithFixedCmdline(std::stringstream &newCmdLine)
             nullptr,                            // Process handle not inheritable
             nullptr,                            // Thread handle not inheritable
             FALSE,                              // Set handle inheritance to FALSE
-            0,                                  // No creation flags
+            CREATE_NO_WINDOW,                   // No creation flags
             nullptr,                            // Use parent's environment block
             nullptr,                            // Use parent's starting directory 
             &si,                                // Pointer to STARTUPINFO structure
@@ -72,8 +68,7 @@ void restartWithFixedCmdline(std::stringstream &newCmdLine)
     CloseHandle( pi.hProcess );
     CloseHandle( pi.hThread );
 
-    __fastfail(FAST_FAIL_FATAL_APP_EXIT);
-    // abort();
+    TerminateProcess(GetCurrentProcess(), 0);
 }
 
 // return true to abort running the rest of the steam ctors
@@ -82,11 +77,11 @@ bool relaunch()
     const char* Win32CmdLine = GetCommandLineA();
     std::string StrWin32CmdLine(Win32CmdLine);
 
-    if (V_stristr(Win32CmdLine, "hijack"))
-    {
-        return false;
-    }
-    if (V_stristr(Win32CmdLine, "norelaunch"))
+    // if (V_stristr(Win32CmdLine, "hijack"))
+    // {
+    //     return false;
+    // }
+    if (V_stristr(Win32CmdLine, "norelaunch_iknowwhatimdoing"))
     {
         return false;
     }
