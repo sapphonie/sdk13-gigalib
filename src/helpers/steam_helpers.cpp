@@ -89,6 +89,7 @@ bool relaunch()
     {
         UTIL_ReplaceAll(StrWin32CmdLine, "-game sourcetest", "");
         std::stringstream newCmdLine;
+        // hack of the millenium
         newCmdLine << "cmd /C echo Hey! We're restarting your game to enable crash reporting and the Steam overlay! Just sit tight... & ";
         newCmdLine << "ping 127.0.0.1 -n 4 > nul & ";
         newCmdLine << "start \"\" ";

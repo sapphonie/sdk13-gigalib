@@ -11,7 +11,7 @@
 __forceinline __declspec(noreturn) void TERMINATE_RIGHT_NOW()
 {
 #ifdef _WIN32
-    _exit(2);
+    TerminateProcess( GetCurrentProcess(), 0 );
 #else
     _exit(2);
 #endif
