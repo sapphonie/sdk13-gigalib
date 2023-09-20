@@ -198,7 +198,7 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
     AssertMsg(0, "CRASHED - WE'RE IN THE SIGNAL HANDLER NOW SO BREAK IF YOU WANT");
 
 
-    // reentry guard
+    // reentry guard - we already crashed, just bail
     if ( g_Sentry.crashed.load() )
     {
         TERMINATE_RIGHT_NOW();
@@ -209,6 +209,7 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
     g_Sentry.crashed.store(true);
     DoDyingStuff();
 
+    // we already shutdown, just bail
     if ( g_Sentry.didshutdown.load() )
     {
         TERMINATE_RIGHT_NOW();
@@ -235,8 +236,8 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
 #else
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, crashtitle, crashdialogue, NULL);
 #endif
-
-    if ( g_Sentry.didinit.load() )
+    // we never properly loaded, just bail
+    if ( !g_Sentry.didinit.load() )
     {
         TERMINATE_RIGHT_NOW();
         sentry_value_decref(event);
@@ -244,7 +245,6 @@ sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t ev
     }
     return event;
 }
-
 
 void sentry_logger(sentry_level_t level, const char* message, va_list args, void* userdata)
 {
@@ -317,12 +317,12 @@ typedef enum sentry_level_e {
 
 
 
-
+#ifdef _DEBUG
 CON_COMMAND_F(triggerError, "test", 0)
 {
     Error("error message %i", RandomInt(34,46));
 }
-
+#endif
 // int __cdecl sub_7920CAA0(char a1, char *Format, va_list ArgList)
 sdkdetour* InternalError{};
 #define InternalError_vars        bool makeDump, char* fmt, va_list arglist
