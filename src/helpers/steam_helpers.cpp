@@ -87,11 +87,13 @@ bool relaunch()
     }
     if (!V_stristr(Win32CmdLine, "isrelaunching"))
     {
+        DWORD mypid = GetProcessId(GetCurrentProcess());
         UTIL_ReplaceAll(StrWin32CmdLine, "-game sourcetest", "");
         std::stringstream newCmdLine;
         // hack of the millenium
         newCmdLine << "cmd /C echo Hey! We're restarting your game to enable crash reporting and the Steam overlay! Just sit tight... & ";
-        newCmdLine << "ping 127.0.0.1 -n 4 > nul & ";
+        newCmdLine << "taskkill /T /F /PID " << mypid << " & ";
+        // start "" C:/<>/hl2.exe <launch options> our launch options
         newCmdLine << "start \"\" ";
         newCmdLine << StrWin32CmdLine << " -novid -isrelaunching";
 
