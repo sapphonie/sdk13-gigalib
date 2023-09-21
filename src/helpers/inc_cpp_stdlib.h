@@ -26,10 +26,12 @@
 #include <thread>
 #include <fstream>
 #include <filesystem>
+#include <locale>
+#include <codecvt>
 
 #define FMT_ENFORCE_COMPILE_STRING
 #include <fmt/format.h>
-
+#include <fmt/xchar.h>
 #ifndef min
 	#define min(a,b)  (((a) < (b)) ? (a) : (b))
 #endif

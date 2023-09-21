@@ -10,10 +10,8 @@ enum FLUSH_CUSTOM_CONTENT
 	FLUSH_MAP_OVERRIDES = 3,
 };
 
-
 void FlushContent(FLUSH_CUSTOM_CONTENT FLUSH)
 {
-
     ConVarRef _modpath = ConVarRef("_modpath");
     if (!_modpath.IsValid())
     {
@@ -23,7 +21,7 @@ void FlushContent(FLUSH_CUSTOM_CONTENT FLUSH)
     
     const char* modpath = _modpath.GetString();
     
-    V_StripTrailingSlash((char*)modpath);
+    V_StripTrailingSlash( (char*)modpath );
     
     // c++17 my beloved
     std::filesystem::path mpath(modpath);
@@ -33,6 +31,32 @@ void FlushContent(FLUSH_CUSTOM_CONTENT FLUSH)
         return;
     }
     
+    if
+    (
+           !std::filesystem::exists(mpath / "bin" / "client.dll")
+        && !std::filesystem::exists(mpath / "bin" / "client.so")
+        && !std::filesystem::exists(mpath / "bin" / "server.dll")
+        && !std::filesystem::exists(mpath / "bin" / "server.so")
+    )
+    {
+        // convert it down to a utf8 string
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+        std::string narrow_mpath = converter.to_bytes(mpath.c_str());
+        // std::wstring wide = converter.from_bytes(narrow_utf8_source_string);
+
+        std::string msg = fmt::format(FMT_STRING("{:s}"), narrow_mpath.c_str());
+        const char* smsg = msg.c_str();
+
+        sentry_value_t ctxinfo = sentry_value_new_object();
+        sentry_value_set_by_key(ctxinfo, "mpath", sentry_value_new_string(smsg));
+        SentryEvent("warning", __FUNCTION__, "Modpath wrong in FlushContent", ctxinfo);
+
+        Warning("Modpath ( %s ) seems wrong!?!? BAILING!!\n", narrow_mpath.c_str());
+        Warning("Modpath ( %s ) seems wrong!?!? BAILING!!\n", modpath);
+        return;
+    }
+
+
     if (FLUSH == FLUSH_ALL)
     {
         mpath = mpath / "download";
@@ -47,10 +71,11 @@ void FlushContent(FLUSH_CUSTOM_CONTENT FLUSH)
     }
     else
     {
-        Warning("Invalid FLUSH option %i? [0]\n", FLUSH);
+        Warning("Invalid FLUSH option %i?\n", FLUSH);
         return;
     }
-    const wchar* rmdPath = mpath.c_str();
+    const std::wstring& wspth   = mpath.wstring();
+    const wchar_t* rmdPath      = wspth.c_str();
 
     // NOTE: mpath.c_str() will be a wchar_t*!!!
     if (std::filesystem::exists(mpath) && std::filesystem::is_directory(mpath))
@@ -67,7 +92,10 @@ void FlushContent(FLUSH_CUSTOM_CONTENT FLUSH)
             catch (std::filesystem::filesystem_error &err)
             {
                 const char* what = err.what();
-                SentryMsg(__FUNCTION__, what);
+
+                sentry_value_t ctxinfo = sentry_value_new_object();
+                sentry_value_set_by_key(ctxinfo, "mpath", sentry_value_new_string(what));
+                SentryEvent("warning", __FUNCTION__, "Exception in FlushContent", ctxinfo);
             }
             Msg("Flushed %llu items total from %ws!\n", removed, rmdPath);
 

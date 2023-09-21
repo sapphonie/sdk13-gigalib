@@ -65,6 +65,3 @@ void UTIL_GetMap(char mapname[128]);
 #undef offsetof
 #define offsetof(s,m)	(size_t)&(((s *)0)->m)
 #endif
-
-
-#include <git_banned.h>
