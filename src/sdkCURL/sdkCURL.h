@@ -29,6 +29,8 @@ struct curlResponse
         ...
 
         delete [] buffer;
+
+        actually jk idiot DONT it's a std::string for a reason, use fmt::format or snprintf
     */
     std::string body                    = {};
     std::vector<std::string> headers    = {};

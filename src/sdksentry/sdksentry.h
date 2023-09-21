@@ -1,11 +1,14 @@
+
 #ifndef SDK_SENTRY_H
 #define SDK_SENTRY_H
 
+
 #if defined(CLIENT_DLL) && defined(SDKCURL) && defined(SDKSENTRY)
+
+#include <helpers/misc_helpers.h>
 
 #include <sdksentry/vendored/sentry.h>
 #include <sdkCURL/sdkCURL.h>
-#include <helpers/misc_helpers.h>
 #include <helpers/steam_helpers.h>
 #include <csignal>
 #include <signal.h>
@@ -80,7 +83,6 @@ public:
 };
 
 
-void SentryAddressBreadcrumb(void* address, const char* optionalName);
 
 
 void _SentryEventThreaded(const char* level, const char* logger, const char* message, sentry_value_t ctx, bool forcesend = false);
@@ -88,6 +90,7 @@ void _SentryMsgThreaded(const char* logger, const char* text, bool forcesend);
 
 void SentryAddressBreadcrumb(void* address, const char* optionalName = NULL);
 
+// it's so cool that valve cluelessly was like "oh lets just make functions that are named the same as wapi funcs thats smart and will never backfire"
 #ifdef GetObject
 #undef GetObject
 #endif
@@ -104,6 +107,11 @@ void SentryAddressBreadcrumb(void* address, const char* optionalName = NULL);
 #undef CreateEvent
 #endif
 
+#ifdef PostMessage
+#undef PostMessage
+#endif
+
+
 #endif // defined(CLIENT_DLL) && defined(SDKCURL) && defined(SDKSENTRY)
 
-#endif // SDK_SENTRY_H
+#endif //SENTRY_H

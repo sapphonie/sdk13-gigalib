@@ -1,32 +1,7 @@
 #include <cbase.h>
 
 #if defined (CLIENT_DLL) && defined(ENGINE_DETOURS)
-class flushDLS : public CAutoGameSystem
-{
-public:
-	flushDLS();
-	bool Init() override;
-	void PostInit() override;
-};
-
-#include <misc_helpers.h>
-
-#include <filesystem.h>
-
-#include "tier0/valve_minmax_off.h"
-#include <filesystem>
-#include "tier0/valve_minmax_on.h"
-
-#include <icvar.h>
-#include <convar.h>
-
-// #define Debug_FlushDLs yep
-
-#ifdef Debug_FlushDLs
-	Color grn(0, 255, 0, 255);
-	Color ylw(255, 255, 0, 255);
-	Color red(255, 0, 0, 255);
-#endif
+#include <flush_downloadables.h>
 
 enum FLUSH_CUSTOM_CONTENT
 {
@@ -34,7 +9,6 @@ enum FLUSH_CUSTOM_CONTENT
 	FLUSH_SPRAYS = 2,
 	FLUSH_MAP_OVERRIDES = 3,
 };
-#include <sdksentry/sdksentry.h>
 
 
 void FlushContent(FLUSH_CUSTOM_CONTENT FLUSH)

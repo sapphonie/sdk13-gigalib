@@ -6,7 +6,6 @@
 #endif
 
 #include <cbase.h>
-
 // If you use $QUOTE in VPCs, linux needs stringified to get the value as a string, windows does not
 #ifdef _WIN32
 	#define VPC_QUOTE_STRINGIFY(x) x
@@ -66,3 +65,6 @@ void UTIL_GetMap(char mapname[128]);
 #undef offsetof
 #define offsetof(s,m)	(size_t)&(((s *)0)->m)
 #endif
+
+
+#include <git_banned.h>
