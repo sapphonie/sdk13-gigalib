@@ -77,7 +77,8 @@ void FlushContent(FLUSH_CUSTOM_CONTENT FLUSH)
     const std::wstring& wspth   = mpath.wstring();
     const wchar_t* rmdPath      = wspth.c_str();
 
-    // NOTE: mpath.c_str() will be a wchar_t*!!!
+    // NOTE: rmdPath is a wchar_t*!because std::fs::path .c_str() gives us a wstring on win32 and a string on linux, so im just making it the wider type!!!!
+    // Fuck you!! I hate C++!!!
     if (std::filesystem::exists(mpath) && std::filesystem::is_directory(mpath))
     {
         if (FLUSH != FLUSH_MAP_OVERRIDES)
