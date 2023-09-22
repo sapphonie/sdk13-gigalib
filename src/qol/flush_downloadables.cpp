@@ -110,8 +110,10 @@ void FlushContent(FLUSH_CUSTOM_CONTENT FLUSH)
                 Warning("Failed to recreate folder %ws! Your game might crash.\n", rmdPath);
             }
         }
+        // iterate under <sm folder>/download/maps/<>
         else
         {
+
             uintmax_t removed = 0;
             for ( const auto& thisPath : std::filesystem::directory_iterator(mpath) )
             {
@@ -123,10 +125,21 @@ void FlushContent(FLUSH_CUSTOM_CONTENT FLUSH)
                 const std::wstring& str = thisPath.path().wstring();
                 if (str.find(L".txt") != std::string::npos)
                 {
-                    if (std::filesystem::remove(thisPath))
+                    try
                     {
-                        Msg("-> removed %ws\n", thisPath.path().filename().wstring().c_str());
-                        removed++;
+                        if (std::filesystem::remove(thisPath))
+                        {
+                            Msg("-> removed %ws\n", thisPath.path().filename().wstring().c_str());
+                            removed++;
+                        }
+                    }
+                    catch (std::filesystem::filesystem_error& err)
+                    {
+                        const char* what = err.what();
+
+                        sentry_value_t ctxinfo = sentry_value_new_object();
+                        sentry_value_set_by_key(ctxinfo, "thisPath", sentry_value_new_string(what));
+                        SentryEvent("warning", __FUNCTION__, "Exception in FlushContent", ctxinfo);
                     }
                 }
             }
