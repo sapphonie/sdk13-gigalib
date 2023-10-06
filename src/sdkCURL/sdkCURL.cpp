@@ -150,7 +150,10 @@ bool sdkCURL::CURLGet_Thread(std::string inURL, curlResponse* resp)
 
     CURLcode ccode = {};
     setopt_errwrap(curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
-    setopt_errwrap(curl, CURLOPT_TRANSFER_ENCODING, 1L);
+    // Causes sporadic issues with 
+    // curl_easy_perform() failed: Stream error in the HTTP/2 framing layer
+    // sdkCURL.cpp(180) : Assertion Failed : ccode == CURLE_OK
+    // setopt_errwrap(curl, CURLOPT_TRANSFER_ENCODING, 1L);
 
     setopt_errwrap(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_3);
 
