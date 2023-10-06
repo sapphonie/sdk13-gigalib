@@ -77,6 +77,18 @@ bool relaunch()
     const char* Win32CmdLine = GetCommandLineA();
     std::string StrWin32CmdLine(Win32CmdLine);
 
+    if
+    (
+        !V_stristr(Win32CmdLine, "-game sourcetest")
+#ifdef SDKSENTRY
+        && V_stristr(Win32CmdLine, "-nobreakpad")
+        && V_stristr(Win32CmdLine, "-nominidumps")
+#endif
+    )
+    {
+        return false;
+    }
+
     // if (V_stristr(Win32CmdLine, "hijack"))
     // {
     //     return false;
