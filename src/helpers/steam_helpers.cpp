@@ -77,9 +77,11 @@ bool relaunch()
     const char* Win32CmdLine = GetCommandLineA();
     std::string StrWin32CmdLine(Win32CmdLine);
 
+
+
     if
     (
-        !V_stristr(Win32CmdLine, "-game sourcetest")
+        ( !V_stristr(Win32CmdLine, "-game sourcetest") || V_stristr(Win32CmdLine, "-nooverlay") )
 #ifdef SDKSENTRY
         && V_stristr(Win32CmdLine, "-nobreakpad")
         && V_stristr(Win32CmdLine, "-nominidumps")
@@ -93,11 +95,11 @@ bool relaunch()
     // {
     //     return false;
     // }
-    if (V_stristr(Win32CmdLine, "norelaunch_iknowwhatimdoing"))
+    if (V_stristr(Win32CmdLine, "-norelaunch_iknowwhatimdoing"))
     {
         return false;
     }
-    if (!V_stristr(Win32CmdLine, "isrelaunching"))
+    if (!V_stristr(Win32CmdLine, "-isrelaunching"))
     {
         DWORD mypid = GetProcessId(GetCurrentProcess());
         UTIL_ReplaceAll(StrWin32CmdLine, "-game sourcetest", "");
@@ -112,11 +114,11 @@ bool relaunch()
 #ifdef SDKSENTRY
         newCmdLine << " -nobreakpad -nominidumps";
 #endif
-
-        if (checkWine())
-        {
-            newCmdLine << " -iswine";
-        }
+        // Not worth relaunching the whole game over...
+        //if (checkWine())
+        //{
+        //    newCmdLine << " -iswine";
+        //}
         restartWithFixedCmdline(newCmdLine);
         return true;
     }
