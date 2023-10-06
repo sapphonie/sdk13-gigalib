@@ -35,6 +35,13 @@ public:
     volatile sig_atomic_t    mainWindowHandle;
 #endif
 
+    // ptr to game paths that we set up in sentry init
+    volatile char* gamePaths = nullptr;
+    volatile size_t gamePathsSize = NULL;
+
+    volatile char* cmdline = nullptr;
+
+
     void                PostInit() override;
     void                Shutdown() override;
     void                LevelBreadcrumbs(const char* function)
@@ -51,6 +58,7 @@ public:
         {
             V_snprintf(funcmap, 255, "%s - map %s", function, "nada");
         }
+        sentry_set_transaction(funcmap);
         sentry_add_breadcrumb(sentry_value_new_breadcrumb(NULL, funcmap));
     }
     void LevelInitPreEntity()
