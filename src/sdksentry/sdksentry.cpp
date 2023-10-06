@@ -189,6 +189,21 @@ void CSentry::Shutdown()
 #endif
 
 
+void AttachExtraCtxToSentryCrash(sentry_value_t event)
+{
+    const char* gamePaths   = (const char*)g_Sentry.gamePaths;
+    const char* cmdline     = (const char*)g_Sentry.cmdline;
+    sentry_value_t xtraInfo = sentry_value_new_object();
+    sentry_value_set_by_key(xtraInfo, "gamePaths", sentry_value_new_string(gamePaths));
+    sentry_value_set_by_key(xtraInfo, "startupCmdline", sentry_value_new_string(cmdline));
+
+    sentry_value_t contexts = sentry_value_new_object();
+    sentry_value_set_by_key(contexts, "xtraInfo", xtraInfo);
+    sentry_value_set_by_key(event, "contexts", contexts);
+}
+
+
+
 // DO NOT THREAD THIS OR ANY FUNCTIONS CALLED BY IT UNDER ANY CIRCUMSTANCES
 // THIS NEEDS TO BE SIGNAL SAFE ALSO
 // I MEAN NOT REALLY ON WINDOWS ITS CALLED IN A SEH BUT
@@ -196,7 +211,10 @@ void CSentry::Shutdown()
 sentry_value_t SENTRY_CRASHFUNC(const sentry_ucontext_t* uctx, sentry_value_t event, void* closure)
 {
     AssertMsg(0, "CRASHED - WE'RE IN THE SIGNAL HANDLER NOW SO BREAK IF YOU WANT");
+    
 
+    AttachExtraCtxToSentryCrash(event);
+    
 
     // reentry guard - we already crashed, just bail
     if ( g_Sentry.crashed.load() )
@@ -347,7 +365,7 @@ void InternalError_CB(InternalError_vars)
     sentry_value_t thread = sentry_value_new_thread(GetCurrentThreadId(), "nada");
     sentry_value_set_stacktrace(thread, NULL, 16);
     sentry_event_add_thread(event, thread);
-
+    AttachExtraCtxToSentryCrash(event);
     sentry_capture_event(event);
 
     sentry_flush(5000);
@@ -533,6 +551,33 @@ void CSentry::SentryInit()
     sentry_user_consent_reset();
     sentry_callback(cl_send_error_reports.GetLinkedConVar(), "", -2.0);
     
+
+    cmdline = new char[2048] {};
+    snprintf( (char*)cmdline, 2048, "%s", CommandLine()->GetCmdLine());
+
+
+
+    char _[2] = {};
+    const size_t len = filesystem->GetSearchPath("GAME", true, _, 1);
+    char* paths = new char[len + 2] {};
+    /*const size_t newlen = */filesystem->GetSearchPath("GAME", true, paths, len + 1);
+    std::string strpaths(paths);
+    delete [] paths;
+    std::vector<std::string> vec = UTIL_SplitSTDString( strpaths, std::string(";") );
+
+    //AssertAlways(len == newlen);
+
+    std::stringstream path_ss = {};
+    for ( auto& str : vec )
+    {
+        path_ss << str << "\n";
+    }
+    path_ss << "\n";
+    
+    gamePathsSize = path_ss.str().size();
+    gamePaths = new char[gamePathsSize + 2] {};
+    memcpy( (void*)gamePaths, path_ss.str().c_str(), gamePathsSize );
+
     // already asked
     if (cl_send_error_reports.GetInt() >= 0)
     {
