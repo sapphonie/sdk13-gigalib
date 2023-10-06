@@ -155,6 +155,8 @@ bool sdkCURL::CURLGet_Thread(std::string inURL, curlResponse* resp)
     // sdkCURL.cpp(180) : Assertion Failed : ccode == CURLE_OK
     // setopt_errwrap(curl, CURLOPT_TRANSFER_ENCODING, 1L);
 
+    setopt_errwrap(curl, CURLOPT_ACCEPT_ENCODING, "");
+
     setopt_errwrap(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_3);
 
     setopt_errwrap(curl, CURLOPT_URL, inURL.c_str());
