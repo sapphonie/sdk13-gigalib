@@ -135,7 +135,7 @@ void CSteamHelpers::SpinUntilSteamIsAlive()
     const int maxtries = 30;
     for (size_t tries = 0; tries <= maxtries; tries++)
     {
-        if (steamapicontext && steamapicontext->SteamHTTP())
+        if (steamapicontext)
         {
             g_SteamHelpers.iterFuncsToRun();
             // exits the thread

@@ -551,12 +551,12 @@ void CSentry::SentryInit()
     sentry_user_consent_reset();
     sentry_callback(cl_send_error_reports.GetLinkedConVar(), "", -2.0);
     
-
+    // for adding cmdline to context on crash
     cmdline = new char[2048] {};
     snprintf( (char*)cmdline, 2048, "%s", CommandLine()->GetCmdLine());
 
 
-
+    // for adding paths to context on crash
     char _[2] = {};
     const size_t len = filesystem->GetSearchPath("GAME", true, _, 1);
     char* paths = new char[len + 2] {};
