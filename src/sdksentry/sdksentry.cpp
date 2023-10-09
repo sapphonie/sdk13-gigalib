@@ -553,8 +553,11 @@ void CSentry::SentryInit()
     
     // for adding cmdline to context on crash
     cmdline = new char[2048] {};
+#ifdef _WIN32
+    snprintf((char*)cmdline, 2048, "%s", GetCommandLineA());
+#else
     snprintf( (char*)cmdline, 2048, "%s", CommandLine()->GetCmdLine());
-
+#endif
 
     // for adding paths to context on crash
     char _[2] = {};
@@ -572,7 +575,7 @@ void CSentry::SentryInit()
     {
         path_ss << str << "\n";
     }
-    path_ss << "\n";
+    // path_ss << "\n";
     
     gamePathsSize = path_ss.str().size();
     gamePaths = new char[gamePathsSize + 2] {};

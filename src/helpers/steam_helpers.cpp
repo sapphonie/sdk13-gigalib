@@ -77,8 +77,6 @@ bool relaunch()
     const char* Win32CmdLine = GetCommandLineA();
     std::string StrWin32CmdLine(Win32CmdLine);
 
-
-
     if
     (
         // if we don't have sourcetest nonsense OR we don't care about relaunching JUST for the overlay
