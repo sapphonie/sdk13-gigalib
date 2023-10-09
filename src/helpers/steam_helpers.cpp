@@ -80,7 +80,7 @@ bool relaunch()
     if
     (
         // if we don't have sourcetest nonsense OR we don't care about relaunching JUST for the overlay
-        ( !V_stristr(Win32CmdLine, "-game sourcetest") || V_stristr(Win32CmdLine, "-nooverlay") )
+        ( !V_stristr(Win32CmdLine, "-game sourcetest") || V_stristr(Win32CmdLine, "-nofixoverlay") )
 #ifdef SDKSENTRY
         && V_stristr(Win32CmdLine, "-nobreakpad")
         && V_stristr(Win32CmdLine, "-nominidumps")
