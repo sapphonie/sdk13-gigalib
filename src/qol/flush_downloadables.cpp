@@ -43,14 +43,14 @@ void FlushContent(FLUSH_CUSTOM_CONTENT FLUSH)
         std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
         std::string narrow_mpath = converter.to_bytes(mpath.c_str());
         // std::wstring wide = converter.from_bytes(narrow_utf8_source_string);
-
+#ifdef SDKSENTRY
         std::string msg = fmt::format(FMT_STRING("{:s}"), narrow_mpath.c_str());
         const char* smsg = msg.c_str();
 
         sentry_value_t ctxinfo = sentry_value_new_object();
         sentry_value_set_by_key(ctxinfo, "mpath", sentry_value_new_string(smsg));
         SentryEvent("warning", __FUNCTION__, "Modpath wrong in FlushContent", ctxinfo);
-
+#endif
         Warning("Modpath ( %s ) seems wrong!?!? BAILING!!\n", narrow_mpath.c_str());
         Warning("Modpath ( %s ) seems wrong!?!? BAILING!!\n", modpath);
         return;
@@ -93,10 +93,13 @@ void FlushContent(FLUSH_CUSTOM_CONTENT FLUSH)
             catch (std::filesystem::filesystem_error &err)
             {
                 const char* what = err.what();
-
+#ifdef SDKSENTRY
                 sentry_value_t ctxinfo = sentry_value_new_object();
                 sentry_value_set_by_key(ctxinfo, "mpath", sentry_value_new_string(what));
                 SentryEvent("warning", __FUNCTION__, "Exception in FlushContent", ctxinfo);
+#else
+                DevWarning( "Exception in FlushContent %s", what );
+#endif
             }
             Msg("Flushed %llu items total from %ws!\n", removed, rmdPath);
 
@@ -136,10 +139,13 @@ void FlushContent(FLUSH_CUSTOM_CONTENT FLUSH)
                     catch (std::filesystem::filesystem_error& err)
                     {
                         const char* what = err.what();
-
+#ifdef SDKSENTRY
                         sentry_value_t ctxinfo = sentry_value_new_object();
                         sentry_value_set_by_key(ctxinfo, "thisPath", sentry_value_new_string(what));
                         SentryEvent("warning", __FUNCTION__, "Exception in FlushContent", ctxinfo);
+#else
+                        DevWarning("Exception in FlushContent %s", what);
+#endif
                     }
                 }
             }
