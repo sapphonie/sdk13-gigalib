@@ -878,7 +878,9 @@ void win32_HARDENING() {
 
 CEngineDetours::CEngineDetours()
 {
+#ifdef BLACKLISTS
     CClientState__FullConnect_Init();
+#endif
     CNetChan__Shutdown_Init();
 
 #ifdef _WIN32
@@ -891,7 +893,9 @@ CEngineDetours::CEngineDetours()
 void CEngineDetours::Shutdown()
 {
 #ifdef CLIENT_DLL
+#ifdef BLACKLISTS
     delete CClientState__FullConnect;
+#endif
     delete CNetChan__Shutdown;
 #else
     if (engine->IsDedicatedServer())
