@@ -8,7 +8,7 @@
 #endif
 #include <cbase.h>
 // You probably do not need this
-// #define dbging yep
+ #define dbging yep
 
 #if defined (BIN_PATCHES) && defined(ENGINE_DETOURS)
 #include <engine_hacks/bin_patch.h>
@@ -106,6 +106,19 @@ CBinPatch g_EnginePatches[] =
             PATCH_IMMEDIATE,
             FORCE_OBFUSCATE("\x90\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP NOP
         },
+        // Free edicts immediately
+        // Signature for ED_Alloc_sub_101E0120:
+        // 55 8B EC 83 EC 10 56 57 8B 7D 08 85 FF
+        // ED_Alloc_sub_101E0120+1A8
+        // we're trying to skip the checks for 2.0 and 1.0 and just always execute that code
+        {
+            FORCE_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x10\x56\x57\x8B\x7D\x08\x85\xFF"),
+            13,
+            0x1A8,
+            PATCH_IMMEDIATE,
+            FORCE_OBFUSCATE("\xEB\x1B") // 77 1B (ja etc) -> EB 1B (jmp etc)
+        },
+
         #else
         // Client only!
         /*
@@ -195,6 +208,19 @@ CBinPatch g_EnginePatches[] =
             PATCH_IMMEDIATE,
             FORCE_OBFUSCATE("\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP
         },
+
+        // Free edicts immediately
+        // Signature for _Z8ED_Alloci:
+        // 55 89 E5 57 56 53 83 EC 4C 8B 4D 08
+        // \x55\x89\xE5\x57\x56\x53\x83\xEC\x4C\x8B\x4D\x08
+        {
+            FORCE_OBFUSCATE("\x55\x89\xE5\x57\x56\x53\x83\xEC\x4C\x8B\x4D\x08"),
+            12,
+            0x1A5,
+            PATCH_IMMEDIATE,
+            FORCE_OBFUSCATE("\x90\x90") // jbe <addr> -> nop nop
+        },
+
         #else
         // Client only!
         /*
