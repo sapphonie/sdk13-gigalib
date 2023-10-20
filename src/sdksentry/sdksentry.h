@@ -58,7 +58,7 @@ public:
         {
             V_snprintf(funcmap, 255, "%s - map %s", function, "nada");
         }
-        sentry_set_transaction(funcmap);
+        // sentry_set_transaction(funcmap);
         sentry_add_breadcrumb(sentry_value_new_breadcrumb(NULL, funcmap));
     }
     void LevelInitPreEntity()
