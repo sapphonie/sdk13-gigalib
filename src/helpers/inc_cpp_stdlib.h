@@ -28,7 +28,9 @@
 #include <filesystem>
 #include <locale>
 #include <codecvt>
-
+#include <unordered_map>
+#include <unordered_set>
+#include <map>
 #define FMT_ENFORCE_COMPILE_STRING
 #include <fmt/format.h>
 #include <fmt/xchar.h>
