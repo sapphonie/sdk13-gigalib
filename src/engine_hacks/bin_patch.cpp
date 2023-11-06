@@ -129,6 +129,31 @@ CBinPatch g_EnginePatches[] =
             PATCH_REFERENCE, // we are changing the value of a float**
             -1.0f
         },
+        /*
+        Unclamp mat_picmip
+
+        sub_101A4B70 + 0x76
+
+        6A 02  6A FF
+        ->
+        6A 0A  6A F0
+        sub_101A4B70 + 76   02C push    2
+        sub_101A4B70 + 78   030 push - 1
+
+        ->
+        sub_101A4B70 + 76   02C push    10
+        sub_101A4B70 + 78   030 push - 10
+        */
+        // Signature for sub_101A4B70:
+        // 55 8B EC 83 EC 20 8B 0D ? ? ? ? 56
+        // \x55\x8B\xEC\x83\xEC\x20\x8B\x0D\x2A\x2A\x2A\x2A\x56
+        {
+            FORCE_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x20\x8B\x0D\x2A\x2A\x2A\x2A\x56"),
+            13,
+            0x76,
+            PATCH_IMMEDIATE,
+            FORCE_OBFUSCATE("\x6A\x0A\x6A\xF0")
+        }
         #endif
     #else 
     // LINUX
@@ -267,6 +292,15 @@ void CBinary::PostInit()
             ConColorMsg(goodcolor, "CEngineBinary::EPostInit -> Successfully applied client patches!\n");
         }
         #endif
+
+        // Fully fix the rest of mat_picmip - set in a bin patch we had earlier.
+        ConVarRef mat_picmip("mat_picmip");
+        if (mat_picmip.IsValid())
+        {
+            ConVar* mat_picmip_ptr = static_cast<ConVar*>(mat_picmip.GetLinkedConVar());
+            mat_picmip_ptr->SetMax(10.0);
+            mat_picmip_ptr->SetMin(-10.0);
+        }
 
     #endif
 
