@@ -7,7 +7,6 @@
 
 typedef void (*fPtr)(void);
 #ifdef CLIENT_DLL
-#include <helpers/misc_helpers.h>
 
 #include <dbg.h>
 #include <steam/isteamutils.h>

@@ -14,6 +14,7 @@ $Configuration
         $AdditionalIncludeDirectories   "$BASE;$gigalibloc/sdkCURL"
         $AdditionalIncludeDirectories   "$BASE;$gigalibloc/sdknanopb"
         $AdditionalIncludeDirectories   "$BASE;$gigalibloc/sdksentry"
+        $AdditionalIncludeDirectories   "$BASE;$gigalibloc/speedykv"
 
         $AdditionalIncludeDirectories   "$BASE;$SRCDIR\thirdparty\SDL2" // [$SDL || $DEDICATED]
 
@@ -123,6 +124,21 @@ $Project
                 $File   "$gigalibloc/sdknanopb/vendored/pb_common.h"
                 $File   "$gigalibloc/sdknanopb/vendored/pb_encode.h"
                 $File   "$gigalibloc/sdknanopb/vendored/pb.h"
+            }
+            $Folder "speedykv"
+            {
+                $File   "$gigalibloc/speedykv/speedykv.cpp"
+                {
+                    $Configuration
+                    {
+                        $Compiler
+                        {
+                            $Create/UsePrecompiledHeader    "Not Using Precompiled Headers"
+                        }
+                    }
+                }
+
+                $File   "$gigalibloc/speedykv/speedykv.h"
             }
         }
 
