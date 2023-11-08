@@ -153,7 +153,43 @@ CBinPatch g_EnginePatches[] =
             0x76,
             PATCH_IMMEDIATE,
             FORCE_OBFUSCATE("\x6A\x0A\x6A\xF0")
+        },
+        // rootlod callback (?)
+        // Signature for sub_1010DCC0:
+        // 55 8B EC 83 EC 08 6A 02
+        // \x55\x8B\xEC\x83\xEC\x08\x6A\x02
+        {
+            FORCE_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x08\x6A\x02"),
+            8,
+            0x6,
+            PATCH_IMMEDIATE,
+            FORCE_OBFUSCATE("\x6A\x06\x6A\xF0")
+        },
+
+        // rootlod
+        // Signature for sub_100EC8C0:
+        // 6A 02 6A 00 68 ? ? ? ? E8 ? ? ? ? 83 C4 0C C3
+        // \x6A\x02\x6A\x00\x68\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x83\xC4\x0C\xC3
+        {
+            FORCE_OBFUSCATE("\x6A\x02\x6A\x00\x68\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x83\xC4\x0C\xC3"),
+            18,
+            0x0,
+            PATCH_IMMEDIATE,
+            FORCE_OBFUSCATE("\x6A\x06\x6A\xF0")
+        },
+
+        // lod
+        // Signature for sub_100F1E40:
+        // 6A 02 6A FF 68 ? ? ? ? 
+        // \x6A\x02\x6A\xFF\x68\x2A\x2A\x2A\x2A
+        {
+            FORCE_OBFUSCATE("\x6A\x02\x6A\xFF\x68\x2A\x2A\x2A\x2A"),
+            9,
+            0x0,
+            PATCH_IMMEDIATE,
+            FORCE_OBFUSCATE("\x6A\x0A\x6A\xF0")
         }
+
         #endif
     #else 
     // LINUX
@@ -293,13 +329,48 @@ void CBinary::PostInit()
         }
         #endif
 
+
+        /*
+        convar.h
+
+        In ConVar class decl:
+        + void    SetMin(float min);
+        + void    SetMax(float max);
+
+        Right outside of ConVar class decl
+        + FORCEINLINE_CVAR void ConVar::SetMin( float min )
+        + {
+        +     m_pParent->m_bHasMin = true;
+        +     m_pParent->m_fMinVal = min;
+        + }
+        +
+        + FORCEINLINE_CVAR void ConVar::SetMax( float max )
+        + {
+        +     m_pParent->m_bHasMax = true;
+        +     m_pParent->m_fMaxVal = max;
+        + }
+        */
+
+
         // Fully fix the rest of mat_picmip - set in a bin patch we had earlier.
         ConVarRef mat_picmip("mat_picmip");
+        ConVarRef r_rootlod("r_rootlod");
+        ConVarRef r_lod("r_lod");
+
         if (mat_picmip.IsValid())
         {
-            ConVar* mat_picmip_ptr = static_cast<ConVar*>(mat_picmip.GetLinkedConVar());
-            mat_picmip_ptr->SetMax(10.0);
-            mat_picmip_ptr->SetMin(-10.0);
+            static_cast<ConVar*>(mat_picmip.GetLinkedConVar())->SetMax(10.0);
+            static_cast<ConVar*>(mat_picmip.GetLinkedConVar())->SetMin(-10.0);
+        }
+        if (r_rootlod.IsValid())
+        {
+            static_cast<ConVar*>(r_rootlod.GetLinkedConVar())->SetMax(6.0);
+            static_cast<ConVar*>(r_rootlod.GetLinkedConVar())->SetMin(-10.0);
+        }
+        if (r_lod.IsValid())
+        {
+            static_cast<ConVar*>(r_lod.GetLinkedConVar())->SetMax(10.0);
+            static_cast<ConVar*>(r_lod.GetLinkedConVar())->SetMin(-10.0);
         }
 
     #endif
