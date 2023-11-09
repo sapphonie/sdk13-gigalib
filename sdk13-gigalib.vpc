@@ -167,5 +167,8 @@ $Project
         $Lib                "$gigalibloc\..\bin\libz"                     [$LINUX]
         // $Lib             "$gigalibloc\..\bin\libzstd"                  [$LINUX]
         $ImpLibExternal     "$gigalibloc\..\bin\SDL2"                     [$LINUX]
+
+        $LibExternal        "$gigalibloc\..\bin\libfmt"                  [$LINUX]
+
     }
 }
