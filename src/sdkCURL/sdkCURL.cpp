@@ -1,4 +1,3 @@
-
 #include <cbase.h>
 #ifdef SDKCURL
 #include <sdkCURL/sdkCURL.h>

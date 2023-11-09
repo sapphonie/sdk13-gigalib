@@ -60,9 +60,10 @@ memy::memy()
 bool memy::Init()
 {
     InitAllBins();
-
+#ifdef CLIENT_DLL
 #ifdef SDKCURL
     new sdkCURL;
+#endif
 #endif
 
     return true;
