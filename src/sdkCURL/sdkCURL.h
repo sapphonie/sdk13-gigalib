@@ -1,3 +1,5 @@
+#ifdef CLIENT_DLL
+
 
 #ifndef SDKCURL_H
 #define SDKCURL_H
@@ -76,3 +78,6 @@ extern sdkCURL* g_sdkCURL;
 
 #endif // SDKCURL
 #endif // SDKCURL_H
+
+
+#endif // CLIENT_DLL

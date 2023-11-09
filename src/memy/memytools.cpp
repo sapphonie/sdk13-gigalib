@@ -55,7 +55,9 @@ memy::memy()
 #endif
 }
 
+#ifdef CLIENT_DLL
 #include <sdkCURL/sdkCURL.h>
+#endif
 
 bool memy::Init()
 {

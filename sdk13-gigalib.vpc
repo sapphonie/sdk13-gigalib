@@ -89,7 +89,7 @@ $Project
                 $File   "$gigalibloc/qol/blacklists.cpp"
                 $File   "$gigalibloc/qol/blacklists.h"
             }
-            $Folder "sdkCURL" [$WIN32 && $CLIENT_DLL]
+            $Folder "sdkCURL" [$WIN32]
             {
                 $File   "$gigalibloc/sdkCURL/sdkCURL.cpp"
                 $File   "$gigalibloc/sdkCURL/sdkCURL.h"
