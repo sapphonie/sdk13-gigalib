@@ -133,7 +133,7 @@ void CheckSteamExeSpin()
 }
 #endif
 
-
+// ret's true if we rewrote something
 bool RewriteLocalSteamConfig()
 {
     std::string SteamKey("SOFTWARE\\Valve\\Steam");
@@ -394,6 +394,7 @@ CON_COMMAND_F(testRewrite, "", 0)
 
 
 // return true to abort running the rest of the steam ctors
+// aka we need to restart
 bool relaunch()
 {
     const char* Win32CmdLine = GetCommandLineA();
@@ -463,6 +464,7 @@ bool relaunch()
 
 #endif // WIN32
 
+
 // run our ctor
 CSteamHelpers g_SteamHelpers;
 CSteamHelpers::CSteamHelpers()
@@ -470,17 +472,14 @@ CSteamHelpers::CSteamHelpers()
     DevMsg(2, "CSteamHelpers CTOR->\n");
 #ifdef _WIN32
 
-#ifdef REWRITE_LOCAL_STEAM_CFG_BETA
-    if (RewriteLocalSteamConfig())
+    if (!RewriteLocalSteamConfig())
     {
-    }
-#else
-    if (relaunch())
-    {
-        return;
-    }
-#endif
 
+        if (relaunch())
+        {
+            return;
+        }
+    }
 
 #endif
 
