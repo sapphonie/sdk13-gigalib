@@ -31,7 +31,7 @@ $Configuration
         $AdditionalDependencies             "$BASE wsock32.lib" [$WIN32]
         $AdditionalDependencies             "$BASE ws2_32.lib" [$WIN32]
         $AdditionalDependencies             "$BASE wldap32.lib" [$WIN32]
-        //$AdditionalDependencies             "$BASE msvcrtd.lib" [$WIN32]
+        $AdditionalDependencies             "$BASE msvcrtd.lib" [$WIN32]
     }
 }
 
@@ -146,32 +146,31 @@ $Project
 
     $Folder "Link Libraries"
     {
-        $ImpLib             "$gigalibloc\..\bin\sentry"                   [$WIN32]
-        $ImpLib             "$gigalibloc\..\bin\libcurl"                  [$WIN32]
-        $ImpLib             "$gigalibloc\..\bin\fmt"                      [$WIN32]
+        $ImpLib             "$gigalibloc\..\bin\sentry"                     [$WIN32]
+        $ImpLib             "$gigalibloc\..\bin\libcurl"                    [$WIN32]
+        $ImpLib             "$gigalibloc\..\bin\fmt"                        [$WIN32]
 
-        $Lib                "$gigalibloc\..\bin\libbreakpad_client"       [$LINUX]
-        $Lib                "$gigalibloc\..\bin\libsentry"                [$LINUX]
+        // sentry
+        $Lib                "$gigalibloc\..\bin\libbreakpad_client"         [$LINUX]
+        $Lib                "$gigalibloc\..\bin\libsentry"                  [$LINUX]
+        // bin patching
+        $Lib                "$gigalibloc\..\bin\libPolyHook_2"              [$LINUX]
+        $Lib                "$gigalibloc\..\bin\libZydis"                   [$LINUX]
+        // fmt
+        $LibExternal        "$gigalibloc\..\bin\libfmt"                     [$LINUX]
+        // sdl
+        $ImpLibExternal     "$gigalibloc\..\bin\SDL2"                       [$LINUX]
 
-        $Lib                 "$gigalibloc\..\bin\libPolyHook_2"           [$LINUX]
-        $Lib                 "$gigalibloc\..\bin\libZydis"                [$LINUX]
-
-	// $ImpLibExternal        "$gigalibloc\..\bin\libcurl"                  [$LINUX]
-
-        // $Lib                "$gigalibloc\..\bin\libbrotlicommon-static"   [$LINUX]
-        // $Lib                "$gigalibloc\..\bin\libbrotlidec-static"      [$LINUX]
-        // $Lib                "$gigalibloc\..\bin\libbrotlienc-static"      [$LINUX]
-        // $Lib                "$gigalibloc\..\bin\libcrypto"                [$LINUX]
-        // $Lib                "$gigalibloc\..\bin\libnghttp2"               [$LINUX]
-        // $Lib                "$gigalibloc\..\bin\libssh2"                  [$LINUX]
-        // $Lib                "$gigalibloc\..\bin\libssl"                   [$LINUX]
-        // $Lib                "$gigalibloc\..\bin\libz"                     [$LINUX]
-        // $Lib             "$gigalibloc\..\bin\libzstd"                  [$LINUX]
-        $ImpLibExternal     "$gigalibloc\..\bin\SDL2"                     [$LINUX]
-
-        //$ImpLibExternal        "$gigalibloc\..\bin\libcurl"                  [$LINUX]
-
-        $LibExternal        "$gigalibloc\..\bin\libfmt"                  [$LINUX]
-
+        // curl
+        // $ImpLibExternal      "$gigalibloc\..\bin\libcurl"                [$LINUX]
+        // $Lib                 "$gigalibloc\..\bin\libbrotlicommon-static" [$LINUX]
+        // $Lib                 "$gigalibloc\..\bin\libbrotlidec-static"    [$LINUX]
+        // $Lib                 "$gigalibloc\..\bin\libbrotlienc-static"    [$LINUX]
+        // $Lib                 "$gigalibloc\..\bin\libcrypto"              [$LINUX]
+        // $Lib                 "$gigalibloc\..\bin\libnghttp2"             [$LINUX]
+        // $Lib                 "$gigalibloc\..\bin\libssh2"                [$LINUX]
+        // $Lib                 "$gigalibloc\..\bin\libssl"                 [$LINUX]
+        // $Lib                 "$gigalibloc\..\bin\libz"                   [$LINUX]
+        // $Lib                 "$gigalibloc\..\bin\libzstd"                [$LINUX]
     }
 }
