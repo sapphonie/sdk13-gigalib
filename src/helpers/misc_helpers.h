@@ -55,7 +55,6 @@ uint64_t nanos();
 #ifdef CLIENT_DLL
 void UTIL_GetMap(char mapname[128]);
 #endif
-#endif
 
 #ifdef GNUC
 #undef offsetof
@@ -105,3 +104,5 @@ static inline std::string trim_copy(std::string s) {
     trim(s);
     return s;
 }
+
+#endif

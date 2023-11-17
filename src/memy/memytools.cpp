@@ -55,14 +55,17 @@ memy::memy()
 #endif
 }
 
+#ifdef CLIENT_DLL
 #include <sdkCURL/sdkCURL.h>
+#endif
 
 bool memy::Init()
 {
     InitAllBins();
-
+#ifdef CLIENT_DLL
 #ifdef SDKCURL
     new sdkCURL;
+#endif
 #endif
 
     return true;

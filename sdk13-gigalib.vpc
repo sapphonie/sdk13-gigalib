@@ -21,7 +21,7 @@ $Configuration
         $SymbolVisibility               "default" [$POSIX]
 
         // Enable modern CURL
-        $PreprocessorDefinitions        "$BASE;CURL_STATICLIB"
+        $PreprocessorDefinitions        "$BASE;CURL_STATICLIB" [$WIN32]
 
         // $Create/UsePrecompiledHeader "Not Using Precompiled Headers"
     }
@@ -89,7 +89,7 @@ $Project
                 $File   "$gigalibloc/qol/blacklists.cpp"
                 $File   "$gigalibloc/qol/blacklists.h"
             }
-            $Folder "sdkCURL"
+            $Folder "sdkCURL" [$WIN32]
             {
                 $File   "$gigalibloc/sdkCURL/sdkCURL.cpp"
                 $File   "$gigalibloc/sdkCURL/sdkCURL.h"
@@ -156,16 +156,22 @@ $Project
         $Lib                 "$gigalibloc\..\bin\libPolyHook_2"           [$LINUX]
         $Lib                 "$gigalibloc\..\bin\libZydis"                [$LINUX]
 
-        $LibExternal        "$gigalibloc\..\bin\libcurl"                  [$LINUX]
-        $Lib                "$gigalibloc\..\bin\libbrotlicommon-static"   [$LINUX]
-        $Lib                "$gigalibloc\..\bin\libbrotlidec-static"      [$LINUX]
-        $Lib                "$gigalibloc\..\bin\libbrotlienc-static"      [$LINUX]
-        $Lib                "$gigalibloc\..\bin\libcrypto"                [$LINUX]
-        $Lib                "$gigalibloc\..\bin\libnghttp2"               [$LINUX]
-        $Lib                "$gigalibloc\..\bin\libssh2"                  [$LINUX]
-        $Lib                "$gigalibloc\..\bin\libssl"                   [$LINUX]
-        $Lib                "$gigalibloc\..\bin\libz"                     [$LINUX]
+	// $ImpLibExternal        "$gigalibloc\..\bin\libcurl"                  [$LINUX]
+
+        // $Lib                "$gigalibloc\..\bin\libbrotlicommon-static"   [$LINUX]
+        // $Lib                "$gigalibloc\..\bin\libbrotlidec-static"      [$LINUX]
+        // $Lib                "$gigalibloc\..\bin\libbrotlienc-static"      [$LINUX]
+        // $Lib                "$gigalibloc\..\bin\libcrypto"                [$LINUX]
+        // $Lib                "$gigalibloc\..\bin\libnghttp2"               [$LINUX]
+        // $Lib                "$gigalibloc\..\bin\libssh2"                  [$LINUX]
+        // $Lib                "$gigalibloc\..\bin\libssl"                   [$LINUX]
+        // $Lib                "$gigalibloc\..\bin\libz"                     [$LINUX]
         // $Lib             "$gigalibloc\..\bin\libzstd"                  [$LINUX]
         $ImpLibExternal     "$gigalibloc\..\bin\SDL2"                     [$LINUX]
+
+        //$ImpLibExternal        "$gigalibloc\..\bin\libcurl"                  [$LINUX]
+
+        $LibExternal        "$gigalibloc\..\bin\libfmt"                  [$LINUX]
+
     }
 }

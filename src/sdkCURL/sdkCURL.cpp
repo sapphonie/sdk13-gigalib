@@ -1,5 +1,6 @@
-
 #include <cbase.h>
+
+#ifdef CLIENT_DLL
 #ifdef SDKCURL
 #include <sdkCURL/sdkCURL.h>
 sdkCURL* g_sdkCURL;
@@ -45,12 +46,11 @@ void recurl_f(const CCommand& command)
 
     g_sdkCURL->CURLGet(url, curlcurlcurl);
 }
+
 #ifdef CLIENT_DLL
 ConCommand curl_test_client("curl_test_client", recurl_f);
 #endif
-#ifdef GAME_DLL
-ConCommand curl_test_server("curl_test_server", recurl_f);
-#endif
+
 
 size_t sdkCURL::response_callback(void* ptr, size_t size, size_t nmemb, void* stream)
 {
@@ -257,4 +257,5 @@ void sdkCURL::Update(float frametime)
     }
 }
 
+#endif
 #endif
