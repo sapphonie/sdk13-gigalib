@@ -12,7 +12,7 @@
 
 
 
-
+// ret's true if we're running under wine/proton
 bool checkWine()
 {
     static const char * (__cdecl *pwine_get_version)(void);
@@ -132,9 +132,8 @@ void CheckSteamExeSpin()
     }
 }
 #endif
-
 // ret's true if we rewrote something
-bool RewriteLocalSteamConfig()
+bool RewriteLocalSteamConfigIfNeeded()
 {
     std::string SteamKey("SOFTWARE\\Valve\\Steam");
     std::string SMInstallPathKey("SourceModInstallPath");
@@ -202,7 +201,7 @@ bool RewriteLocalSteamConfig()
     {
         const std::filesystem::path usercfgPath = localcfgPath / dir_entry.path() / "config" / "localconfig.vdf";
 
-        std::fstream localcfgFile(usercfgPath, std::ios::in);
+        std::fstream localcfgFile( usercfgPath, std::ios::in, std::ios::out );
 
         if (!localcfgFile.is_open())
         {
@@ -329,7 +328,6 @@ bool RewriteLocalSteamConfig()
             lineVec.push_back(fullLaunchOptions.str());
         }
 
-        localcfgFile.close();
 
         if (rewriteLocalCfg)
         {
@@ -351,19 +349,16 @@ bool RewriteLocalSteamConfig()
             bakPath.append(".bak");
             std::filesystem::copy_file(usercfgPath, bakPath, std::filesystem::copy_options::skip_existing);
 
-            flushall();
 
-
-            localcfgFile.open(usercfgPath, std::ios::binary | std::ios::out | std::ios::trunc);
+            std::fstream MutableLocalCfg( usercfgPath, std::ios::binary | std::ios::out | std::ios::trunc );
 
             for (const auto& line : lineVec)
             {
                 // steam has \ns in this file for some reason?
-                localcfgFile << line << "\n" << std::flush;
+                MutableLocalCfg << line << "\n" << std::flush;
+                MutableLocalCfg.std::fstream::sync();
             }
-
-            localcfgFile.flush();
-            localcfgFile.close();
+            MutableLocalCfg.std::fstream::sync();
 
             system("taskkill /f /im Steam.exe >nul 2>nul");
 
@@ -389,13 +384,13 @@ bool RewriteLocalSteamConfig()
 
 CON_COMMAND_F(testRewrite, "", 0)
 {
-    RewriteLocalSteamConfig();
+    RewriteLocalSteamConfigIfNeeded();
 }
 
 
 // return true to abort running the rest of the steam ctors
 // aka we need to restart
-bool relaunch()
+bool RelaunchIfNeeded()
 {
     const char* Win32CmdLine = GetCommandLineA();
     std::string StrWin32CmdLine(Win32CmdLine);
@@ -471,11 +466,17 @@ CSteamHelpers::CSteamHelpers()
 {
     DevMsg(2, "CSteamHelpers CTOR->\n");
 #ifdef _WIN32
-
-    if (!RewriteLocalSteamConfig())
+    bool isWine = checkWine();
+    if (isWine)
     {
-
-        if (relaunch())
+        if (RelaunchIfNeeded())
+        {
+            return;
+        }
+    }
+    else if (!RewriteLocalSteamConfigIfNeeded())
+    {
+        if (RelaunchIfNeeded())
         {
             return;
         }
