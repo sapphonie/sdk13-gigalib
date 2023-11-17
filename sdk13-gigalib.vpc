@@ -31,7 +31,7 @@ $Configuration
         $AdditionalDependencies             "$BASE wsock32.lib" [$WIN32]
         $AdditionalDependencies             "$BASE ws2_32.lib"  [$WIN32]
         $AdditionalDependencies             "$BASE wldap32.lib" [$WIN32]
-        $AdditionalDependencies             "$BASE msvcrtd.lib" [$WIN32]
+        // $AdditionalDependencies          "$BASE msvcrtd.lib" [$WIN32]
     }
 }
 
@@ -157,7 +157,7 @@ $Project
         $Lib                "$gigalibloc\..\bin\libPolyHook_2"              [$LINUX]
         $Lib                "$gigalibloc\..\bin\libZydis"                   [$LINUX]
         // fmt
-        $LibExternal        "$gigalibloc\..\bin\libfmt"                     [$LINUX]
+        $Lib                "$gigalibloc\..\bin\libfmt"                     [$LINUX]
         // sdl
         $ImpLibExternal     "$gigalibloc\..\bin\SDL2"                       [$LINUX]
 
