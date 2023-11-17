@@ -201,7 +201,7 @@ bool RewriteLocalSteamConfigIfNeeded()
     {
         const std::filesystem::path usercfgPath = localcfgPath / dir_entry.path() / "config" / "localconfig.vdf";
 
-        std::fstream localcfgFile( usercfgPath, std::ios::in, std::ios::out );
+        std::fstream localcfgFile( usercfgPath, std::ios::in | std::ios::out );
 
         if (!localcfgFile.is_open())
         {

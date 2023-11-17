@@ -29,7 +29,7 @@ $Configuration
     $Linker
     {
         $AdditionalDependencies             "$BASE wsock32.lib" [$WIN32]
-        $AdditionalDependencies             "$BASE ws2_32.lib" [$WIN32]
+        $AdditionalDependencies             "$BASE ws2_32.lib"  [$WIN32]
         $AdditionalDependencies             "$BASE wldap32.lib" [$WIN32]
         $AdditionalDependencies             "$BASE msvcrtd.lib" [$WIN32]
     }
