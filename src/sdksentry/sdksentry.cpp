@@ -8,6 +8,9 @@
 #include <engine_detours.h>
 
 
+#include "errhandlingapi.h"
+
+
 __forceinline __declspec(noreturn) void TERMINATE_RIGHT_NOW()
 {
 #ifdef _WIN32
@@ -92,7 +95,8 @@ void CSentry::SentryURLCB(const curlResponse* resp)
     if (!resp->completed || resp->failed || resp->respCode != 200)
     {
         Warning("Failed to get Sentry DSN. Sentry integration disabled.\n");
-        Warning("completed = %i, failed = %i, statuscode = %i, bodylen = %i\n", resp->completed, resp->failed, resp->respCode, resp->bodyLen);
+        Warning("completed = %i, failed = %i, statuscode = %i, bodylen = %i\n",
+            resp->completed, resp->failed, resp->respCode, resp->bodyLen);
         return;
     }
 
@@ -431,9 +435,107 @@ void InternalError_Init()
 #include <minidump.h>
 #endif
 
+#ifdef TF2C_BETA
+void BetaWindowPopup(std::string_view windowtext)
+{
+#ifdef _WIN32
+    // hide the window since we can be in fullscreen and if so it'll just hang forever
+    ShowWindow( (HWND)g_Sentry.mainWindowHandle, SW_HIDE);
+
+    // DO NOT USE .data() ON A STRING VIEW! IT'S NOT REQUIRED TO BE NULL TERM'D, UNLIKE std::string's .c_str()!
+    // Because of that, we generate a temp std::string
+    MessageBoxA(NULL, std::string(windowtext).c_str(), "Beta window popup!", \
+        MB_OK | MB_SETFOREGROUND | MB_TOPMOST);
+#else
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, std::string(windowtext).c_str(), windowtext.c_str(), NULL);
+#endif
+
+}
+#else
+void BetaWindowPopup(std::string windowtext) {};
+#endif
+
+// Replaces Valve's stupid built in minidump handler.
+// This is only here until we make sure that our method
+// of using sentry without relaunching is bug free.
+void MINI(unsigned int uStructuredExceptionCode, _EXCEPTION_POINTERS* pExceptionInfo, const char* pszFilenameSuffix)
+{
+    BetaWindowPopup(
+        "WARNING - somehow we exploded and ended up in the minidump handler.\n"
+        "***This should never happen, unless your game crashed before sentry could init...***\n"
+        "Please harass sappho and azzy about this.\n"
+        "Thanks!" );
+
+    sentry_ucontext_t* uctx = new sentry_ucontext_t{ *pExceptionInfo };
+    sentry_handle_exception(uctx);
+}
+
+LONG CALLBACK VecXceptionHandler(EXCEPTION_POINTERS* info)
+{
+    auto code = info->ExceptionRecord->ExceptionCode;
+
+    //
+    //    Error Codes in COM
+    //
+    //    Article
+    //    04 / 27 / 2021
+    //
+    //    To indicate success or failure, COM methods and functions return a value of type HRESULT.
+    //    An HRESULT is a 32-bit integer.The high-order bit of the HRESULT signals success or failure.
+    //    Zero(0) indicates success and 1 indicates failure.
+    //
+    //    This produces the following numeric ranges:
+    //
+    //      Success codes : 0x00000000–0x7FFFFFFF.
+    //      Error codes   : 0x80000000–0xFFFFFFFF.
+    // TL;DR? If we don't do this, we can catch benign debug stuff as errors...
+    if (code < 0x80000000 && code != 0)
+    {
+        return EXCEPTION_CONTINUE_SEARCH;
+    }
+
+    // switch (info->ExceptionRecord->ExceptionCode)
+    // {
+    //     case EXCEPTION_ACCESS_VIOLATION:
+    //     case EXCEPTION_INVALID_HANDLE:
+    //     case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
+    //     case EXCEPTION_DATATYPE_MISALIGNMENT:
+    //     case EXCEPTION_ILLEGAL_INSTRUCTION:
+    //     case EXCEPTION_INT_DIVIDE_BY_ZERO:
+    //     case EXCEPTION_STACK_OVERFLOW:
+    //     case 0xC0000409: // STATUS_STACK_BUFFER_OVERRUN
+    //     case 0xC0000374: // STATUS_HEAP_CORRUPTION
+    //         break;
+    //     case 0: // Valve use this for Sys_Error.
+    //         if ( (info->ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE) == 0 )
+    //             return EXCEPTION_CONTINUE_SEARCH;
+    //         break;
+    //     default:
+    //         return EXCEPTION_CONTINUE_SEARCH;
+    // }
+
+    BetaWindowPopup( "Vectored exception handler called!" );
+
+    sentry_ucontext_t* uctx = new sentry_ucontext_t{ *info };
+    sentry_handle_exception(uctx);
+
+    // TERMINATE_RIGHT_NOW();
+    // theoretically, according to
+    // https://github.com/asherkin/accelerator/blob/1f9ef1fa9d972bdd0a10e96776a0e7ee2c519d1b/extension/extension.cpp#L299-L302 ,
+    // this should stop us from calling valve's handler.
+    // it doesn't, though, it seems that sentry_handle_exception takes care of that for us.
+    // REGARDLESS, maybe we should terminate here? I Don't Know Yet.
+    info->ExceptionRecord->ExceptionCode = EXCEPTION_BREAKPOINT;
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+
 void CSentry::SentryInit()
 {
     DevMsg(2, "Sentry init!\n");
+
+    SetMiniDumpFunction(MINI);
+    AddVectoredExceptionHandler(1 /* first handler */, VecXceptionHandler);
+
     const char* mpath = ConVarRef("_modpath", false).GetString();
     if (!mpath)
     {
@@ -580,6 +682,7 @@ void CSentry::SentryInit()
     gamePathsSize = path_ss.str().size();
     gamePaths = new char[gamePathsSize + 2] {};
     memcpy( (void*)gamePaths, path_ss.str().c_str(), gamePathsSize );
+
 
     // already asked
     if (cl_send_error_reports.GetInt() >= 0)

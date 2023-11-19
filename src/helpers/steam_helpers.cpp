@@ -2,7 +2,6 @@
 
 #ifdef CLIENT_DLL
 #include <helpers/misc_helpers.h>
-
 #include <helpers/steam_helpers.h>
 
 #ifdef _WIN32
@@ -466,6 +465,7 @@ CSteamHelpers::CSteamHelpers()
 {
     DevMsg(2, "CSteamHelpers CTOR->\n");
 #ifdef _WIN32
+    /*
     bool isWine = checkWine();
     if (isWine)
     {
@@ -481,7 +481,7 @@ CSteamHelpers::CSteamHelpers()
             return;
         }
     }
-
+    */
 #endif
 
     // spin off a thread and wait until steam is up before we call any of our funcs
