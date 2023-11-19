@@ -105,4 +105,82 @@ static inline std::string trim_copy(std::string s) {
     return s;
 }
 
+
+
+
+
+
+
+// Reimplementation of sdk13 convar class so we can poke at internals
+// please use with caution as this invalidates the entire point of some of this stuff being private
+// example use:
+//
+// ConVarRef mat_picmip("mat_picmip");
+// if (mat_picmip.IsValid())
+// {
+//     ConVar*     realVar = static_cast<ConVar*>(mat_picmip.GetLinkedConVar());
+//     FakeConVar* fakeVar = reinterpret_cast<FakeConVar*>(realVar);
+//     FakeConVar__SetMax(fakeVar, 10.0);
+//     FakeConVar__SetMin(fakeVar, -10.0);
+// }
+//
+class FakeConVar
+{
+public:
+    friend class ConVar;
+    friend class CCvar;
+    friend class ConVarRef;
+
+    // no ctor/dtor
+    // FakeConVar()    = delete;
+    // ~FakeConVar()   = delete;
+    // FakeConVar(FakeConVar const&) = delete;
+    // FakeConVar& operator=(FakeConVar const&) = delete;
+
+    // these are the actual functions
+    char bullshit[28];
+
+    // This either points to "this" or it points to the original declaration of a ConVar.
+    // This allows ConVars to exist in separate modules, and they all use the first one to be declared.
+    // m_pParent->m_pParent must equal m_pParent (ie: m_pParent must be the root, or original, ConVar).
+    ConVar* m_pParent;
+
+    // Static data
+    const char* m_pszDefaultValue;
+
+    // Value
+    // Dynamically allocated
+    char* m_pszString;
+    int							m_StringLength;
+
+    // Values
+    float						m_fValue;
+    int							m_nValue;
+
+    // Min/Max values
+    bool						m_bHasMin;
+    float						m_fMinVal;
+    bool						m_bHasMax;
+    float						m_fMaxVal;
+
+    // Call this function when ConVar changes
+    FnChangeCallback_t			m_fnChangeCallback;
+
+    // ANYTHING PAST HERE NEEDS TO BE FORCEINLINED
+    FORCEINLINE_CVAR void SetMin(float min)
+    {
+        m_pParent->m_bHasMin = true;
+        m_pParent->m_fMinVal = min;
+    }
+
+    FORCEINLINE_CVAR void SetMax(float max)
+    {
+        m_pParent->m_bHasMax = true;
+        m_pParent->m_fMaxVal = max;
+    }
+};
+
+static_assert( sizeof(FakeConVar) == sizeof(ConVar) );
+
+
 #endif

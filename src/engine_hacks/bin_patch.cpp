@@ -330,47 +330,31 @@ void CBinary::PostInit()
         #endif
 
 
-        /*
-        convar.h
-
-        In ConVar class decl:
-        + void    SetMin(float min);
-        + void    SetMax(float max);
-
-        Right outside of ConVar class decl
-        + FORCEINLINE_CVAR void ConVar::SetMin( float min )
-        + {
-        +     m_pParent->m_bHasMin = true;
-        +     m_pParent->m_fMinVal = min;
-        + }
-        +
-        + FORCEINLINE_CVAR void ConVar::SetMax( float max )
-        + {
-        +     m_pParent->m_bHasMax = true;
-        +     m_pParent->m_fMaxVal = max;
-        + }
-        */
-
 
         // Fully fix the rest of mat_picmip - set in a bin patch we had earlier.
         ConVarRef mat_picmip("mat_picmip");
         ConVarRef r_rootlod("r_rootlod");
         ConVarRef r_lod("r_lod");
-
         if (mat_picmip.IsValid())
         {
-            static_cast<ConVar*>(mat_picmip.GetLinkedConVar())->SetMax(10.0);
-            static_cast<ConVar*>(mat_picmip.GetLinkedConVar())->SetMin(-10.0);
+            ConVar*     realVar = static_cast<ConVar*>(mat_picmip.GetLinkedConVar());
+            FakeConVar* fakeVar = reinterpret_cast<FakeConVar*>(realVar);
+            fakeVar->SetMax(10.0);
+            fakeVar->SetMin(-10.0);
         }
         if (r_rootlod.IsValid())
         {
-            static_cast<ConVar*>(r_rootlod.GetLinkedConVar())->SetMax(6.0);
-            static_cast<ConVar*>(r_rootlod.GetLinkedConVar())->SetMin(-10.0);
+            ConVar* realVar     = static_cast<ConVar*>(r_rootlod.GetLinkedConVar());
+            FakeConVar* fakeVar = reinterpret_cast<FakeConVar*>(realVar);
+            fakeVar->SetMax(6.0);
+            fakeVar->SetMin(-10.0);
         }
         if (r_lod.IsValid())
         {
-            static_cast<ConVar*>(r_lod.GetLinkedConVar())->SetMax(10.0);
-            static_cast<ConVar*>(r_lod.GetLinkedConVar())->SetMin(-10.0);
+            ConVar* realVar     = static_cast<ConVar*>(r_lod.GetLinkedConVar());
+            FakeConVar* fakeVar = reinterpret_cast<FakeConVar*>(realVar);
+            fakeVar->SetMax(10.0);
+            fakeVar->SetMin(-10.0);
         }
 
     #endif
