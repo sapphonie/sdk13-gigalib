@@ -169,14 +169,15 @@ public:
     // ANYTHING PAST HERE NEEDS TO BE FORCEINLINED
     FORCEINLINE_CVAR void SetMin(float min)
     {
-        m_pParent->m_bHasMin = true;
-        m_pParent->m_fMinVal = min;
+        reinterpret_cast<FakeConVar*>(m_pParent)->m_bHasMin = true;
+        reinterpret_cast<FakeConVar*>(m_pParent)->m_fMinVal = min;
+
     }
 
     FORCEINLINE_CVAR void SetMax(float max)
     {
-        m_pParent->m_bHasMax = true;
-        m_pParent->m_fMaxVal = max;
+        reinterpret_cast<FakeConVar*>(m_pParent)->m_bHasMax = true;
+        reinterpret_cast<FakeConVar*>(m_pParent)->m_fMaxVal = max;
     }
 };
 
