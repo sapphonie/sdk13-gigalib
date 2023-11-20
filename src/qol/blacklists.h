@@ -8,9 +8,6 @@
 #include <helpers/misc_helpers.h>
 #include <helpers/steam_helpers.h>
 #include <sdkCURL/sdkCURL.h>
-#include "tier0/valve_minmax_off.h"
-#include <thread>
-#include "tier0/valve_minmax_on.h"
 
 bool         CompareServerBlacklist(const char* ipaddr);
 

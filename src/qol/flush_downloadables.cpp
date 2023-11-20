@@ -1,30 +1,7 @@
 #include <cbase.h>
 
 #if defined (CLIENT_DLL) && defined(ENGINE_DETOURS)
-class flushDLS : public CAutoGameSystem
-{
-public:
-	flushDLS();
-	bool Init() override;
-	void PostInit() override;
-};
-
-#include <filesystem.h>
-
-#include "tier0/valve_minmax_off.h"
-#include <filesystem>
-#include "tier0/valve_minmax_on.h"
-
-#include <icvar.h>
-#include <convar.h>
-
-// #define Debug_FlushDLs yep
-
-#ifdef Debug_FlushDLs
-	Color grn(0, 255, 0, 255);
-	Color ylw(255, 255, 0, 255);
-	Color red(255, 0, 0, 255);
-#endif
+#include <flush_downloadables.h>
 
 enum FLUSH_CUSTOM_CONTENT
 {
@@ -35,120 +12,152 @@ enum FLUSH_CUSTOM_CONTENT
 
 void FlushContent(FLUSH_CUSTOM_CONTENT FLUSH)
 {
-	size_t totalflushed = 0;
-	char path[MAX_PATH] = {};
-	char glob[16] = {};
+    ConVarRef _modpath = ConVarRef("_modpath");
+    if (!_modpath.IsValid())
+    {
+        Warning("NULL ConVar* _modpath? Report this to a developer! Failing...\n");
+        return;
+    }
+    
+    const char* modpath = _modpath.GetString();
+    
+    V_StripTrailingSlash( (char*)modpath );
+    
+    // c++17 my beloved
+    std::filesystem::path mpath(modpath);
+    if (!std::filesystem::exists(mpath))
+    {
+        Warning("Modpath doesn't exist? Report this to a developer! Failing...\n");
+        return;
+    }
+    
+    if
+    (
+           !std::filesystem::exists(mpath / "bin" / "client.dll")
+        && !std::filesystem::exists(mpath / "bin" / "client.so")
+        && !std::filesystem::exists(mpath / "bin" / "server.dll")
+        && !std::filesystem::exists(mpath / "bin" / "server.so")
+    )
+    {
+        // convert it down to a utf8 string
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+        std::string narrow_mpath = converter.to_bytes(mpath.c_str());
+        // std::wstring wide = converter.from_bytes(narrow_utf8_source_string);
+#ifdef SDKSENTRY
+        std::string msg = fmt::format(FMT_STRING("{:s}"), narrow_mpath.c_str());
+        const char* smsg = msg.c_str();
 
-	if (FLUSH != FLUSH_MAP_OVERRIDES)
-	{
-		// set in memy init. probably should move that someday
-		ConVar* _modpath = cvar->FindVar("_modpath");
-		if (!_modpath)
-		{
-			Warning("NULL ConVar* _modpath? Report this to a developer! Failing...\n");
-			return;
-		}
-		// yeah, i'm an empath
-		char* empath = const_cast<char*>(_modpath->GetString());
-		if (!empath || empath[0] == '\0')
-		{
-			Warning("NULL char* modpath? Report this to a developer! Failing...\n");
-			return;
-		}
-		V_StripTrailingSlash(empath);
-		// c++17 my beloved
-		std::filesystem::path mpath = empath;
-		if (!std::filesystem::exists(mpath))
-		{
-			Warning("Modpath doesn't exist? Report this to a developer! Failing...\n");
-			return;
-		}
-
-		if (FLUSH == FLUSH_ALL)
-		{
-			mpath = mpath / "download";
-		}
-		else if (FLUSH == FLUSH_SPRAYS)
-		{
-			mpath = mpath / "download" / "user_custom";
-		}
-		else
-		{
-			Warning("Invalid FLUSH option %i? [0]\n", FLUSH);
-			return;
-		}
-
-		std::string str_mpath = mpath.string();
-		const char* ch_mpath = str_mpath.c_str();
-
-		if (std::filesystem::exists(mpath) && std::filesystem::is_directory(mpath))
-		{
-			uintmax_t removed = std::filesystem::remove_all(mpath);
-			Msg("Flushed %llu items total from %s!\n", removed, ch_mpath);
-			bool mkdir = std::filesystem::create_directory(mpath);
-			if (mkdir)
-			{
-				Msg("Successfully recreated folder %s.\n", ch_mpath);
-			}
-			else
-			{
-				Warning("Failed to recreate folder %s! Your game might crash.\n", ch_mpath);
-			}
-		}
-		else
-		{
-			Warning("Couldn't find folder %s! Not flushing...\n", ch_mpath);
-		}
-		return;
-	}
-	else if (FLUSH == FLUSH_MAP_OVERRIDES)
-	{
-		V_strncpy(path, "download/maps", sizeof(path));
-		V_strncpy(glob, "*.txt", sizeof(glob));
-	}
-	else
-	{
-		Warning("Invalid FLUSH option %i? [1]\n", FLUSH);
-		return;
-	}
-
-	// smoosh em into one string
-	char pathglob[MAX_PATH] = {};
-	V_snprintf(pathglob, MAX_PATH, "%s%s%s", path, CORRECT_PATH_SEPARATOR_S, glob);
-
-	// find files containing pathglob
-	FileFindHandle_t ffhand = FILESYSTEM_INVALID_FIND_HANDLE;
-	const char* filename = g_pFullFileSystem->FindFirstEx(pathglob, "GAME", &ffhand);
-
-	// is it a real file? if it's not, that means there's nothin found here.
-	if (!filename || ffhand == FILESYSTEM_INVALID_FIND_HANDLE)
-	{
-#ifdef Debug_FlushDLs
-		ConColorMsg(red, "---> No files found in this path!\n\n");
+        sentry_value_t ctxinfo = sentry_value_new_object();
+        sentry_value_set_by_key(ctxinfo, "mpath", sentry_value_new_string(smsg));
+        SentryEvent("warning", __FUNCTION__, "Modpath wrong in FlushContent", ctxinfo);
 #endif
-		Msg("Removed all downloaded map overrides [%i items total]\n", totalflushed);
-		return;
-	}
+        Warning("Modpath ( %s ) seems wrong!?!? BAILING!!\n", narrow_mpath.c_str());
+        Warning("Modpath ( %s ) seems wrong!?!? BAILING!!\n", modpath);
+        return;
+    }
 
-	for (; filename != nullptr; filename = g_pFullFileSystem->FindNext(ffhand))
-	{
-		// get full path name relative to game folder
-		char fullpath[MAX_PATH] = {};
-		V_snprintf(fullpath, MAX_PATH, "%s%s%s", path, CORRECT_PATH_SEPARATOR_S, filename);
 
-		totalflushed++;
-		g_pFullFileSystem->RemoveFile(fullpath);
+    if (FLUSH == FLUSH_ALL)
+    {
+        mpath = mpath / "download";
+    }
+    else if (FLUSH == FLUSH_SPRAYS)
+    {
+        mpath = mpath / "download" / "user_custom";
+    }
+    else if (FLUSH == FLUSH_MAP_OVERRIDES)
+    {
+        mpath = mpath / "download" / "maps";
+    }
+    else
+    {
+        Warning("Invalid FLUSH option %i?\n", FLUSH);
+        return;
+    }
+    const std::wstring& wspth   = mpath.wstring();
+    const wchar_t* rmdPath      = wspth.c_str();
 
-#ifdef Debug_FlushDLs
-		ConColorMsg(ylw, "--->---> Found file = %s\n", filename);
-		ConColorMsg(ylw, "--->---> Fullpath of file = %s\n", fullpath);
+    // NOTE: rmdPath is a wchar_t*!because std::fs::path .c_str() gives us a wstring on win32 and a string on linux, so im just making it the wider type!!!!
+    // Fuck you!! I hate C++!!!
+    if (std::filesystem::exists(mpath) && std::filesystem::is_directory(mpath))
+    {
+        if (FLUSH != FLUSH_MAP_OVERRIDES)
+        {
+            uintmax_t removed = 0;
+            // im only putting a try catch here because this is the only part of this func that has ever thrown
+            // -sappho
+            try
+            {
+                removed = std::filesystem::remove_all(mpath);
+            }
+            catch (std::filesystem::filesystem_error &err)
+            {
+                const char* what = err.what();
+#ifdef SDKSENTRY
+                sentry_value_t ctxinfo = sentry_value_new_object();
+                sentry_value_set_by_key(ctxinfo, "mpath", sentry_value_new_string(what));
+                SentryEvent("warning", __FUNCTION__, "Exception in FlushContent", ctxinfo);
+#else
+                DevWarning( "Exception in FlushContent %s", what );
 #endif
+            }
+            Msg("Flushed %llu items total from %ws!\n", removed, rmdPath);
 
-		continue;
-	}
-	g_pFullFileSystem->FindClose(ffhand);
+            bool mkdir = std::filesystem::create_directory(mpath);
+            if (mkdir)
+            {
+                Msg("Successfully recreated folder %ws.\n", rmdPath);
+            }
+            else
+            {
+                Warning("Failed to recreate folder %ws! Your game might crash.\n", rmdPath);
+            }
+        }
+        // iterate under <sm folder>/download/maps/<>
+        else
+        {
 
-	Msg("Removed all downloaded map overrides [%i items total]\n", totalflushed);
+            uintmax_t removed = 0;
+            for ( const auto& thisPath : std::filesystem::directory_iterator(mpath) )
+            {
+                // should never happen
+                if (!thisPath.exists())
+                {
+                    continue;
+                }
+                const std::wstring& str = thisPath.path().wstring();
+                if (str.find(L".txt") != std::string::npos)
+                {
+                    try
+                    {
+                        if (std::filesystem::remove(thisPath))
+                        {
+                            Msg("-> removed %ws\n", thisPath.path().filename().wstring().c_str());
+                            removed++;
+                        }
+                    }
+                    catch (std::filesystem::filesystem_error& err)
+                    {
+                        const char* what = err.what();
+#ifdef SDKSENTRY
+                        sentry_value_t ctxinfo = sentry_value_new_object();
+                        sentry_value_set_by_key(ctxinfo, "thisPath", sentry_value_new_string(what));
+                        SentryEvent("warning", __FUNCTION__, "Exception in FlushContent", ctxinfo);
+#else
+                        DevWarning("Exception in FlushContent %s", what);
+#endif
+                    }
+                }
+            }
+            Msg("Flushed %llu items total from %ws!\n", removed, rmdPath);
+        }
+    }
+    else
+    {
+        Warning("Couldn't find folder %ws! Creating it instead...\n", rmdPath);
+        std::filesystem::create_directory(mpath);
+    }
+    return;
 }
 
 void CC_FlushMapOverrides(const CCommand& args)

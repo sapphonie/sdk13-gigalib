@@ -7,13 +7,6 @@
 
 typedef void (*fPtr)(void);
 #ifdef CLIENT_DLL
-#include <helpers/misc_helpers.h>
-
-#include "tier0/valve_minmax_off.h"
-#include <thread>
-#include <vector>
-
-#include "tier0/valve_minmax_on.h"
 
 #include <dbg.h>
 #include <steam/isteamutils.h>

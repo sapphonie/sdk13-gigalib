@@ -49,7 +49,6 @@ struct GIGAplayerStruct
 };
 
 
-GIGAplayerStruct thePlayers[MAX_PLAYERS] = {};
 #endif
 
 
@@ -122,6 +121,6 @@ public:
 
 };
 
-CEngineDetours* gCEngineDetours = nullptr;
+extern CEngineDetours* gCEngineDetours;
 
 #endif

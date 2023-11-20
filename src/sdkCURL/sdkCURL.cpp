@@ -1,5 +1,6 @@
-
 #include <cbase.h>
+
+#ifdef CLIENT_DLL
 #ifdef SDKCURL
 #include <sdkCURL/sdkCURL.h>
 sdkCURL* g_sdkCURL;
@@ -45,12 +46,11 @@ void recurl_f(const CCommand& command)
 
     g_sdkCURL->CURLGet(url, curlcurlcurl);
 }
+
 #ifdef CLIENT_DLL
 ConCommand curl_test_client("curl_test_client", recurl_f);
 #endif
-#ifdef GAME_DLL
-ConCommand curl_test_server("curl_test_server", recurl_f);
-#endif
+
 
 size_t sdkCURL::response_callback(void* ptr, size_t size, size_t nmemb, void* stream)
 {
@@ -115,6 +115,7 @@ bool sdkCURL::InitCURL()
         const curl_easyoption* ezoptinfo = curl_easy_option_by_id(opt); \
         Warning("curl_easy_setopt (%s) failed: %s\n",                   \
         curl_easy_strerror(ccode), ezoptinfo->name);                    \
+        Assert(ccode == CURLE_OK);                                      \
         curl_easy_cleanup(chand);                                       \
         return false;                                                   \
     }
@@ -147,13 +148,14 @@ bool sdkCURL::CURLGet_Thread(std::string inURL, curlResponse* resp)
         return false;
     }
 
-    CURLcode ccode;
+    CURLcode ccode = {};
     setopt_errwrap(curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
-    setopt_errwrap(curl, CURLOPT_TRANSFER_ENCODING, 1L);
+    // Causes sporadic issues with 
+    // curl_easy_perform() failed: Stream error in the HTTP/2 framing layer
+    // sdkCURL.cpp(180) : Assertion Failed : ccode == CURLE_OK
+    // setopt_errwrap(curl, CURLOPT_TRANSFER_ENCODING, 1L);
 
-    // setopt_errwrap(curl, CURLOPT_DNS_SERVERS, "1.1.1.1,1.0.0.1,8.8.8.8,8.8.4.4");
-
-    setopt_errwrap(curl, CURLOPT_DOH_URL, "https://cloudflare-dns.com/dns-query");
+    setopt_errwrap(curl, CURLOPT_ACCEPT_ENCODING, "");
 
     setopt_errwrap(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_3);
 
@@ -162,24 +164,25 @@ bool sdkCURL::CURLGet_Thread(std::string inURL, curlResponse* resp)
 
     // send all response data to this func
     setopt_errwrap(curl, CURLOPT_WRITEFUNCTION, response_callback);
-    setopt_errwrap(curl, CURLOPT_WRITEDATA, resp);
+    setopt_errwrap(curl, CURLOPT_WRITEDATA, (void*)resp);
 
     // send all headers to this func
     setopt_errwrap(curl, CURLOPT_HEADERFUNCTION, header_callback);
-    setopt_errwrap(curl, CURLOPT_HEADERDATA, resp);
+    setopt_errwrap(curl, CURLOPT_HEADERDATA, (void*)resp);
 
-    /* enable progress meter */
-    setopt_errwrap(curl, CURLOPT_NOPROGRESS, 0L);
+    // disable progress meter for now
+    setopt_errwrap(curl, CURLOPT_NOPROGRESS, 1L);
 
     // setopt_errwrap(curl, CURLOPT_XFERINFODATA, canary);
     // setopt_errwrap(curl, CURLOPT_XFERINFOFUNCTION, progress_callback);
 
-    setopt_errwrap(curl, CURLOPT_USERAGENT, "sdk2013 CURL implementation by sappho.io - github.com/sapphonie/sdk13-sappholib");
+    setopt_errwrap(curl, CURLOPT_USERAGENT, "sdk2013 CURL implementation by sappho.io");
 
     ccode = curl_easy_perform(curl);
     if (ccode != CURLE_OK)
     {
         Warning("curl_easy_perform() failed: %s\n", curl_easy_strerror(ccode));
+        Assert(ccode == CURLE_OK);
         curl_easy_cleanup(curl);
         return false;
     }
@@ -206,6 +209,9 @@ bool sdkCURL::CURLGet_Thread(std::string inURL, curlResponse* resp)
 
     resp->failed    = false;
     resp->completed = true;
+
+    reqs.push_back(resp);
+
     return true;
 }
 
@@ -213,7 +219,6 @@ bool sdkCURL::CURLGet(std::string inURL, curlCallback ccb)
 {
     curlResponse* r = new curlResponse;
     r->callback = (void*)ccb;
-    reqs.push_back(r);
     std::thread t(&sdkCURL::CURLGet_Thread, g_sdkCURL, inURL, r);
     t.detach();
     return true;
@@ -252,4 +257,5 @@ void sdkCURL::Update(float frametime)
     }
 }
 
+#endif
 #endif

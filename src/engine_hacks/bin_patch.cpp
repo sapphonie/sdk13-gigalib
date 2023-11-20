@@ -10,13 +10,10 @@
 // You probably do not need this
 // #define dbging yep
 
-
 #if defined (BIN_PATCHES) && defined(ENGINE_DETOURS)
-#include <engine_detours.h>
-
-#include "tier0/valve_minmax_off.h"
 #include <engine_hacks/bin_patch.h>
-#include "tier0/valve_minmax_on.h"
+#include <engine_hacks/engine_detours.h>
+CEngineDetours* gCEngineDetours = nullptr;
 
 #ifdef dbging
     #define goodcolor   Color(90, 240, 90, 255) // green
@@ -132,6 +129,67 @@ CBinPatch g_EnginePatches[] =
             PATCH_REFERENCE, // we are changing the value of a float**
             -1.0f
         },
+        /*
+        Unclamp mat_picmip
+
+        sub_101A4B70 + 0x76
+
+        6A 02  6A FF
+        ->
+        6A 0A  6A F0
+        sub_101A4B70 + 76   02C push    2
+        sub_101A4B70 + 78   030 push - 1
+
+        ->
+        sub_101A4B70 + 76   02C push    10
+        sub_101A4B70 + 78   030 push - 10
+        */
+        // Signature for sub_101A4B70:
+        // 55 8B EC 83 EC 20 8B 0D ? ? ? ? 56
+        // \x55\x8B\xEC\x83\xEC\x20\x8B\x0D\x2A\x2A\x2A\x2A\x56
+        {
+            FORCE_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x20\x8B\x0D\x2A\x2A\x2A\x2A\x56"),
+            13,
+            0x76,
+            PATCH_IMMEDIATE,
+            FORCE_OBFUSCATE("\x6A\x0A\x6A\xF0")
+        },
+        // rootlod callback (?)
+        // Signature for sub_1010DCC0:
+        // 55 8B EC 83 EC 08 6A 02
+        // \x55\x8B\xEC\x83\xEC\x08\x6A\x02
+        {
+            FORCE_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x08\x6A\x02"),
+            8,
+            0x6,
+            PATCH_IMMEDIATE,
+            FORCE_OBFUSCATE("\x6A\x06\x6A\xF0")
+        },
+
+        // rootlod
+        // Signature for sub_100EC8C0:
+        // 6A 02 6A 00 68 ? ? ? ? E8 ? ? ? ? 83 C4 0C C3
+        // \x6A\x02\x6A\x00\x68\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x83\xC4\x0C\xC3
+        {
+            FORCE_OBFUSCATE("\x6A\x02\x6A\x00\x68\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x83\xC4\x0C\xC3"),
+            18,
+            0x0,
+            PATCH_IMMEDIATE,
+            FORCE_OBFUSCATE("\x6A\x06\x6A\xF0")
+        },
+
+        // lod
+        // Signature for sub_100F1E40:
+        // 6A 02 6A FF 68 ? ? ? ? 
+        // \x6A\x02\x6A\xFF\x68\x2A\x2A\x2A\x2A
+        {
+            FORCE_OBFUSCATE("\x6A\x02\x6A\xFF\x68\x2A\x2A\x2A\x2A"),
+            9,
+            0x0,
+            PATCH_IMMEDIATE,
+            FORCE_OBFUSCATE("\x6A\x0A\x6A\xF0")
+        }
+
         #endif
     #else 
     // LINUX
@@ -271,6 +329,34 @@ void CBinary::PostInit()
         }
         #endif
 
+
+
+        // Fully fix the rest of mat_picmip - set in a bin patch we had earlier.
+        ConVarRef mat_picmip("mat_picmip");
+        ConVarRef r_rootlod("r_rootlod");
+        ConVarRef r_lod("r_lod");
+        if (mat_picmip.IsValid())
+        {
+            ConVar*     realVar = static_cast<ConVar*>(mat_picmip.GetLinkedConVar());
+            FakeConVar* fakeVar = reinterpret_cast<FakeConVar*>(realVar);
+            fakeVar->SetMax(10.0);
+            fakeVar->SetMin(-10.0);
+        }
+        if (r_rootlod.IsValid())
+        {
+            ConVar* realVar     = static_cast<ConVar*>(r_rootlod.GetLinkedConVar());
+            FakeConVar* fakeVar = reinterpret_cast<FakeConVar*>(realVar);
+            fakeVar->SetMax(6.0);
+            fakeVar->SetMin(-10.0);
+        }
+        if (r_lod.IsValid())
+        {
+            ConVar* realVar     = static_cast<ConVar*>(r_lod.GetLinkedConVar());
+            FakeConVar* fakeVar = reinterpret_cast<FakeConVar*>(realVar);
+            fakeVar->SetMax(10.0);
+            fakeVar->SetMin(-10.0);
+        }
+
     #endif
 
     // now run engine detours
@@ -336,7 +422,7 @@ bool CBinPatch::ApplyPatch(modbin* mbin)
         {
             V_memcpy(pMemory, m_pPatch.get(), m_iPatchLength);
 
-            int _ = {};
+            int _ = 0;
 #ifdef _WIN32
             memy::SetMemoryProtection(pMemory, m_iPatchLength, prot, &_);
 #else

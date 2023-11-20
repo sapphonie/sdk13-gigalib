@@ -2,6 +2,68 @@
 
 
 #include <engine_memutils.h>
+#include <memytools.h>
+#include <atomic>
+#include <csignal>
+
+volatile sig_atomic_t GetSpewPtr = NULL;
+bool initEngineSpew()
+{
+	    /*                              v-- unique string -------------v
+        sub_10246FC0(Destination, "\nConsole History (reversed)\n\n", 95000, -1);
+        v16 = strlen(Destination);
+        if (v16 < 0x17318)
+        {
+            result = GetSpew_sub_101FC3A0(&Destination[v16], 94999 - v16);
+            Destination[94999] = 0;
+        }
+        return result;
+    */
+#ifdef _WIN32
+    //Signature for GetSpew_sub_101FC3A0:
+    //55 8B EC 53 FF 15 ?  ?  ?  ?  8B D0 BB  ?  ?  ?  ? 3B 15 ? ? ? ?     74 ? 8B CA 33 C0 F0 0F B1 0B 85 C0 74 ? F3 90 6A 00 52 8B CB FF 15 ? ? ? ? EB ? FF 05 ? ? ? ? 0F B7 05 ? ? ? ?
+    static constexpr const char*    pattern     = "\x55\x8B\xEC\x53\xFF\x15\x2A\x2A\x2A\x2A\x8B\xD0\xBB\x2A\x2A\x2A\x2A\x3B\x15\x2A\x2A\x2A\x2A\x74\x2A\x8B\xCA\x33\xC0\xF0\x0F\xB1\x0B\x85\xC0\x74\x2A\xF3\x90\x6A\x00\x52\x8B\xCB\xFF\x15\x2A\x2A\x2A\x2A\xEB\x2A\xFF\x05\x2A\x2A\x2A\x2A\x0F\xB7\x05\x2A\x2A\x2A\x2A";
+    static constexpr size_t         patternSize = 65;
+#else // LINUX
+
+    // for now these sigs are the same
+    // -sappho
+//#ifdef GAME_DLL
+//  // Signature for _Z7GetSpewPcj:
+//  // 55 89 E5 57 56 53 83 EC 2C 8B 7D 08 8B 75 0C E8 ? ? ? ?
+//  static constexpr const char*    pattern     = "\x55\x89\xE5\x57\x56\x53\x83\xEC\x2C\x8B\x7D\x08\x8B\x75\x0C\xE8\x2A\x2A\x2A\x2A";
+//  static constexpr size_t         patternSize = 20;
+//#else
+    // Signature for sub_5742E0:
+    // 55 89 E5 57 56 53 83 EC 2C 8B 7D 08 8B 75 0C E8 ? ? ? ?
+    static constexpr const char*    pattern     = "\x55\x89\xE5\x57\x56\x53\x83\xEC\x2C\x8B\x7D\x08\x8B\x75\x0C\xE8\x2A\x2A\x2A\x2A";
+    static constexpr size_t         patternSize = 20;       
+#endif
+
+    GetSpewPtr = memy::FindPattern(engine_bin, pattern, patternSize, 0);
+    ConVarRef sys_minidumpspewlines("sys_minidumpspewlines", false);
+    if (sys_minidumpspewlines.IsValid())
+    {
+        // will never be null if valid
+        ConVar* spewCvar = static_cast<ConVar*>(sys_minidumpspewlines.GetLinkedConVar());
+        // up defaults from 512 to 2048
+        spewCvar->SetDefault("2048");
+        spewCvar->SetValue(2048);
+        return true;
+    }
+    return false;
+}
+
+char SpewOut[256000] = {};
+// Do not free the return value of this function ever - it is a global char[256000]
+char* Engine_GetSpew()
+{
+	typedef void GetSpew(char* buffer, unsigned int length);
+	GetSpew* SpewFunc = (GetSpew*)GetSpewPtr;
+    SpewFunc( (char*)SpewOut, 256000 );
+	return SpewOut;
+}
+
 #ifdef GAME_DLL
 #include <iclient.h>
 #include <inetchannel.h>

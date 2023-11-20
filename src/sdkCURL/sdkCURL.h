@@ -1,3 +1,5 @@
+#ifdef CLIENT_DLL
+
 
 #ifndef SDKCURL_H
 #define SDKCURL_H
@@ -10,12 +12,6 @@ extern "C" { FILE __iob_func[3] = { *stdin,*stdout,*stderr }; }
 #include <sdkCURL/vendored/curl.h>
 #include <sdkCURL/vendored/easy.h>
 #include <helpers/misc_helpers.h>
-
-#include "tier0/valve_minmax_off.h"
-    #include <string>
-    #include <vector>
-    #include <thread>
-#include "tier0/valve_minmax_on.h"
 
 #undef SetPort
 #undef PlaySound
@@ -35,6 +31,8 @@ struct curlResponse
         ...
 
         delete [] buffer;
+
+        actually jk idiot DONT it's a std::string for a reason, use fmt::format or snprintf
     */
     std::string body                    = {};
     std::vector<std::string> headers    = {};
@@ -80,3 +78,6 @@ extern sdkCURL* g_sdkCURL;
 
 #endif // SDKCURL
 #endif // SDKCURL_H
+
+
+#endif // CLIENT_DLL

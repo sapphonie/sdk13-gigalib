@@ -14,13 +14,16 @@ $Configuration
         $AdditionalIncludeDirectories   "$BASE;$gigalibloc/sdkCURL"
         $AdditionalIncludeDirectories   "$BASE;$gigalibloc/sdknanopb"
         $AdditionalIncludeDirectories   "$BASE;$gigalibloc/sdksentry"
+        $AdditionalIncludeDirectories   "$BASE;$gigalibloc/speedykv"
 
         $AdditionalIncludeDirectories   "$BASE;$SRCDIR\thirdparty\SDL2" // [$SDL || $DEDICATED]
 
         $SymbolVisibility               "default" [$POSIX]
 
         // Enable modern CURL
-        $PreprocessorDefinitions        "$BASE;CURL_STATICLIB;_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING"
+        $PreprocessorDefinitions        "$BASE;CURL_STATICLIB" [$WIN32]
+        // Net stuff
+        $PreprocessorDefinitions        "$BASE;_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING"
 
         // $Create/UsePrecompiledHeader "Not Using Precompiled Headers"
     }
@@ -28,9 +31,9 @@ $Configuration
     $Linker
     {
         $AdditionalDependencies             "$BASE wsock32.lib" [$WIN32]
-        $AdditionalDependencies             "$BASE ws2_32.lib" [$WIN32]
+        $AdditionalDependencies             "$BASE ws2_32.lib"  [$WIN32]
         $AdditionalDependencies             "$BASE wldap32.lib" [$WIN32]
-        //$AdditionalDependencies             "$BASE msvcrtd.lib" [$WIN32]
+        // $AdditionalDependencies          "$BASE msvcrtd.lib" [$WIN32]
     }
 }
 
@@ -115,7 +118,7 @@ $Project
                 $File   "$gigalibloc/qol/blacklists.cpp"
                 $File   "$gigalibloc/qol/blacklists.h"
             }
-            $Folder "sdkCURL"
+            $Folder "sdkCURL" [$WIN32]
             {
                 $File   "$gigalibloc/sdkCURL/sdkCURL.cpp"
                 $File   "$gigalibloc/sdkCURL/sdkCURL.h"
@@ -151,31 +154,52 @@ $Project
                 $File   "$gigalibloc/sdknanopb/vendored/pb_encode.h"
                 $File   "$gigalibloc/sdknanopb/vendored/pb.h"
             }
+            $Folder "speedykv"
+            {
+                $File   "$gigalibloc/speedykv/speedykv.cpp"
+                {
+                    $Configuration
+                    {
+                        $Compiler
+                        {
+                            $Create/UsePrecompiledHeader    "Not Using Precompiled Headers"
+                        }
+                    }
+                }
+
+                $File   "$gigalibloc/speedykv/speedykv.h"
+            }
         }
 
     }
 
     $Folder "Link Libraries"
     {
-        $ImpLib             "$gigalibloc\..\bin\sentry"                   [$WIN32]
-        $ImpLib             "$gigalibloc\..\bin\libcurl"                  [$WIN32]
+        $ImpLib             "$gigalibloc\..\bin\sentry"                     [$WIN32]
+        $ImpLib             "$gigalibloc\..\bin\libcurl"                    [$WIN32]
+        $ImpLib             "$gigalibloc\..\bin\fmt"                        [$WIN32]
 
-        $Lib                "$gigalibloc\..\bin\libbreakpad_client"       [$LINUX]
-        $Lib                "$gigalibloc\..\bin\libsentry"                [$LINUX]
+        // sentry
+        $Lib                "$gigalibloc\..\bin\libbreakpad_client"         [$LINUX]
+        $Lib                "$gigalibloc\..\bin\libsentry"                  [$LINUX]
+        // bin patching
+        $Lib                "$gigalibloc\..\bin\libPolyHook_2"              [$LINUX]
+        $Lib                "$gigalibloc\..\bin\libZydis"                   [$LINUX]
+        // fmt
+        $Lib                "$gigalibloc\..\bin\libfmt"                     [$LINUX]
+        // sdl
+        $ImpLibExternal     "$gigalibloc\..\bin\SDL2"                       [$LINUX]
 
-        $Lib                 "$gigalibloc\..\bin\libPolyHook_2"           [$LINUX]
-        $Lib                 "$gigalibloc\..\bin\libZydis"                [$LINUX]
-
-        $LibExternal        "$gigalibloc\..\bin\libcurl"                  [$LINUX]
-        $Lib                "$gigalibloc\..\bin\libbrotlicommon-static"   [$LINUX]
-        $Lib                "$gigalibloc\..\bin\libbrotlidec-static"      [$LINUX]
-        $Lib                "$gigalibloc\..\bin\libbrotlienc-static"      [$LINUX]
-        $Lib                "$gigalibloc\..\bin\libcrypto"                [$LINUX]
-        $Lib                "$gigalibloc\..\bin\libnghttp2"               [$LINUX]
-        $Lib                "$gigalibloc\..\bin\libssh2"                  [$LINUX]
-        $Lib                "$gigalibloc\..\bin\libssl"                   [$LINUX]
-        $Lib                "$gigalibloc\..\bin\libz"                     [$LINUX]
-        // $Lib             "$gigalibloc\..\bin\libzstd"                  [$LINUX]
-        $ImpLibExternal     "$gigalibloc\..\bin\SDL2"                     [$LINUX]
+        // curl
+        // $ImpLibExternal      "$gigalibloc\..\bin\libcurl"                [$LINUX]
+        // $Lib                 "$gigalibloc\..\bin\libbrotlicommon-static" [$LINUX]
+        // $Lib                 "$gigalibloc\..\bin\libbrotlidec-static"    [$LINUX]
+        // $Lib                 "$gigalibloc\..\bin\libbrotlienc-static"    [$LINUX]
+        // $Lib                 "$gigalibloc\..\bin\libcrypto"              [$LINUX]
+        // $Lib                 "$gigalibloc\..\bin\libnghttp2"             [$LINUX]
+        // $Lib                 "$gigalibloc\..\bin\libssh2"                [$LINUX]
+        // $Lib                 "$gigalibloc\..\bin\libssl"                 [$LINUX]
+        // $Lib                 "$gigalibloc\..\bin\libz"                   [$LINUX]
+        // $Lib                 "$gigalibloc\..\bin\libzstd"                [$LINUX]
     }
 }

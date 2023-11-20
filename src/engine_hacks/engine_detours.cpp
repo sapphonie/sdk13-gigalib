@@ -44,6 +44,9 @@
 #include <inetmsghandler.h>
 
 
+GIGAplayerStruct thePlayers[MAX_PLAYERS] = {};
+
+
 ConVar net_chan_proctime_limit_ms("net_chan_proctime_limit_ms", "128", FCVAR_NONE,
     "Max amount of time per tick a client is allowed to make the server spend processing network packets, in msec.\n"
     "Similar to TF2's net_chan_limit_msec, but uses a different calculation method.");
@@ -822,6 +825,8 @@ void win32_HARDENING() {
         DWORD AuditProhibitDynamicCode : 1;
         DWORD ReservedFlags : 28;
     */
+
+    /*
     PROCESS_MITIGATION_DYNAMIC_CODE_POLICY dynCode;
     dynCode.ProhibitDynamicCode             = 1;
     dynCode.AllowThreadOptOut               = 0;
@@ -832,7 +837,7 @@ void win32_HARDENING() {
     if (!SetProcessMitigationPolicy(ProcessDynamicCodePolicy, &dynCode, sizeof(dynCode)))
     {
     }
-
+    */
     PROCESS_MITIGATION_CONTROL_FLOW_GUARD_POLICY cfGuard;
     cfGuard.EnableControlFlowGuard      = 1;
     cfGuard.EnableExportSuppression     = 0;
@@ -873,11 +878,13 @@ void win32_HARDENING() {
 
 CEngineDetours::CEngineDetours()
 {
+#ifdef BLACKLISTS
     CClientState__FullConnect_Init();
+#endif
     CNetChan__Shutdown_Init();
 
 #ifdef _WIN32
-    win32_HARDENING();
+    // win32_HARDENING();
 #endif
 }
 #endif // client
@@ -886,7 +893,9 @@ CEngineDetours::CEngineDetours()
 void CEngineDetours::Shutdown()
 {
 #ifdef CLIENT_DLL
+#ifdef BLACKLISTS
     delete CClientState__FullConnect;
+#endif
     delete CNetChan__Shutdown;
 #else
     if (engine->IsDedicatedServer())
@@ -896,5 +905,6 @@ void CEngineDetours::Shutdown()
         delete CBaseServer__ConnectClient;
     }
 #endif
+    // delete gCEngineDetours;
 }
 #endif

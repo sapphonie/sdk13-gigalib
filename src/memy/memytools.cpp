@@ -2,7 +2,7 @@
 
 #include <memy/memytools.h>
 #include <helpers/misc_helpers.h>
-
+#include <engine_memutils.h>
 // #define memydbg yep
 
 // shared between client and server
@@ -55,14 +55,17 @@ memy::memy()
 #endif
 }
 
+#ifdef CLIENT_DLL
 #include <sdkCURL/sdkCURL.h>
+#endif
 
 bool memy::Init()
 {
     InitAllBins();
-
+#ifdef CLIENT_DLL
 #ifdef SDKCURL
     new sdkCURL;
+#endif
 #endif
 
     return true;
@@ -119,6 +122,8 @@ bool memy::InitAllBins()
     {
         Error("Failed getting SDK2013 path!");
     }
+
+    initEngineSpew();
     return true;
 }
 
@@ -145,7 +150,7 @@ bool memy::InitSingleBin(const char* binname, modbin* mbin)
         mbin->addr = reinterpret_cast<uintptr_t>(minfo.lpBaseOfDll);
         mbin->size = minfo.SizeOfImage;
         mbin->end  = mbin->addr + mbin->size;
-        GetModuleFileName(mhandle, mbin->binpath, MAX_PATH);
+        GetModuleFileNameA(mhandle, mbin->binpath, MAX_PATH);
 
         if (!mbin->addr || !mbin->size || !mbin->binpath)
         {
@@ -264,6 +269,7 @@ uintptr_t memy::FindPattern(const uintptr_t startaddr, const size_t searchsize, 
 // getting the old protection only works on windows...
 bool memy::SetMemoryProtection(void* addr, size_t protlen, int wantprot, int* oldprotection)
 {
+    *oldprotection = 0;
 #ifdef _WIN32
     // VirtualProtect requires a valid pointer to store the old protection value
     DWORD prot;
@@ -297,7 +303,7 @@ bool memy::SetMemoryProtection(void* addr, size_t protlen, int wantprot, int* ol
     return !!(VirtualProtect(addr, protlen, prot, (PDWORD)oldprotection));
 #else
     // POSIX - i do not care enough to scrape proc self maps again just for every instance of this operation
-    return !!mprotect(LALIGN(addr), protlen + LALDIF(addr), wantprot, 0);
+    return !(mprotect(LALIGN(addr), protlen + LALDIF(addr), wantprot));
 #endif
 }
 
