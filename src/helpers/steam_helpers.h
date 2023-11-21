@@ -33,5 +33,6 @@ public:
 };
 
 void RUN_THIS_FUNC_WHEN_STEAM_INITS(fPtr yourFunctionPointer);
+
 #endif // inc guard
 #endif

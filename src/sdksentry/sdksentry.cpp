@@ -859,6 +859,10 @@ const std::vector<std::string> cvarList =
     "mat_dxlevel",
     "host_timescale",
     "sv_cheats",
+    "mat_picmip",
+    "r_rootlod",
+    "r_lod",
+    "developer",
 };
 
 
@@ -885,6 +889,17 @@ void SentrySetTags()
     {
         sentry_set_tag("server ip", "none");
     }
+
+    static bool isWine = checkWine();
+    if (isWine)
+    {
+        sentry_set_tag("wine", "true");
+    }
+    else
+    {
+        sentry_set_tag("wine", "false");
+    }
+
     if (!cvar)
     {
         return;
@@ -908,12 +923,11 @@ void SentrySetTags()
 
 void SentryAddressBreadcrumb(void* address, const char* optionalName)
 {
-    char addyString[11] = {};
-    UTIL_AddrToString(address, addyString);
+    std::string addr = UTIL_AddrToString(address);
     sentry_value_t addr_crumb = sentry_value_new_breadcrumb(NULL, NULL);
 
     sentry_value_t address_object = sentry_value_new_object();
-    sentry_value_set_by_key(address_object, optionalName ? optionalName : _OBFUSCATE("variable address"), sentry_value_new_string(addyString));
+    sentry_value_set_by_key(address_object, optionalName ? optionalName : _OBFUSCATE("variable address"), sentry_value_new_string(addr.c_str()));
     sentry_value_set_by_key
     (
         addr_crumb, "data", address_object

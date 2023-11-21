@@ -9,34 +9,6 @@
 #include <Windows.h>
 #include <engine_hacks/engine_detours.h>
 
-
-
-// ret's true if we're running under wine/proton
-bool checkWine()
-{
-    static const char * (__cdecl *pwine_get_version)(void);
-    HMODULE hntdll = GetModuleHandle("ntdll.dll");
-    if(!hntdll)
-    {
-        Error("Not running on NT.");
-        return false;
-    }
-    FARPROC fp = GetProcAddress(hntdll, "wine_get_version");
-
-    pwine_get_version = PLH::FnCast(fp, pwine_get_version);
-    if (pwine_get_version)
-    {
-        Warning("Running on Wine... %s\n",pwine_get_version());
-        return true;
-    }
-    else
-    {
-        Warning("did not detect Wine.\n");
-        return false;
-    }
-}
-
-
 void restartWithFixedCmdline(std::stringstream &newCmdLine)
 {
 
@@ -131,6 +103,8 @@ void CheckSteamExeSpin()
     }
 }
 #endif
+
+// CURRENTLY UNUSED.
 // ret's true if we rewrote something
 bool RewriteLocalSteamConfigIfNeeded()
 {
@@ -138,8 +112,7 @@ bool RewriteLocalSteamConfigIfNeeded()
     std::string SMInstallPathKey("SourceModInstallPath");
     std::string SteamPathKey("SteamPath");
 
-    const char* moddir = COM_GetModDirectory();
-    Warning("%s\n", moddir);
+    const char* moddir = HACK_COM_GetModDirectory();
 
 
     // 248356383
@@ -410,12 +383,13 @@ bool RelaunchIfNeeded()
     (
         // we dont need to or we arent allowed to
         ( !needToFixSourceTest || !allowedToFixSourceTest )
+#ifdef NOBREAKPAD_NOMINIDUMPS_HACK
 #ifdef SDKSENTRY
         // and we have the sentry stuff already set up
         && V_stristr(Win32CmdLine, "-nobreakpad")
         && V_stristr(Win32CmdLine, "-nominidumps")
 #endif
-
+#endif
     )
     {
         // don't relaunch
@@ -436,14 +410,20 @@ bool RelaunchIfNeeded()
         UTIL_ReplaceAll(StrWin32CmdLine, "-game sourcetest", "");
         std::stringstream newCmdLine;
         // hack of the millenium
+#ifdef NOBREAKPAD_NOMINIDUMPS_HACK
         newCmdLine << "cmd /C echo Hey! We're restarting your game to enable crash reporting and the Steam overlay! Just sit tight... & ";
+#else
+        newCmdLine << "cmd /C echo Hey! We're restarting your game to enable the Steam overlay! Just sit tight... & ";
+#endif
         newCmdLine << "taskkill /T /F /PID " << mypid << " & ";
         // start "" C:/<>/hl2.exe <launch options> our launch options
         newCmdLine << "start \"\" ";
         newCmdLine << StrWin32CmdLine << " -novid -isrelaunching";
 
+#ifdef NOBREAKPAD_NOMINIDUMPS_HACK
 #ifdef SDKSENTRY
         newCmdLine << " -nobreakpad -nominidumps";
+#endif
 #endif
         // Not worth relaunching the whole game over...
         //if (checkWine())
@@ -465,23 +445,10 @@ CSteamHelpers::CSteamHelpers()
 {
     DevMsg(2, "CSteamHelpers CTOR->\n");
 #ifdef _WIN32
-    /*
-    bool isWine = checkWine();
-    if (isWine)
+    if (RelaunchIfNeeded())
     {
-        if (RelaunchIfNeeded())
-        {
-            return;
-        }
+        return;
     }
-    else if (!RewriteLocalSteamConfigIfNeeded())
-    {
-        if (RelaunchIfNeeded())
-        {
-            return;
-        }
-    }
-    */
 #endif
 
     // spin off a thread and wait until steam is up before we call any of our funcs

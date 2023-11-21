@@ -133,19 +133,19 @@ bool UTIL_IsVTFValid(const char* fileloc)
 
 	// basic flag checks
 	if
-		(
-			vtfheader->flags &
-			(
-				TEXTUREFLAGS_RENDERTARGET
-				| TEXTUREFLAGS_DEPTHRENDERTARGET
-				| TEXTUREFLAGS_NODEPTHBUFFER
-				| TEXTUREFLAGS_UNUSED_00400000
-				| TEXTUREFLAGS_UNUSED_01000000
-				| TEXTUREFLAGS_UNUSED_10000000
-				| TEXTUREFLAGS_UNUSED_40000000
-				| TEXTUREFLAGS_UNUSED_80000000
-				)
-			)
+    (
+    	vtfheader->flags &
+    	(
+    		TEXTUREFLAGS_RENDERTARGET
+    		| TEXTUREFLAGS_DEPTHRENDERTARGET
+    		| TEXTUREFLAGS_NODEPTHBUFFER
+    		| TEXTUREFLAGS_UNUSED_00400000
+    		| TEXTUREFLAGS_UNUSED_01000000
+    		| TEXTUREFLAGS_UNUSED_10000000
+    		| TEXTUREFLAGS_UNUSED_40000000
+    		| TEXTUREFLAGS_UNUSED_80000000
+        )
+    )
 	{
 		AssertMsg1(NULL, "[VTF] Invalid vtf flags = %x", vtfheader->flags);
 		free(vtfheader);
@@ -156,20 +156,21 @@ bool UTIL_IsVTFValid(const char* fileloc)
 	return true;
 }
 
-void UTIL_AddrToString(void* inAddr, char outAddrStr[11])
+std::string UTIL_AddrToString(void* inAddr)
 {
-	// sizeof doesn't work for params
-	memset(outAddrStr, 0x0, 11);
-	if (!inAddr)
+    std::string outStr;
+    if (!inAddr)
 	{
-		V_snprintf(outAddrStr, 11, "(nil)");
+        outStr = "(nil)";
 	}
 	else
 	{
-		V_snprintf(outAddrStr, 11, "%p", inAddr);
+        outStr = fmt::format( FMT_STRING("{}"), fmt::ptr(inAddr));
 	}
 
-	return;
+    // this isn't dangling, this is an object and C++ returns by value
+    // actually technically it's moved to this return but whatever
+    return outStr;
 }
 
 std::vector<std::string> UTIL_SplitSTDString(const std::string& i_str, const std::string& i_delim)
@@ -255,4 +256,56 @@ void UTIL_GetMap(char mapname[128])
 	V_FileBase(engine->GetLevelName(), mapname, 128);
 	V_strlower(mapname);
 }
+
+
+#include <Windows.h>
+#include <engine_hacks/engine_detours.h>
+// ret's true if we're running under wine/proton
+bool checkWine()
+{
+#ifdef _WIN32
+    static const char* (__cdecl * pwine_get_version)(void);
+    HMODULE hntdll = GetModuleHandle("ntdll.dll");
+    if (!hntdll)
+    {
+        Error("Not running on NT.");
+        return false;
+    }
+    FARPROC fp = GetProcAddress(hntdll, "wine_get_version");
+
+    pwine_get_version = PLH::FnCast(fp, pwine_get_version);
+    if (pwine_get_version)
+    {
+        Warning("Running on Wine... %s\n", pwine_get_version());
+        return true;
+    }
+    else
+    {
+        Warning("did not detect Wine.\n");
+        return false;
+    }
+#else
+    return false;
+#endif
+}
+
+// Hackily grabbed from other places in the sdk since this is for some reason undefined in places
+const char* HACK_COM_GetModDirectory()
+{
+    static char modDir[MAX_PATH];
+    if (Q_strlen(modDir) == 0)
+    {
+        const char* gamedir = CommandLine()->ParmValue("-game", CommandLine()->ParmValue("-defaultgamedir", "hl2"));
+        Q_strncpy(modDir, gamedir, sizeof(modDir));
+        if (strchr(modDir, '/') || strchr(modDir, '\\'))
+        {
+            Q_StripLastDir(modDir, sizeof(modDir));
+            int dirlen = Q_strlen(modDir);
+            Q_strncpy(modDir, gamedir + dirlen, sizeof(modDir) - dirlen);
+        }
+    }
+
+    return modDir;
+}
+
 #endif
