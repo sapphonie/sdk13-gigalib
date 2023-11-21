@@ -66,94 +66,121 @@ bool UTIL_IsFakePlayer(CBasePlayer* inplayer)
 	return false;
 }
 
-bool UTIL_IsVTFValid(const char* fileloc)
+bool UTIL_IsVTFValid(std::string& fileloc)
 {
-	int len = 0;
-	byte* bytes = UTIL_LoadFileForMe(fileloc, &len);
+    int len = 0;
+    auto bytes = UTIL_SmartLoadFileForMe(fileloc, &len);
+    if (!len)
+    {
+        //AssertMsg(NULL, "Downloaded file is NULL!\n");
+        return true;
+    }
 
-	if (!len)
-	{
-		//AssertMsg(NULL, "Downloaded file is NULL!\n");
-		return true;
-	}
+    // sanity check - smallest i have seen is 96 bytes
+    if (len <= 64)
+    {
+        AssertMsg(NULL, "Downloaded file is too small!\n");
+        return false;
+    }
 
-	// sanity check - smallest i have seen is 96 bytes
-	if (len <= 64)
-	{
-		AssertMsg(NULL, "Downloaded file is too small!\n");
-		return false;
-	}
+    // Get our header
+    auto vtfheader = std::make_unique<VTFFileHeader_t>();
+    // will never happen
+    if (!vtfheader)
+    {
+        return true;
+    }
+    memcpy(vtfheader.get(), bytes.get(), sizeof(VTFFileHeader_t));
 
-	// Get our header
-	VTFFileHeader_t* vtfheader = (VTFFileHeader_t*)calloc(1, sizeof(VTFFileHeader_t));
-	// will never happen
-	if (!vtfheader)
-	{
-		return true;
-	}
-	memcpy(vtfheader, bytes, sizeof(VTFFileHeader_t));
+    // Duh
+    if (!vtfheader->headerSize)
+    {
+        AssertMsg(NULL, "[VTF] Invalid header/headerSize");
+        return false;
+    }
 
-	// Duh
-	if (!vtfheader || !vtfheader->headerSize)
-	{
-		AssertMsg(NULL, "[VTF] Invalid header/headerSize");
-		free(vtfheader);
-		return false;
-	}
+    // Magic
+    if (memcmp(vtfheader->fileTypeString, "VTF\0", 4))
+    {
+        AssertMsg(NULL, "[VTF] Invalid header magic");
+        return false;
+    }
 
-	// Magic
-	if (memcmp(vtfheader->fileTypeString, "VTF\0", 4))
-	{
-		AssertMsg(NULL, "[VTF] Invalid header magic");
-		free(vtfheader);
-		return false;
-	}
+    // 7.5 or lower
+    if (vtfheader->version[0] > 7 || vtfheader->version[1] > 5)
+    {
+        AssertMsg(NULL, "[VTF] Invalid vtf version");
+        return false;
+    }
 
-	// 7.5 or lower
-	if (vtfheader->version[0] > 7 || vtfheader->version[1] > 5)
-	{
-		AssertMsg(NULL, "[VTF] Invalid vtf version");
-		free(vtfheader);
-		return false;
-	}
-
-	// basic size checks
-	if
-		(
-			vtfheader->width < 0
-			|| vtfheader->width  > 8192
-			|| vtfheader->height < 0
-			|| vtfheader->height > 8192
-			)
-	{
-		AssertMsg(NULL, "[VTF] Invalid vtf dimensions");
-		free(vtfheader);
-		return false;
-	}
-
-	// basic flag checks
-	if
+    // basic size checks
+    if
     (
-    	vtfheader->flags &
-    	(
-    		TEXTUREFLAGS_RENDERTARGET
-    		| TEXTUREFLAGS_DEPTHRENDERTARGET
-    		| TEXTUREFLAGS_NODEPTHBUFFER
-    		| TEXTUREFLAGS_UNUSED_00400000
-    		| TEXTUREFLAGS_UNUSED_01000000
-    		| TEXTUREFLAGS_UNUSED_10000000
-    		| TEXTUREFLAGS_UNUSED_40000000
-    		| TEXTUREFLAGS_UNUSED_80000000
+           vtfheader->width < 0
+        || vtfheader->width  > 8192
+        || vtfheader->height < 0
+        || vtfheader->height > 8192
+    )
+    {
+        AssertMsg(NULL, "[VTF] Invalid vtf dimensions");
+        return false;
+    }
+
+    // basic flag checks
+    if
+    (
+        vtfheader->flags &
+        (
+              TEXTUREFLAGS_RENDERTARGET
+            | TEXTUREFLAGS_DEPTHRENDERTARGET
+            | TEXTUREFLAGS_NODEPTHBUFFER
+            | TEXTUREFLAGS_UNUSED_00400000
+            | TEXTUREFLAGS_UNUSED_01000000
+            | TEXTUREFLAGS_UNUSED_10000000
+            | TEXTUREFLAGS_UNUSED_40000000
+            | TEXTUREFLAGS_UNUSED_80000000
         )
     )
-	{
-		AssertMsg1(NULL, "[VTF] Invalid vtf flags = %x", vtfheader->flags);
-		free(vtfheader);
-		return false;
-	}
+    {
+        AssertMsg1(NULL, "[VTF] Invalid vtf flags = %x", vtfheader->flags);
+        return false;
+    }
 
-	free(vtfheader);
-	return true;
+    return true;
+}
+
+#include <filesystem.h>
+#include <filesystem_helpers.h>
+std::unique_ptr<byte> UTIL_SmartLoadFileForMe(std::string& filename, int* pLength)
+{
+    FileHandle_t file;
+    file = filesystem->Open(filename.c_str(), "rb", "GAME");
+    if (FILESYSTEM_INVALID_HANDLE == file)
+    {
+        if (pLength) *pLength = 0;
+        return NULL;
+    }
+
+    int size = filesystem->Size(file);
+    std::unique_ptr<byte> buffer(new byte[size + 1]);
+    if (!buffer)
+    {
+        Warning( "UTIL_SmartLoadFileForMe:  Couldn't allocate buffer of size %i for file %s\n", size + 1, filename.c_str() );
+        filesystem->Close(file);
+        return NULL;
+    }
+    filesystem->Read(buffer.get(), size, file);
+    filesystem->Close(file);
+
+    // Ensure null terminator
+    buffer.get()[size] = 0;
+
+    if (pLength)
+    {
+        *pLength = size;
+    }
+
+    return buffer;
 }
 
 std::string UTIL_AddrToString(void* inAddr)

@@ -34,7 +34,8 @@ bool UTIL_CheckRealRemoteAddr(netadr_t netaddr);
 bool UTIL_GetRealRemoteAddr(char* ipadr);
 #endif // clientdll
 bool UTIL_IsFakePlayer(CBasePlayer* inplayer);
-bool UTIL_IsVTFValid(const char* fileloc);
+bool UTIL_IsVTFValid(std::string& instr);
+std::unique_ptr<byte> UTIL_SmartLoadFileForMe(std::string& infile, int* pLength);
 std::string UTIL_AddrToString(void* inAddr);
 
 
