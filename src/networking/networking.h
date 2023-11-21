@@ -4,25 +4,32 @@
 #pragma once
 #endif
 
-#ifdef PROTOBUF_USE_DLLS
-#undef PROTOBUF_USE_DLLS
-#endif
 
 
 #ifdef _WIN32
 // hack because theres no macro for DEBUG that i can find
 // feel free to PR to add it to vpc if you know of one
 #ifdef DEBUG
-    //#pragma comment( lib, "../shared/sdk13-gigalib/bin/libprotobufd.lib" )
-#else
+    // x86-windows-static-md
+    /*
+    set(VCPKG_TARGET_ARCHITECTURE x86)
+    set(VCPKG_CRT_LINKAGE static)
+    set(VCPKG_LIBRARY_LINKAGE static)
+    set(protobuf_MSVC_STATIC_RUNTIME ON)
 
+    set(_ITERATOR_DEBUG_LEVEL 0)
+    set(VCPKG_C_FLAGS "-D_ITERATOR_DEBUG_LEVEL=0")
+    set(VCPKG_CXX_FLAGS "-D_ITERATOR_DEBUG_LEVEL=0")
+    */
+    #pragma comment( lib, "../shared/sdk13-gigalib/bin/libprotobufd.lib" )
+#else
     #pragma comment( lib, "../shared/sdk13-gigalib/bin/libprotobuf.lib" )
 #endif
 #endif
 
 
 
-#define OVERRIDE override
+// #define OVERRIDE override
 
 #include "steam/isteamclient.h"
 #include "steam/isteamnetworking.h"
