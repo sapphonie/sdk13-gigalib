@@ -37,6 +37,25 @@
 #include "inetchannelinfo.h"
 
 #include <tier0/valve_minmax_off.h>
+
+#ifdef LINUX
+
+#ifndef bswap_16
+#define bswap_16(x) __builtin_bswap16(x)
+#endif
+
+#ifndef bswap_32
+#define bswap_32(x) __builtin_bswap32(x)
+#endif
+
+#ifndef bswap_64
+#define bswap_64(x) __builtin_bswap64(x)
+#endif
+
+#include <bits/byteswap.h>
+
+#endif
+
 #include "messages.pb.h"
 #include <tier0/valve_minmax_on.h>
 
