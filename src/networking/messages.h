@@ -3,6 +3,8 @@
 #ifdef _WIN32
 #pragma once
 #endif
+#define OVERRIDE override
+
 
 
 #include "tier1/mempool.h"
@@ -22,7 +24,10 @@ struct MsgHdr_t
 //-----------------------------------------------------------------------------
 class CNetPacket : public IRefCounted
 {
-	DECLARE_FIXEDSIZE_ALLOCATOR_MT( CNetPacket );
+    friend class CNetworking;
+
+    
+    DECLARE_FIXEDSIZE_ALLOCATOR_MT( CNetPacket );
 public:
 	CNetPacket()
 	{

@@ -36,7 +36,6 @@ bool checkWine()
     }
 }
 
-
 void restartWithFixedCmdline(std::stringstream &newCmdLine)
 {
 
@@ -131,6 +130,26 @@ void CheckSteamExeSpin()
     }
 }
 #endif
+
+// need to clean this up
+const char *HACK_COM_GetModDirectory()
+{
+    static char modDir[MAX_PATH];
+    if ( Q_strlen( modDir ) == 0 )
+    {
+        const char *gamedir = CommandLine()->ParmValue("-game", CommandLine()->ParmValue( "-defaultgamedir", "hl2" ) );
+        Q_strncpy( modDir, gamedir, sizeof(modDir) );
+        if ( strchr( modDir, '/' ) || strchr( modDir, '\\' ) )
+        {
+            Q_StripLastDir( modDir, sizeof(modDir) );
+            int dirlen = Q_strlen( modDir );
+            Q_strncpy( modDir, gamedir + dirlen, sizeof(modDir) - dirlen );
+        }
+    }
+
+    return modDir;
+}
+
 // ret's true if we rewrote something
 bool RewriteLocalSteamConfigIfNeeded()
 {
@@ -138,7 +157,7 @@ bool RewriteLocalSteamConfigIfNeeded()
     std::string SMInstallPathKey("SourceModInstallPath");
     std::string SteamPathKey("SteamPath");
 
-    const char* moddir = COM_GetModDirectory();
+    const char* moddir = HACK_COM_GetModDirectory();
     Warning("%s\n", moddir);
 
 
