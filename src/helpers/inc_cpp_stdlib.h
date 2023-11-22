@@ -40,6 +40,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <map>
+#include <bitset>
 
 #define FMT_ENFORCE_COMPILE_STRING
 #include <fmt/format.h>

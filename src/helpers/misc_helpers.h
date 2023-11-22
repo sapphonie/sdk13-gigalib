@@ -184,4 +184,12 @@ public:
 static_assert( sizeof(FakeConVar) == sizeof(ConVar) );
 
 
+
+
+constexpr int int_ceil(float f)
+{
+    const int i = static_cast<int>(f);
+    return f > i ? i + 1 : i;
+}
+
 #endif
