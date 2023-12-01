@@ -132,6 +132,7 @@ $Configuration
 
 
 ## Distributing binaries
+
 - If you're using the sentry integration, .dlls, .sos, and .exes need to be distributed into your clients' /mod/bin folder, next to client and server binaries
 - If you're using the curl integration, .dlls need to be distributed into your clients' /mod/bin folder, next to client and server binaries
 - You need to distribute the [fmtlib](https://github.com/fmtlib/fmt) binaries into your clients' /mod/bin folder, next to client and server binaries
