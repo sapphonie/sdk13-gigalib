@@ -287,12 +287,6 @@ void UTIL_GetMap(char mapname[128])
 
 #include <Windows.h>
 #include <engine_hacks/engine_detours.h>
-// ret's true if we're running under wine/proton
-bool checkWine()
-{
-    static bool iswine = checkWineInternal();
-    return iswine;
-}
 
 bool checkWineInternal()
 {
@@ -320,6 +314,13 @@ bool checkWineInternal()
 #else
     return false;
 #endif
+}
+
+// ret's true if we're running under wine/proton
+bool checkWine()
+{
+    static bool iswine = checkWineInternal();
+    return iswine;
 }
 
 // Hackily grabbed from other places in the sdk since this is for some reason undefined in places
