@@ -290,6 +290,12 @@ void UTIL_GetMap(char mapname[128])
 // ret's true if we're running under wine/proton
 bool checkWine()
 {
+    static bool iswine = checkWineInternal();
+    return iswine;
+}
+
+bool checkWineInternal()
+{
 #ifdef _WIN32
     static const char* (__cdecl * pwine_get_version)(void);
     HMODULE hntdll = GetModuleHandle("ntdll.dll");
