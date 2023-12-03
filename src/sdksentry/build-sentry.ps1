@@ -1,4 +1,4 @@
-$SentryVersion = "0.6.6"
+$SentryVersion = "0.6.7"
 
 rm -Recurse -Force sentry-native
 

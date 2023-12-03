@@ -6,7 +6,7 @@ rm -rfv sentry-native
 
 cd /sentry
 
-SentryVersion="0.6.5"
+SentryVersion="0.6.7"
 git config --global --add safe.directory '*'
 git clone https://github.com/getsentry/sentry-native --recursive --depth=1 -b ${SentryVersion}
 cd ./sentry-native
