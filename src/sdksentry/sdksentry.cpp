@@ -893,11 +893,11 @@ void SentrySetTags()
     static bool isWine = checkWine();
     if (isWine)
     {
-        sentry_set_tag("wine", "true");
+        sentry_set_tag("wine", "yes");
     }
     else
     {
-        sentry_set_tag("wine", "false");
+        sentry_set_tag("wine", "no");
     }
 
     if (!cvar)
