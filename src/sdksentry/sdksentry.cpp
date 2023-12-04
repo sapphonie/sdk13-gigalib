@@ -533,6 +533,12 @@ void CSentry::SentryInit()
 {
     DevMsg(2, "Sentry init!\n");
 
+    // Don't bother on Linux
+    if (checkWine())
+    {
+        return;
+    }
+
     SetMiniDumpFunction(MINI);
     AddVectoredExceptionHandler(1 /* first handler */, VecXceptionHandler);
 
@@ -917,8 +923,6 @@ void SentrySetTags()
             Warning("Failed getting sentry tag for %s\n", element.c_str());
         }
 	}
-
-
 }
 
 void SentryAddressBreadcrumb(void* address, const char* optionalName)
