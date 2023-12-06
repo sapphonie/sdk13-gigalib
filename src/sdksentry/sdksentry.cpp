@@ -41,6 +41,12 @@ CSentry::CSentry()
 // #ifdef _DEBUG
 void CC_SentryTest(const CCommand& args)
 {
+    // Don't bother on Linux
+    if (checkWine())
+    {
+        return;
+    }
+
     sentry_value_t ctxinfo = sentry_value_new_object();
     sentry_value_set_by_key(ctxinfo, "test", sentry_value_new_string("test str"));
     SentryEvent("info", __FUNCTION__, "testEvent", ctxinfo);
@@ -171,6 +177,12 @@ FORCEINLINE void DoDyingStuff()
 // then you can remove the ugly atomic part of this
 void CSentry::Shutdown()
 {
+    // Don't bother on Linux
+    if (checkWine())
+    {
+        return;
+    }
+
     sentry_add_breadcrumb(sentry_value_new_breadcrumb(NULL, __FUNCTION__));
 
     DoDyingStuff();
@@ -874,6 +886,12 @@ const std::vector<std::string> cvarList =
 
 void SentrySetTags()
 {
+    // Don't bother on Linux
+    if (checkWine())
+    {
+        return;
+    }
+
     char mapname[128] = {};
     UTIL_GetMap(mapname);
     if (mapname && mapname[0])
@@ -927,6 +945,12 @@ void SentrySetTags()
 
 void SentryAddressBreadcrumb(void* address, const char* optionalName)
 {
+    // Don't bother on Linux
+    if (checkWine())
+    {
+        return;
+    }
+
     std::string addr = UTIL_AddrToString(address);
     sentry_value_t addr_crumb = sentry_value_new_breadcrumb(NULL, NULL);
 
