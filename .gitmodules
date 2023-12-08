@@ -1,0 +1,3 @@
+[submodule "src/protobuf"]
+	path = src/protobuf
+	url = https://github.com/sapphonie/protobuf-valve-sdk13-compat

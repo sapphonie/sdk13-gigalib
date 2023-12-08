@@ -1,8 +1,41 @@
 $Macro gigalibloc     "$SRCDIR\game\shared\sdk13-gigalib\src"
+$Macro gigalibbinloc     "$SRCDIR\game\shared\sdk13-gigalib\bin"
+
+$Macro GENERATED_PROTO_DIR "$SRCDIR\game\shared\sdk13-gigalib\src\networking\"
+// $Include "$gigalibloc/../protobuf_builder.vpc"
+$MacroRequired  GENERATED_PROTO_DIR
+
+$CustomBuildStep "proto"
+{
+    $Description    "Running Protocol Buffer Compiler on $(InputFileName)..."
+    $CommandLine    "if not exist $GENERATED_PROTO_DIR mkdir $GENERATED_PROTO_DIR" "\n" \
+                    "$gigalibbinloc\protobuf\protoc.exe --proto_path=$gigalibloc\protobuf\src --proto_path=$(InputDir) --proto_path=$gigalibloc\networking --cpp_out=$GENERATED_PROTO_DIR $(InputPath)" [$WINDOWS]
+
+
+    $CommandLine    "mkdir $GENERATED_PROTO_DIR 2> /dev/null;"  \
+                    "$gigalibbinloc/protobuf/protoc --proto_path=$gigalibloc\protobuf\src --proto_path=$(InputDir) --proto_path=$gigalibloc\networking --cpp_out=$GENERATED_PROTO_DIR $(InputPath)" [$LINUXALL]
+    $Outputs        "$GENERATED_PROTO_DIR\$(InputName).pb.cc;$GENERATED_PROTO_DIR\$(InputName).pb.h"
+}
+
+$Project
+{
+    $Folder "Link Libraries"
+    {
+        // defined in networking.h
+        // $Libexternal    "$gigalibloc\..\bin\libprotobuf"    [$WIN32]
+        $Libexternal    "$gigalibloc\..\bin\libprotobuf"    [$LINUX]
+    }
+}
+
+
+
 $Configuration
 {
     $Compiler
     {
+        // https://github.com/microsoft/vcpkg/issues/7936
+        // $DisableSpecificWarnings    "$BASE;4251"
+
         $AdditionalIncludeDirectories   "$BASE;$gigalibloc"
 
 
@@ -12,16 +45,22 @@ $Configuration
         $AdditionalIncludeDirectories   "$BASE;$gigalibloc/polyhook"
         $AdditionalIncludeDirectories   "$BASE;$gigalibloc/qol"
         $AdditionalIncludeDirectories   "$BASE;$gigalibloc/sdkCURL"
-        $AdditionalIncludeDirectories   "$BASE;$gigalibloc/sdknanopb"
         $AdditionalIncludeDirectories   "$BASE;$gigalibloc/sdksentry"
         $AdditionalIncludeDirectories   "$BASE;$gigalibloc/speedykv"
 
         $AdditionalIncludeDirectories   "$BASE;$SRCDIR\thirdparty\SDL2" // [$SDL || $DEDICATED]
 
+        // General
+        $AdditionalIncludeDirectories   "$BASE;$GENERATED_PROTO_DIR;$gigalibloc\protobuf\src"
+
+
         $SymbolVisibility               "default" [$POSIX]
 
         // Enable modern CURL
         $PreprocessorDefinitions        "$BASE;CURL_STATICLIB" [$WIN32]
+        // Net stuff
+        // PROTOBUF_USE_DLLS
+        $PreprocessorDefinitions        "$BASE;_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING"
 
         // $Create/UsePrecompiledHeader "Not Using Precompiled Headers"
     }
@@ -38,6 +77,26 @@ $Configuration
 
 $Project
 {
+    $Folder "Protobuf Files"
+	{
+		$File "$gigalibloc/networking/messages.proto"
+		$Folder "Generated Files" [!$OSXALL]
+		{
+			$DynamicFile "$gigalibloc/networking/messages.pb.h"
+			$DynamicFile "$gigalibloc/networking/messages.pb.cc"
+			{
+				$Configuration
+				{
+					$Compiler 
+					{
+						$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+						$AdditionalOptions				"$BASE /D_HAS_EXCEPTIONS=0"
+					}
+				}
+			}
+		}
+	}
+
     $Folder "Source Files"
     {
         $Folder "sdk13-gigalib"
@@ -62,7 +121,14 @@ $Project
 
                 $File "$gigalibloc/memy/vtblhook.h"
             }
+            $Folder "networking"
+            {
+                $File   "$gigalibloc/networking/networking.cpp"
+                $File   "$gigalibloc/networking/networking.h"
 
+                $File   "$gigalibloc/networking/messages.cpp"
+                $File   "$gigalibloc/networking/messages.h"
+            }
             $Folder "engine hacks"
             {
                 $File   "$gigalibloc/engine_hacks/engine_detours.cpp"
@@ -106,25 +172,25 @@ $Project
                 $File   "$gigalibloc/sdkCURL/vendored/urlapi.h"
                 $File   "$gigalibloc/sdkCURL/vendored/websockets.h"
             }
-            $Folder "sdknanopb"
-            {
-                $File   "$gigalibloc/sdknanopb/vendored/pb_common.c" \
-                        "$gigalibloc/sdknanopb/vendored/pb_decode.c" \
-                        "$gigalibloc/sdknanopb/vendored/pb_encode.c"
-                {
-                    $Configuration
-                    {
-                        $Compiler
-                        {
-                            $Create/UsePrecompiledHeader    "Not Using Precompiled Headers"
-                        }
-                    }
-                }
-
-                $File   "$gigalibloc/sdknanopb/vendored/pb_common.h"
-                $File   "$gigalibloc/sdknanopb/vendored/pb_encode.h"
-                $File   "$gigalibloc/sdknanopb/vendored/pb.h"
-            }
+            //$Folder "sdknanopb"
+            //{
+            //    $File   "$gigalibloc/sdknanopb/vendored/pb_common.c" \
+            //            "$gigalibloc/sdknanopb/vendored/pb_decode.c" \
+            //            "$gigalibloc/sdknanopb/vendored/pb_encode.c"
+            //    {
+            //        $Configuration
+            //        {
+            //            $Compiler
+            //            {
+            //                $Create/UsePrecompiledHeader    "Not Using Precompiled Headers"
+            //            }
+            //        }
+            //    }
+			//
+            //    $File   "$gigalibloc/sdknanopb/vendored/pb_common.h"
+            //    $File   "$gigalibloc/sdknanopb/vendored/pb_encode.h"
+            //    $File   "$gigalibloc/sdknanopb/vendored/pb.h"
+            //}
             $Folder "speedykv"
             {
                 $File   "$gigalibloc/speedykv/speedykv.cpp"

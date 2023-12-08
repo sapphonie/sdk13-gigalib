@@ -184,11 +184,12 @@ public:
 
 static_assert( sizeof(FakeConVar) == sizeof(ConVar) );
 
-
 bool checkWine();
 
-
-// need to clean this up
-const char* HACK_COM_GetModDirectory();
+constexpr int int_ceil(float f)
+{
+    const int i = static_cast<int>(f);
+    return f > i ? i + 1 : i;
+}
 
 #endif
