@@ -5,8 +5,13 @@
 #endif
 
 
-
 #ifdef _WIN32
+
+
+#ifndef PROTOLIBS_DEFD_H
+#define PROTOLIBS_DEFD_H
+
+
 // hack because theres no macro for DEBUG that i can find
 // feel free to PR to add it to vpc if you know of one
 #ifdef DEBUG
@@ -24,6 +29,8 @@
     #pragma comment( lib, "../shared/sdk13-gigalib/bin/libprotobufd.lib" )
 #else
     #pragma comment( lib, "../shared/sdk13-gigalib/bin/libprotobuf.lib" )
+#endif
+
 #endif
 #endif
 
