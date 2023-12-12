@@ -125,12 +125,65 @@ static inline std::string trim_copy(std::string s) {
 //     FakeConVar__SetMin(fakeVar, -10.0);
 // }
 //
-class FakeConVar
+
+class FakeConCommandBase
+{
+    friend class CCvar;
+    friend class ConVar;
+    friend class ConCommandBase;
+    friend class ConCommand;
+    friend class CDefaultCvar;
+
+public:
+    FORCEINLINE_CVAR void Shutdown_HACK()
+    {
+        if (g_pCVar)
+        {
+            g_pCVar->UnregisterConCommand((ConCommandBase*)this);
+        }
+    }
+
+    char padCtorDtor[4];
+
+
+    // Next ConVar in chain
+    // Prior to register, it points to the next convar in the DLL.
+    // Once registered, though, m_pNext is reset to point to the next
+    // convar in the global list
+    FakeConCommandBase* m_pNext;
+
+    // Has the cvar been added to the global list?
+    bool						m_bRegistered;
+
+    // Static data
+    const char* m_pszName;
+    const char* m_pszHelpString;
+
+    // ConVar flags
+    int							m_nFlags;
+
+
+
+    // ConVars add themselves to this list for the executable. 
+    // Then ConVar_Register runs through  all the console variables 
+    // and registers them into a global list stored in vstdlib.dll
+    static FakeConCommandBase* s_pConCommandBases;
+
+    // ConVars in this executable use this 'global' to access values.
+    static IConCommandBaseAccessor* s_pAccessor;
+};
+
+
+
+class FakeConVar : public FakeConCommandBase, public IConVar
+
 {
 public:
     friend class ConVar;
     friend class CCvar;
     friend class ConVarRef;
+
+    typedef FakeConCommandBase BaseClass;
 
     // no ctor/dtor
     // FakeConVar()    = delete;
@@ -138,13 +191,13 @@ public:
     // FakeConVar(FakeConVar const&) = delete;
     // FakeConVar& operator=(FakeConVar const&) = delete;
 
-    // these are the actual functions
-    char bullshit[28];
+    // FakeConCommandBase concmdObj;
+    // IConVar* iconvarObj;
 
     // This either points to "this" or it points to the original declaration of a ConVar.
     // This allows ConVars to exist in separate modules, and they all use the first one to be declared.
     // m_pParent->m_pParent must equal m_pParent (ie: m_pParent must be the root, or original, ConVar).
-    ConVar* m_pParent;
+    FakeConVar* m_pParent;
 
     // Static data
     const char* m_pszDefaultValue;
@@ -170,19 +223,41 @@ public:
     // ANYTHING PAST HERE NEEDS TO BE FORCEINLINED
     FORCEINLINE_CVAR void SetMin(float min)
     {
-        reinterpret_cast<FakeConVar*>(m_pParent)->m_bHasMin = true;
-        reinterpret_cast<FakeConVar*>(m_pParent)->m_fMinVal = min;
+        m_pParent->m_bHasMin = true;
+        m_pParent->m_fMinVal = min;
 
     }
 
     FORCEINLINE_CVAR void SetMax(float max)
     {
-        reinterpret_cast<FakeConVar*>(m_pParent)->m_bHasMax = true;
-        reinterpret_cast<FakeConVar*>(m_pParent)->m_fMaxVal = max;
+        m_pParent->m_bHasMax = true;
+        m_pParent->m_fMaxVal = max;
+    }
+
+    // set flags of a convar manually without mucking about with AddFlags or bitflag logic
+    // you should still use bitflag logic if you want to preserve one or more of the old flags of a cvar, though
+    // stolen from Open Fortress - thanks kaydemon
+    // -sappho
+    FORCEINLINE_CVAR void SetFlags(int flags)
+    {
+        m_pParent->m_nFlags = flags;
+        m_nFlags = flags;
+    }
+
+    // delete a convar off the face of the planet
+    // never use this unless you know exactly what you're doing
+    FORCEINLINE_CVAR void Nuke(void)
+    {
+        m_pParent->Shutdown_HACK();
+        Shutdown_HACK();
     }
 };
 
-static_assert( sizeof(FakeConVar) == sizeof(ConVar) );
+static_assert(sizeof(FakeConCommandBase)    == sizeof(ConCommandBase),  "size mismatch between FakeConCommandBase and ConCommandBase");
+static_assert(sizeof(FakeConVar)            == sizeof(ConVar),          "size mismatch between FakeConVar and ConVar");
+
+static_assert(sizeof(ConCommandBase)        == 24, "ConCommandBase  size != expected size of 24! Did you change ConVar.h?");
+static_assert(sizeof(ConVar)                == 72, "ConVar          size != expected size of 72! Did you change ConVar.h?");
 
 bool checkWine();
 
