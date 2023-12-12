@@ -1,7 +1,9 @@
 #include <cbase.h>
 
-#ifdef CLIENT_DLL
+// Man, I really gotta seperate this and sentry's internals into their own files, don't I...
+// Oh well. Someday...
 #ifdef SDKCURL
+
 #include <sdkCURL/sdkCURL.h>
 sdkCURL* g_sdkCURL;
 
@@ -40,15 +42,32 @@ void curlcurlcurl(const curlResponse* curlRepsonseStruct)
     }
 }
 
-void recurl_f(const CCommand& command)
+#ifdef CLIENT_DLL
+CON_COMMAND(curl_test_client, "")
 {
-    std::string url( command.Arg(1) );
+    std::string url(args.Arg(1));
+    if (url == "http" || url == "https")
+    {
+        Warning("You need to wrap the URL in quotes. Sorry.\n");
+        return;
+    }
 
     g_sdkCURL->CURLGet(url, curlcurlcurl);
 }
+#endif
 
-#ifdef CLIENT_DLL
-ConCommand curl_test_client("curl_test_client", recurl_f);
+#ifdef GAME_DLL
+CON_COMMAND(curl_test_server, "")
+{
+    std::string url(args.Arg(1));
+    if (url == "http" || url == "https")
+    {
+        Warning("You need to wrap the URL in quotes. Sorry.\n");
+        return;
+    }
+
+    g_sdkCURL->CURLGet(url, curlcurlcurl);
+}
 #endif
 
 
@@ -73,9 +92,9 @@ bool sdkCURL::InitCURL()
 {
     DevMsg(2, "%s\n", curl_version());
 
-    CURLcode ccode = {};
-    curlSetSSL = false;
-    curlInited = false;
+    CURLcode ccode  = {};
+    curlSetSSL      = false;
+    curlInited      = false;
 
     if (!curlSetSSL)
     {
@@ -224,8 +243,46 @@ bool sdkCURL::CURLGet(std::string inURL, curlCallback ccb)
     return true;
 }
 
+// These run on server
+void sdkCURL::FrameUpdatePreEntityThink(void)
+{
+}
+
+void sdkCURL::FrameUpdatePostEntityThink(void)
+{
+#ifdef GAME_DLL
+    UpdateRequestVector();
+#endif
+}
+
+// Runs on client
 void sdkCURL::Update(float frametime)
 {
+#ifdef CLIENT_DLL
+    UpdateRequestVector();
+#endif
+}
+
+// This is just a spinlock basically, kind of.
+// We only want to run this every 500ms - honestly maybe this should
+// just be it's own thread...? but I really don't want to worry about keeping things in sync
+// So for now this will do.
+// This is called client side from ::Update, 
+// and server side from ::FrameUpdatePostEntityThink (which is *after* all think calcs have happened,
+// so we don't stall as easily)
+void sdkCURL::UpdateRequestVector()
+{
+    static uint64_t nextTime    = 0;
+    uint64_t nowTime            = millis();
+    if (nextTime > nowTime)
+    {
+        return;
+    }
+
+    // run next one 500ms in the future
+    nextTime = nowTime + ( 500 );
+
+
     for (size_t i = 0; i < reqs.size(); ++i)
     {
         curlResponse* thisReq = reqs.at(i);
@@ -257,5 +314,4 @@ void sdkCURL::Update(float frametime)
     }
 }
 
-#endif
 #endif

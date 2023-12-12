@@ -142,6 +142,9 @@ typedef void CURLSH;
 #  define CURL_EXTERN
 #endif
 
+#undef CURL_EXTERN
+#define CURL_EXTERN
+
 #ifndef curl_socket_typedef
 /* socket typedef */
 #if defined(CURL_WIN32) && !defined(__LWIP_OPT_H__) && !defined(LWIP_HDR_OPT_H)

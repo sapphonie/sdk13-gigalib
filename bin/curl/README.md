@@ -1,0 +1,1 @@
+These are straight up copied from the latest curl mingw win32 release 

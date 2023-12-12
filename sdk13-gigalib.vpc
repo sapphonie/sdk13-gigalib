@@ -20,9 +20,6 @@ $Configuration
 
         $SymbolVisibility               "default" [$POSIX]
 
-        // Enable modern CURL
-        $PreprocessorDefinitions        "$BASE;CURL_STATICLIB" [$WIN32]
-
         // $Create/UsePrecompiledHeader "Not Using Precompiled Headers"
     }
 
@@ -144,10 +141,55 @@ $Project
 
     }
 
+	// $Lib:
+	//   windows:
+	//     if dedicated sv:
+	//       path == <name>_srv.lib
+	//     else:
+	//       path == <name>.lib
+	//   linux:
+	//     if dedicated sv:
+	//       path == <name>_srv.a
+	//     else:
+	//       path == <name>.a
+	// 
+	// $LibExternal:
+	//   windows:
+	//     path == <name>.lib
+	//   linux:
+	//     path == <name>.a
+	// 
+	// $ImpLib:
+	//   windows:
+	//     if dedicated sv:
+	//       path == <name>_srv.lib
+	//     else:
+	//       path == <name>.lib
+	//   linux:
+	//     if dedicated sv:
+	//       path == <name>_srv.so
+	//     else:
+	//       path == <name>.so
+	// 
+	// $ImpLibExternal:
+	//   windows:
+	//     path == <name>.lib
+	//   linux:
+	//     path == <name>.so
+	// 
+	// TLDR:
+	// 
+	// use ImpLib for internally compiled shared libraries
+	// use ImpLibExternal externally compiled shared libraries
+	// 
+	// use Lib for internally compiled static libraries
+	// use LibExternal for externally compiled static libraries
+
+
+
     $Folder "Link Libraries"
     {
         $ImpLib             "$gigalibloc\..\bin\sentry"                     [$WIN32]
-        $ImpLib             "$gigalibloc\..\bin\libcurl"                    [$WIN32]
         $ImpLib             "$gigalibloc\..\bin\fmt"                        [$WIN32]
 
         // sentry
