@@ -126,6 +126,7 @@ static inline std::string trim_copy(std::string s) {
 // }
 //
 
+
 class FakeConCommandBase
 {
     friend class CCvar;
@@ -135,17 +136,9 @@ class FakeConCommandBase
     friend class CDefaultCvar;
 
 public:
-    FORCEINLINE_CVAR void Shutdown_HACK()
-    {
-        if (g_pCVar)
-        {
-            g_pCVar->UnregisterConCommand((ConCommandBase*)this);
-        }
-    }
-
-    char padCtorDtor[4];
-
-
+    // needed for class/struct memory alignment
+    virtual void doNothing() {};
+    // char pad[4];
     // Next ConVar in chain
     // Prior to register, it points to the next convar in the DLL.
     // Once registered, though, m_pNext is reset to point to the next
@@ -171,9 +164,20 @@ public:
 
     // ConVars in this executable use this 'global' to access values.
     static IConCommandBaseAccessor* s_pAccessor;
+
+
+    FORCEINLINE_CVAR void Shutdown_HACK()
+    {
+        if (g_pCVar)
+        {
+            g_pCVar->UnregisterConCommand((ConCommandBase*)this);
+        }
+    }
+
+
 };
 
-
+// class ConVar : public ConCommandBase, public IConVar
 
 class FakeConVar : public FakeConCommandBase, public IConVar
 
@@ -258,6 +262,112 @@ static_assert(sizeof(FakeConVar)            == sizeof(ConVar),          "size mi
 
 static_assert(sizeof(ConCommandBase)        == 24, "ConCommandBase  size != expected size of 24! Did you change ConVar.h?");
 static_assert(sizeof(ConVar)                == 72, "ConVar          size != expected size of 72! Did you change ConVar.h?");
+
+
+static_assert(std::is_standard_layout<ConVar>::value == false);
+static_assert(std::is_standard_layout<FakeConVar>::value == false);
+
+// static_assert(offsetof(A, data[0]) == 0 * sizeof(float));
+
+#include <type_traits>
+
+// we can't do offsetof so instead we supply this macro with the member to check
+// and what we think the offset of that member should be
+#define CHECK_CONVAR_OFFSET_MEMBER(member, expectedOffsetFromConVar)                            \
+{                                                                                               \
+    int offsetFromFakeConVar = offsetof(FakeConVar, member);                                    \
+    if (offsetFromFakeConVar != expectedOffsetFromConVar)                                       \
+    {                                                                                           \
+        std::string msg = fmt::format(                                                          \
+            FMT_STRING( "Offset {:s} on FakeConVar == 0x{:x}, should be 0x{:x}! Exploding!" ),  \
+            V_STRINGIFY(member),                                                                \
+            offsetFromFakeConVar,                                                               \
+            expectedOffsetFromConVar);                                                          \
+        const char* str = msg.c_str();                                                          \
+        AssertMsgAlways(offsetFromFakeConVar == expectedOffsetFromConVar, str );                \
+    }                                                                                           \
+}
+
+
+#ifndef FAKECONVAR_TESTS_H
+#define FAKECONVAR_TESTS_H
+
+
+constexpr static const char* ConVarTestString = __TIMESTAMP__;
+
+static ConVar testConVar("testConVar", ConVarTestString, FCVAR_NONE);
+
+class FakeConVarUnitTests : public CAutoGameSystem
+{
+public:
+    FakeConVarUnitTests() {};
+
+    virtual bool Init()
+    {
+        return true;
+    }
+
+    virtual void PostInit()
+    {
+        static bool inited = false;
+        if (inited)
+        {
+            return;
+        }
+        inited = true;
+
+        ConVarRef testConVarRef("testConVar", false);
+        AssertFatalMsg(testConVarRef.IsValid(), "Failed getting testConVar ref!");
+        ConVar* testConVarPtr       = static_cast<ConVar*>(testConVarRef.GetLinkedConVar());
+        AssertFatalMsg(testConVarPtr, "Failed getting testConVarPtr!");
+        FakeConVar* fakeTestConVar  = reinterpret_cast<FakeConVar*>(testConVarPtr);
+
+        // BaseClass VFTable @ 0x0
+        CHECK_CONVAR_OFFSET_MEMBER(m_pNext,            0x04);
+        CHECK_CONVAR_OFFSET_MEMBER(m_bRegistered,      0x08);
+        CHECK_CONVAR_OFFSET_MEMBER(m_pszName,          0x0C);
+        CHECK_CONVAR_OFFSET_MEMBER(m_pszHelpString,    0x10);
+        CHECK_CONVAR_OFFSET_MEMBER(m_nFlags,           0x14);
+        // IConVar VFTable @ 0x18
+        CHECK_CONVAR_OFFSET_MEMBER(m_pParent,          0x1C);
+        CHECK_CONVAR_OFFSET_MEMBER(m_pszDefaultValue,  0x20);
+        CHECK_CONVAR_OFFSET_MEMBER(m_pszString,        0x24);
+        CHECK_CONVAR_OFFSET_MEMBER(m_StringLength,     0x28);
+        CHECK_CONVAR_OFFSET_MEMBER(m_fValue,           0x2C);
+        CHECK_CONVAR_OFFSET_MEMBER(m_nValue,           0x30);
+        CHECK_CONVAR_OFFSET_MEMBER(m_bHasMin,          0x34);
+        CHECK_CONVAR_OFFSET_MEMBER(m_fMinVal,          0x38);
+        CHECK_CONVAR_OFFSET_MEMBER(m_bHasMax,          0x3C);
+        CHECK_CONVAR_OFFSET_MEMBER(m_fMaxVal,          0x40);
+        CHECK_CONVAR_OFFSET_MEMBER(m_fnChangeCallback, 0x44);
+
+        volatile const char* defaultValue =
+        *reinterpret_cast<const char**>
+        (
+            reinterpret_cast<uintptr_t>(testConVarPtr) + offsetof(FakeConVar, m_pszDefaultValue)
+        );
+
+        if (strcmp((const char*)(defaultValue), fakeTestConVar->m_pszDefaultValue) != 0)
+        {
+            Error("FakeConVar/ConVar mismatch on ->m_pszDefaultValue!");
+        }
+
+        if (strcmp((const char*)(defaultValue), ConVarTestString) != 0)
+        {
+            Error("FakeConVar/ConVar mismatch on ->m_pszDefaultValue!");
+        }
+
+        if (strcmp(fakeTestConVar->m_pszDefaultValue, ConVarTestString) != 0)
+        {
+            Error("FakeConVar/ConVar mismatch on ->m_pszDefaultValue!");
+        }
+
+        return;
+    }
+};
+static FakeConVarUnitTests g_FakeConVarUnitTests = {};
+
+#endif
 
 bool checkWine();
 
