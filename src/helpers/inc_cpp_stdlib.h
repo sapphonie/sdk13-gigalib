@@ -25,7 +25,7 @@
 
 #include <memdbgoff.h>
 
-
+#include <type_traits>
 #include <chrono>
 #include <vector>
 #include <string>

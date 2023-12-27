@@ -107,6 +107,9 @@ $Project
                 $File   "$gigalibloc/helpers/misc_helpers.h"
                 $File   "$gigalibloc/helpers/misc_helpers.cpp"
 
+                $File   "$gigalibloc/helpers/fakeconvar.h"
+                $File   "$gigalibloc/helpers/fakeconvar.cpp"
+
                 $File   "$gigalibloc/helpers/git_banned.h"
             }
             $Folder "memy"

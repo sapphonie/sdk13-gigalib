@@ -285,7 +285,7 @@ CBinPatch g_EnginePatches[] =
 };
 
 
-
+#include <fakeconvar.h>
 void CBinary::PostInit()
 {
     // Only run this on dedicated servers, not on clients
