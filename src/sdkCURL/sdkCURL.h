@@ -58,13 +58,16 @@ struct curlResponse
     std::string body                    = {};
     std::vector<std::string> headers    = {};
     std::string httpType                = {};
+
+    // they're packed this way on purpose...
     short respCode                      = {};
+    bool completed = false;
+    bool failed = false;
+
     // do not use this for allocating buffers
     std::string contentLen              = {};
     // use this for allocating buffers instead
     int bodyLen                         = {};
-    bool completed                      = false;
-    bool failed                         = false;
 };
 
 typedef void (*curlCallback)(const curlResponse* curlRepsonseStruct);
