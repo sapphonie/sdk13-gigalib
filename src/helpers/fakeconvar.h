@@ -3,6 +3,7 @@
 
 #include <convar.h>
 #include <iconvar.h>
+ 
 #include <inc_cpp_stdlib.h>
 
 // Reimplementation of sdk13 ConCommandBase class so we can poke at internals
@@ -83,14 +84,14 @@ public:
     // This either points to "this" or it points to the original declaration of a ConVar.
     // This allows ConVars to exist in separate modules, and they all use the first one to be declared.
     // m_pParent->m_pParent must equal m_pParent (ie: m_pParent must be the root, or original, ConVar).
-    FakeConVar*                 m_pParent;
+    FakeConVar* m_pParent;
 
     // Static data
-    const char*                 m_pszDefaultValue;
+    const char* m_pszDefaultValue;
 
     // Value
     // Dynamically allocated
-    char*                       m_pszString;
+    char* m_pszString;
     int                         m_StringLength;
 
     // Values
@@ -136,17 +137,26 @@ public:
         m_pParent->Shutdown_HACK();
         Shutdown_HACK();
     }
-
 };
+
+// prevent our layout from breaking terribly
+static_assert(std::is_polymorphic_v<ConCommandBase>             == true, "ConCommandBase        must be polymorphic!");
+static_assert(std::is_polymorphic_v<FakeConCommandBase>         == true, "FakeConCommandBase    must be polymorphic!");
+
+static_assert(std::is_polymorphic_v<ConVar>                     == true, "ConVar        must be polymorphic!");
+static_assert(std::is_polymorphic_v<FakeConVar>                 == true, "FakeConVar    must be polymorphic!");
+
+static_assert(std::is_standard_layout_v<ConCommandBase>         == false, "ConCommandBase       should never be a standard layout - aka Plain Old Data!");
+static_assert(std::is_standard_layout_v<FakeConCommandBase>     == false, "FakeConCommandBase   should never be a standard layout - aka Plain Old Data!");
+
+static_assert(std::is_standard_layout_v<ConVar>                 == false, "ConVar       should never be a standard layout - aka Plain Old Data!");
+static_assert(std::is_standard_layout_v<FakeConVar>             == false, "FakeConVar   should never be a standard layout - aka Plain Old Data!");
 
 static_assert(sizeof(FakeConCommandBase)    == sizeof(ConCommandBase),  "size mismatch between Fake/ConCommandBase!");
 static_assert(sizeof(FakeConVar)            == sizeof(ConVar),          "size mismatch between Fake/ConVar!");
 
 static_assert(sizeof(ConCommandBase)        == 24, "ConCommandBase  size != expected size of 24! Did you change ConVar.h?");
 static_assert(sizeof(ConVar)                == 72, "ConVar          size != expected size of 72! Did you change ConVar.h?");
-
-static_assert(std::is_standard_layout<ConVar>::value        == false, "ConVar should never be a standard layout - aka Plain Old Data!");
-static_assert(std::is_standard_layout<FakeConVar>::value    == false, "FakeConVar should never be a standard layout - aka Plain Old Data!");
 
 static_assert(alignof(FakeConCommandBase)   == alignof(ConCommandBase), "alignof mismatch between Fake/ConCommandBase!");
 static_assert(alignof(FakeConVar)           == alignof(ConVar),         "alignof mismatch between Fake/ConVar!");
