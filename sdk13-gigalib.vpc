@@ -59,6 +59,7 @@ $Configuration
         // Net stuff
         // PROTOBUF_USE_DLLS
         $PreprocessorDefinitions        "$BASE;_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING"
+        // $PreprocessorDefinitions        "$BASE;CURL_STATICLIB"
 
         // $Create/UsePrecompiledHeader "Not Using Precompiled Headers"
     }
@@ -156,7 +157,7 @@ $Project
                 $File   "$gigalibloc/qol/blacklists.cpp"
                 $File   "$gigalibloc/qol/blacklists.h"
             }
-            $Folder "sdkCURL" [$WIN32]
+            $Folder "sdkCURL" //[$WIN32]
             {
                 $File   "$gigalibloc/sdkCURL/sdkCURL.cpp"
                 $File   "$gigalibloc/sdkCURL/sdkCURL.h"
@@ -274,7 +275,10 @@ $Project
         $ImpLibExternal     "$gigalibloc\..\bin\SDL2"                       [$LINUX]
 
         // curl
-        // $ImpLibExternal      "$gigalibloc\..\bin\libcurl"                [$LINUX]
+        // $ImpLibExternal      "libcurl"
+       // $ImpLibExternal      "libcurl"
+        $ImpLibExternal         "$gigalibloc\..\bin\curl"                       [$LINUX]
+//"$gigalibloc\..\bin\libcurl"                [$LINUX]
         // $Lib                 "$gigalibloc\..\bin\libbrotlicommon-static" [$LINUX]
         // $Lib                 "$gigalibloc\..\bin\libbrotlidec-static"    [$LINUX]
         // $Lib                 "$gigalibloc\..\bin\libbrotlienc-static"    [$LINUX]
