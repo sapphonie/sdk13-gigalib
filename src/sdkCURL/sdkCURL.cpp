@@ -176,7 +176,7 @@ bool sdkCURL::CURLGet_Thread(std::string inURL, curlResponse* resp)
 
     setopt_errwrap(curl, CURLOPT_ACCEPT_ENCODING, "");
 
-    setopt_errwrap(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_3);
+    // setopt_errwrap(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_3);
 
     setopt_errwrap(curl, CURLOPT_URL, inURL.c_str());
     setopt_errwrap(curl, CURLOPT_FOLLOWLOCATION, 1L);
