@@ -28,6 +28,15 @@
 #include <type_traits>
 #include <chrono>
 #include <vector>
+
+template <typename T>
+void Vector_FindAndRemove(std::vector<T>& v, T item)
+{
+    v.erase(std::remove(v.begin(), v.end(), item), v.end());
+}
+
+
+
 #include <string>
 #include <sstream>
 #include <memory>
