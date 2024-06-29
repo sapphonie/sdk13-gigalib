@@ -215,6 +215,21 @@ std::vector<std::string> UTIL_SplitSTDString(const std::string& i_str, const std
 	return result;
 }
 
+std::vector<std::wstring> UTIL_SplitSTDWString(const std::wstring& i_str, const std::wstring& i_delim)
+{
+	std::vector<std::wstring> result;
+	size_t startIndex = 0;
+
+	for (size_t found = i_str.find(i_delim); found != std::string::npos; found = i_str.find(i_delim, startIndex))
+	{
+		result.emplace_back(i_str.begin() + startIndex, i_str.begin() + found);
+		startIndex = found + i_delim.size();
+	}
+	if (startIndex != i_str.size())
+		result.emplace_back(i_str.begin() + startIndex, i_str.end());
+	return result;
+}
+
 std::string UTIL_StripCharsFromSTDString(std::string i_str, char char_to_strip)
 { 
 	i_str.erase(std::remove(i_str.begin(), i_str.end(), char_to_strip), i_str.end());

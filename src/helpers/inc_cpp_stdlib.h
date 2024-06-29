@@ -28,15 +28,6 @@
 #include <type_traits>
 #include <chrono>
 #include <vector>
-
-template <typename T>
-void Vector_FindAndRemove(std::vector<T>& v, T item)
-{
-    v.erase(std::remove(v.begin(), v.end(), item), v.end());
-}
-
-
-
 #include <string>
 #include <sstream>
 #include <memory>
@@ -50,6 +41,12 @@ void Vector_FindAndRemove(std::vector<T>& v, T item)
 #include <unordered_set>
 #include <map>
 #include <bitset>
+
+template <typename T>
+void Vector_FindAndRemove(std::vector<T>& v, T item)
+{
+    v.erase(std::remove(v.begin(), v.end(), item), v.end());
+}
 
 #define FMT_ENFORCE_COMPILE_STRING
 #include <fmt/format.h>
