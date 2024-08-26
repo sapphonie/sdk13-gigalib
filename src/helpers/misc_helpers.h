@@ -40,8 +40,8 @@ std::string UTIL_AddrToString(void* inAddr);
 
 
 // https://stackoverflow.com/a/57346888
-//
 std::vector<std::string> UTIL_SplitSTDString(const std::string& i_str, const std::string& i_delim);
+std::vector<std::wstring> UTIL_SplitSTDWString(const std::wstring& i_str, const std::wstring& i_delim);
 std::string UTIL_StripCharsFromSTDString(std::string i_str, char char_to_strip);
 std::string& UTIL_ReplaceAll(std::string& context, std::string const& from, std::string const& to);
 

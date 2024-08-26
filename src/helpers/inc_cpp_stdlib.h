@@ -42,6 +42,12 @@
 #include <map>
 #include <bitset>
 
+template <typename T>
+void Vector_FindAndRemove(std::vector<T>& v, T item)
+{
+    v.erase(std::remove(v.begin(), v.end(), item), v.end());
+}
+
 #define FMT_ENFORCE_COMPILE_STRING
 #include <fmt/format.h>
 #include <fmt/xchar.h>
