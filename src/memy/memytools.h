@@ -52,6 +52,7 @@ extern struct modbin* tier0_bin;
 extern struct modbin* vgui_bin;
 extern struct modbin* client_bin;
 extern struct modbin* gameui_bin;
+extern struct modbin* shaderapi_bin;
 
 #include <igamesystem.h>
 
