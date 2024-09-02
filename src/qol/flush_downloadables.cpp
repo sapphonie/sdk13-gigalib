@@ -5,9 +5,10 @@
 
 enum FLUSH_CUSTOM_CONTENT
 {
-	FLUSH_ALL = 1,
-	FLUSH_SPRAYS = 2,
+	FLUSH_ALL           = 1,
+	FLUSH_SPRAYS        = 2,
 	FLUSH_MAP_OVERRIDES = 3,
+    FLUSH_SPRAYS_VTFS   = 4,
 };
 
 void FlushContent(FLUSH_CUSTOM_CONTENT FLUSH)
@@ -69,6 +70,10 @@ void FlushContent(FLUSH_CUSTOM_CONTENT FLUSH)
     {
         mpath = mpath / "download" / "maps";
     }
+    else if (FLUSH == FLUSH_SPRAYS_VTFS)
+    {
+        mpath = mpath / "materials" / "temp";
+    }
     else
     {
         Warning("Invalid FLUSH option %i?\n", FLUSH);
@@ -90,7 +95,7 @@ void FlushContent(FLUSH_CUSTOM_CONTENT FLUSH)
             {
                 removed = std::filesystem::remove_all(mpath);
             }
-            catch (std::filesystem::filesystem_error &err)
+            catch (std::exception const& err)
             {
                 const char* what = err.what();
 #ifdef SDKSENTRY
@@ -103,7 +108,23 @@ void FlushContent(FLUSH_CUSTOM_CONTENT FLUSH)
             }
             Msg("Flushed %llu items total from %ws!\n", removed, rmdPath);
 
-            bool mkdir = std::filesystem::create_directory(mpath);
+            bool mkdir = false;
+            try
+            {
+                mkdir = std::filesystem::create_directory(mpath);
+            }
+            catch (std::exception const& err)
+            {
+                const char* what = err.what();
+#ifdef SDKSENTRY
+                sentry_value_t ctxinfo = sentry_value_new_object();
+                sentry_value_set_by_key(ctxinfo, "mpath", sentry_value_new_string(what));
+                SentryEvent("warning", __FUNCTION__, "Exception in FlushContent", ctxinfo);
+#else
+                DevWarning("Exception in FlushContent %s", what);
+#endif
+            }
+
             if (mkdir)
             {
                 Msg("Successfully recreated folder %ws.\n", rmdPath);
@@ -173,7 +194,8 @@ static ConCommand flush_map_overrides("flush_map_overrides", CC_FlushMapOverride
 
 void CC_FlushSprays(const CCommand& args)
 {
-	FlushContent(FLUSH_SPRAYS);
+    FlushContent(FLUSH_SPRAYS);
+    FlushContent(FLUSH_SPRAYS_VTFS);
 }
 ConVar cl_auto_flush_sprays("cl_auto_flush_sprays", "1", FCVAR_ARCHIVE, "Flush all sprays on client disconnect, and on game boot.\n");
 static ConCommand flush_sprays("flush_sprays", CC_FlushSprays, "Delete all downloaded client sprays.\n", FCVAR_NONE);
@@ -416,6 +438,7 @@ static flushDLS g_flushDLS;
 flushDLS::flushDLS() : CAutoGameSystem("flushDLS")
 {
 }
+
 bool flushDLS::Init()
 {
 	return true;
