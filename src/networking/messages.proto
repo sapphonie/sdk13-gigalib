@@ -33,6 +33,7 @@ enum EBaseMsg
 	k_EServerHelloMsg		= 2;
 	k_EMultiplexedMsg		= 5;
 	k_ESystemMessageMsg		= 10;
+	k_EAchievementEarnedMsg = 20;
 	k_EBaseMsg_Max			= 50;
 }
 
@@ -67,6 +68,12 @@ message CMultiplexedMsg
 message CSystemMessageMsg
 {
 	optional string message = 1;
+}
+
+message CAchievementEarnedMsg
+{
+	optional uint32 achievementid = 1;
+	optional uint32 entid = 2;
 }
 
 enum EEconSystemMsg

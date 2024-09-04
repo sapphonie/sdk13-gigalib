@@ -132,6 +132,107 @@ public:
 };
 REG_ECON_MSG_HANDLER( CClientHelloHandler, k_EClientHelloMsg, ClientHelloMsg );
 
+#ifdef GAME_DLL
+#include "basemultiplayerplayer.h"
+#include "achievementmgr.h"
+#include "team.h"
+
+#ifdef TF_CLASSIC
+extern ConVar tf2c_log_achievements;
+#endif
+#endif
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+class CAchievementEarnedHandler : public IMessageHandler
+{
+public:
+	CAchievementEarnedHandler() {}
+
+	virtual bool ProcessMessage( CNetPacket *pPacket )
+	{
+#ifdef GAME_DLL
+		CProtobufMsg<CAchievementEarnedMsg> msg( pPacket );
+
+		CBaseMultiplayerPlayer *pPlayer = dynamic_cast<CBaseMultiplayerPlayer *>( CBaseEntity::Instance( msg->entid() ) );
+		if ( !pPlayer )
+			return true;
+		
+		CSteamID steamID;
+		pPlayer->GetSteamID( &steamID );
+
+		if ( steamID != pPacket->Hdr().m_ulSourceID )
+			return true;
+
+		int nAchievementID = msg->achievementid();
+
+#ifdef TF_CLASSIC
+		if ( tf2c_log_achievements.GetBool() )
+		{
+			// Console log
+			char buf[2048];
+
+			CBaseAchievement* pAchievement = nullptr;
+			const char* pchAchName = nullptr;
+			if ( engine->GetAchievementMgr() )
+			{
+				pAchievement = engine->GetAchievementMgr()->GetAchievementByID( nAchievementID );
+				if ( pAchievement )
+				{
+					pchAchName = pAchievement->GetName();
+				}
+			}
+
+			V_sprintf_safe(buf, "Player \"%s<%i><%s><%s><%s>\" earned achievement %i %s",
+				pPlayer->GetPlayerName(),
+				pPlayer->GetUserID(),
+				pPlayer->GetNetworkIDString(),
+				pPlayer->GetTeam() ? pPlayer->GetTeam()->GetName() : "undefined",
+				pPlayer->GetServerClass() ? pPlayer->GetServerClass()->GetName() : "undefined",
+
+				nAchievementID, pchAchName ? pchAchName : "undefined");
+
+			UTIL_LogPrintf("%s\n", buf);
+		}
+#endif
+
+		bool bAnnounce = true;
+#ifdef TF_CLASSIC
+		if ( pPlayer->m_vecAchievementsEarned.HasElement( nAchievementID ) )
+		{
+			bAnnounce = false;
+		}
+		else
+		{
+			pPlayer->m_vecAchievementsEarned.AddToTail( nAchievementID );
+		}
+#endif
+		if ( bAnnounce && !pPlayer->ShouldAnnounceAchievement() )
+		{
+			bAnnounce = false;
+		}
+
+		if ( bAnnounce )
+		{
+			pPlayer->OnAchievementEarned( nAchievementID );
+
+			IGameEvent* event = gameeventmanager->CreateEvent( "achievement_earned" );
+			if (event)
+			{
+				event->SetInt( "player", pPlayer->entindex() );
+				event->SetInt( "achievement", nAchievementID );
+
+				gameeventmanager->FireEvent(event);
+			}
+		}
+#endif
+
+		return true;
+	}
+};
+REG_ECON_MSG_HANDLER( CAchievementEarnedHandler, k_EAchievementEarnedMsg, AchievementEarnedMsg );
+
 //-----------------------------------------------------------------------------
 DEFINE_FIXEDSIZE_ALLOCATOR_MT( CNetPacket, 128, UTLMEMORYPOOL_GROW_FAST );
 //-----------------------------------------------------------------------------
