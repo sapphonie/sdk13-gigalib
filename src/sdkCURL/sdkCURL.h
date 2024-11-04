@@ -61,10 +61,11 @@ struct curlResponse
 
     // they're packed this way on purpose...
     short respCode                      = {};
-    bool completed = false;
-    bool failed = false;
+    bool completed                      = false;
+    bool failed                         = false;
 
-    // do not use this for allocating buffers
+    // do not use this for allocating buffers,
+    // it is the literal contentLength header response
     std::string contentLen              = {};
     // use this for allocating buffers instead
     int bodyLen                         = {};
