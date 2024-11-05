@@ -468,6 +468,20 @@ void BetaWindowPopup(std::string_view windowtext)
 void BetaWindowPopup(std::string windowtext) {};
 #endif
 
+// Replaces Valve's stupid built in minidump handler.
+// This is only here until we make sure that our method
+// of using sentry without relaunching is bug free.
+void MINI(unsigned int uStructuredExceptionCode, _EXCEPTION_POINTERS* pExceptionInfo, const char* pszFilenameSuffix)
+{
+    BetaWindowPopup(
+        "WARNING - somehow we exploded and ended up in the minidump handler.\n"
+        "***This should never happen, unless your game crashed before sentry could init...***\n"
+        "Please harass sappho and azzy about this.\n"
+        "Thanks!");
+
+    sentry_ucontext_t* uctx = new sentry_ucontext_t{ *pExceptionInfo };
+    sentry_handle_exception(uctx);
+}
 
 LONG CALLBACK VecXceptionHandler(EXCEPTION_POINTERS* info)
 {
@@ -538,6 +552,7 @@ void CSentry::SentryInit()
         return;
     }
 
+    SetMiniDumpFunction(MINI);
 #ifdef _WIN32
     vec_handler_handle = AddVectoredExceptionHandler(1 /* first handler */, VecXceptionHandler);
 #endif
