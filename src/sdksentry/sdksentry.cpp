@@ -195,6 +195,8 @@ void CSentry::Shutdown()
     sentry_close();
     didshutdown.store(true);
 
+    RemoveVectoredExceptionHandler(vec_handler_handle);
+
 #ifdef _WIN32
     SetUnhandledExceptionFilter(NULL);
 #endif
@@ -551,8 +553,8 @@ void CSentry::SentryInit()
         return;
     }
 
-    SetMiniDumpFunction(MINI);
-    AddVectoredExceptionHandler(1 /* first handler */, VecXceptionHandler);
+    //SetMiniDumpFunction(MINI);
+    vec_handler_handle = AddVectoredExceptionHandler(1 /* first handler */, VecXceptionHandler);
 
     const char* mpath = ConVarRef("_modpath", false).GetString();
     if (!mpath)

@@ -41,6 +41,8 @@ public:
 
     volatile char* cmdline = nullptr;
 
+    PVOID vec_handler_handle = nullptr;
+
 
     void                PostInit() override;
     void                Shutdown() override;
