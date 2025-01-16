@@ -176,7 +176,15 @@ void FlushContent(FLUSH_CUSTOM_CONTENT FLUSH)
     else
     {
         Warning("Couldn't find folder %ws! Creating it instead...\n", rmdPath);
-        std::filesystem::create_directory(mpath);
+	try
+	{
+		std::filesystem::create_directory(mpath);
+	}
+	catch (std::exception const& err)
+	{
+		const char* what = err.what();
+		DevWarning("Exception in FlushContent %s", what);
+	}
     }
     return;
 }
