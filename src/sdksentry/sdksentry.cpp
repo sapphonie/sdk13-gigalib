@@ -75,6 +75,7 @@ void sentry_callback(IConVar* var, const char* pOldValue, float flOldValue)
     engine->ExecuteClientCmd("host_writeconfig");
 }
 
+#ifndef TF_CLASSIC_CLIENT
 ConVar cl_send_error_reports("cl_send_error_reports", "-1", FCVAR_ARCHIVE,
     "Enables/disables sending error reports to the developers to help improve the game.\n"
     "Error reports will include your SteamID, and any pertinent game info (class, loadout, current map, convars, console spew, etc.) - we do not store any personally identifiable information.\n"
@@ -82,6 +83,7 @@ ConVar cl_send_error_reports("cl_send_error_reports", "-1", FCVAR_ARCHIVE,
     "-1 asks you again on game boot and disables reporting, 0 disables reporting and does not ask you again, 1 enables reporting.\n",
     sentry_callback
 );
+#endif
 
 void CSentry__SentryURLCB__THUNK(const curlResponse* curlRepsonseStruct)
 {
@@ -499,8 +501,8 @@ LONG CALLBACK VecXceptionHandler(EXCEPTION_POINTERS* info)
     //
     //    This produces the following numeric ranges:
     //
-    //      Success codes : 0x00000000–0x7FFFFFFF.
-    //      Error codes   : 0x80000000–0xFFFFFFFF.
+    //      Success codes : 0x00000000Â–0x7FFFFFFF.
+    //      Error codes   : 0x80000000Â–0xFFFFFFFF.
     // TL;DR? If we don't do this, we can catch benign debug stuff as errors...
     if (code < 0x80000000 && code != 0)
     {
@@ -670,6 +672,16 @@ void CSentry::SentryInit()
     InternalError_Init();
 
     ConVarRef cl_send_error_reports("cl_send_error_reports");
+#ifdef TF_CLASSIC_CLIENT
+    if( cl_send_error_reports.IsValid() )
+    {
+        ConVar *pCl_send_error_reports = cl_send_error_reports.GetLinkedConVarPtr();
+        if ( pCl_send_error_reports )
+        {
+            pCl_send_error_reports->InstallChangeCallback(sentry_callback);
+        }
+    }
+#endif
     // get the current version of our consent
     sentry_user_consent_reset();
     sentry_callback(cl_send_error_reports.GetLinkedConVar(), "", -2.0);
@@ -704,7 +716,7 @@ void CSentry::SentryInit()
     gamePaths = new char[gamePathsSize + 2] {};
     memcpy( (void*)gamePaths, path_ss.str().c_str(), gamePathsSize );
 
-
+#ifndef TF_CLASSIC_CLIENT
     // already asked
     if (cl_send_error_reports.GetInt() >= 0)
     {
@@ -781,6 +793,7 @@ void CSentry::SentryInit()
         cl_send_error_reports.SetValue(-1);
     }
 #endif
+#endif
 }
 
 void SetSteamID()
@@ -815,6 +828,11 @@ void SetSteamID()
 
 void SentryMsg(const char* logger, const char* text, bool forcesend /* = false */)
 {
+#ifdef TF_CLASSIC_CLIENT
+    ConVarRef cl_send_error_reports("cl_send_error_reports");
+    if( !cl_send_error_reports.IsValid() )
+        return;
+#endif
     if ( (!forcesend && cl_send_error_reports.GetInt() <= 0) || !(g_Sentry.didinit.load(std::memory_order_relaxed)) )
     {
         // Warning("NOT SENDING!\n");
@@ -848,6 +866,11 @@ void _SentryMsgThreaded(const char* logger, const char* text, bool forcesend /* 
 // context info? You need to read the docs: https://docs.sentry.io/platforms/native/usage/#manual-events
 void SentryEvent(const char* level, const char* logger, const char* message, sentry_value_t ctxinfo, bool forcesend /* = false */)
 {
+#ifdef TF_CLASSIC_CLIENT
+    ConVarRef cl_send_error_reports("cl_send_error_reports");
+    if( !cl_send_error_reports.IsValid() )
+        return;
+#endif
     if ( (!forcesend && cl_send_error_reports.GetInt() <= 0) || !(g_Sentry.didinit.load(std::memory_order_relaxed)) )
     {
         // Warning("NOT SENDING!\n");
