@@ -95,7 +95,7 @@ void FlushContent(FLUSH_CUSTOM_CONTENT FLUSH)
             {
                 removed = std::filesystem::remove_all(mpath);
             }
-            catch (std::exception const& err)
+            catch (std::filesystem::filesystem_error const& err)
             {
                 const char* what = err.what();
 #ifdef SDKSENTRY
@@ -113,7 +113,7 @@ void FlushContent(FLUSH_CUSTOM_CONTENT FLUSH)
             {
                 mkdir = std::filesystem::create_directory(mpath);
             }
-            catch (std::exception const& err)
+            catch (std::filesystem::filesystem_error const& err)
             {
                 const char* what = err.what();
 #ifdef SDKSENTRY
@@ -180,7 +180,7 @@ void FlushContent(FLUSH_CUSTOM_CONTENT FLUSH)
 	{
 		std::filesystem::create_directory(mpath);
 	}
-	catch (std::exception const& err)
+	catch (std::filesystem::filesystem_error const& err)
 	{
 		const char* what = err.what();
 		DevWarning("Exception in FlushContent %s", what);
