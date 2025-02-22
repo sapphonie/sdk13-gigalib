@@ -54,56 +54,58 @@ CBinPatch g_EnginePatches[] =
         */
         // --- PART ONE ---
         //
-        // Signature for sub_101C9090:
-        // 55 8B EC A1 ? ? ? ? 81 EC 04 01 00 00 A8 01
+        // Signature for FUN_101a44e0
+        // 55 8b ec 81 ec 1c 01 00 00 53 56 69 75 08 2c 01 00 00 8b 9d 57
         // Unique string: "Download file '%s' %s"
         //
         // CNetChan::HandleUpload(char *, int)
         {
-            FORCE_OBFUSCATE("\x55\x8B\xEC\xA1\x2A\x2A\x2A\x2A\x81\xEC\x04\x01\x00\x00\xA8\x01"),
-            16,
-            0x167,
+            FORCE_OBFUSCATE("\x55\x8b\xEC\x81\xEC\x1C\x01\x00\x00\x53\x56\x69\x75\x08\x2C\x01\x00\x00\x8B\xD9\x57"),
+            // FORCE_OBFUSCATE("\x55\x8B\xEC\xA1\x2A\x2A\x2A\x2A\x81\xEC\x04\x01\x00\x00\xA8\x01"),
+            21,
+            0x303, // 0x167,
             PATCH_IMMEDIATE,
             FORCE_OBFUSCATE("\x90\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP NOP
         },
         // --- PART TWO THREE FOUR AND FIVE---
         //
         // offsets for the ConMsgs in this func are
-        // 0x40
-        // 0x82
-        // 0xA8
-        // 0x121
+        // 0xC3
+        // 0x106
+        // 0x12D
+        // 0x1A6
         //
-        // Signature for sub_101C8430:
-        // 55 8B EC 51 56 8B 75 08 8B C1
+        // Signature for FUN_101a4f90
+        // 55 8b ec 83 ec 0c 53 8b 5d 08 8b d1 89 55 f4 56 57
         // Unique string: "CreateFragmentsFromFile: '%s' doesn't"
         //
         // CNetChan::CreateFragmentsFromFile(char const*, int, unsigned int)
         {
-            FORCE_OBFUSCATE("\x55\x8B\xEC\x51\x56\x8B\x75\x08\x8B\xC1"),
-            10,
-            0x40,
+            // FORCE_OBFUSCATE("\x55\x8B\xEC\x51\x56\x8B\x75\x08\x8B\xC1"),
+            FORCE_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x0C\x53\x8B\x5D\x08\x8B\xD1\x89\x55\xF4\x56\x57"),
+            17,
+            0xC3,
             PATCH_IMMEDIATE,
             FORCE_OBFUSCATE("\x90\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP NOP
         },
         {
-            FORCE_OBFUSCATE("\x55\x8B\xEC\x51\x56\x8B\x75\x08\x8B\xC1"),
-            10,
-            0x82,
+            FORCE_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x0C\x53\x8B\x5D\x08\x8B\xD1\x89\x55\xF4\x56\x57"),
+            17,
+            0x106,
             PATCH_IMMEDIATE,
             FORCE_OBFUSCATE("\x90\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP NOP
         },
         {
-            FORCE_OBFUSCATE("\x55\x8B\xEC\x51\x56\x8B\x75\x08\x8B\xC1"),
-            10,
-            0xA8,
+            FORCE_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x0C\x53\x8B\x5D\x08\x8B\xD1\x89\x55\xF4\x56\x57"),
+            17,
+            0x12D,
             PATCH_IMMEDIATE,
             FORCE_OBFUSCATE("\x90\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP NOP
         },
         {
-            FORCE_OBFUSCATE("\x55\x8B\xEC\x51\x56\x8B\x75\x08\x8B\xC1"),
-            10,
-            0x121,
+            FORCE_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x0C\x53\x8B\x5D\x08\x8B\xD1\x89\x55\xF4\x56\x57"),
+            17,
+            0x1A6,
             PATCH_IMMEDIATE,
             FORCE_OBFUSCATE("\x90\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP NOP
         },

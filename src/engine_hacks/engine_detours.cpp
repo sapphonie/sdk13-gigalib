@@ -340,7 +340,6 @@ void mbrcallconv CNetChan__ProcessPacket_CB(CNetChan__ProcessPacket_vars)
             && UTIL_IsFullySignedOn(bPlayer)
             && bPlayer->IsConnected()
             && !bPlayer->IsDisconnecting()
-            && !engine->IsPaused()
         )
         {
             const char* kickcmd = UTIL_VarArgs( "kickid %i %s;", bPlayer->GetUserID(), "Exceeded processing time" );
@@ -362,8 +361,13 @@ void CNetChan__ProcessPacket_Init()
 
         // Signature for sub_101C9DF0:
         // 55 8B EC 51 53 56 8B F1 57 8B 7D 08
-        CNetChan__ProcessPacket->patternSize    = 12;
-        CNetChan__ProcessPacket->pattern        = "\x55\x8B\xEC\x51\x53\x56\x8B\xF1\x57\x8B\x7D\x08";
+        // CNetChan__ProcessPacket->patternSize    = 12;
+        // CNetChan__ProcessPacket->pattern        = "\x55\x8B\xEC\x51\x53\x56\x8B\xF1\x57\x8B\x7D\x08";
+
+        // Signature for FUN_101a7880
+        // 55 8B EC 83 EC 08 53 56 8B 75 08 83 7E 24 00 8D 5E 1C 57 8B F9
+        CNetChan__ProcessPacket->patternSize = 21;
+        CNetChan__ProcessPacket->pattern = "\x55\x8B\xEC\x83\xEC\x08\x53\x56\x8B\x75\x08\x83\x7E\x24\x00\x8D\x5E\x1C\x57\x8B\xF9";
 
     #else
 
@@ -415,6 +419,9 @@ void CBaseServer__RejectConnection_Init()
         55 8B EC 81 EC 04 05 00 00 56 6A FF
         \x55\x8B\xEC\x81\xEC\x04\x05\x00\x00\x56\x6A\xFF
 
+        55 8B EC 81 EC 04 05 00 00 57 6A FF 68 ec 04 00 00
+        \x55\x8B\xEC\x81\xEC\x04\x05\x00\x00\x57\x6A\xFF\x68\xEC\x04\x00\x00
+
         Got the original signature from
         https://github.com/asherkin/connect/blob/0c6274058e718d142189d331aae9b288b351360a/connect.games.txt#L71
 
@@ -435,8 +442,8 @@ void CBaseServer__RejectConnection_Init()
         sub_10155B50+9F   224 push    offset aSteamUseridSIs ; "STEAM UserID %s is banned" (unique)
         ...
     */
-    CBaseServer__RejectConnection->patternSize  = 12;
-    CBaseServer__RejectConnection->pattern      = "\x55\x8B\xEC\x81\xEC\x04\x05\x00\x00\x56\x6A\xFF";
+    CBaseServer__RejectConnection->patternSize  = 17;
+    CBaseServer__RejectConnection->pattern      = "\x55\x8B\xEC\x81\xEC\x04\x05\x00\x00\x57\x6A\xFF\x68\xEC\x04\x00\x00";
 
 #else
 
@@ -601,10 +608,16 @@ void CBaseServer__ConnectClient_Init()
     CBaseServer__ConnectClient = new sdkdetour{};
     // unique string: "CBaseServer::ConnectClient"
     #ifdef _WIN32
-        // Signature for sub_1015BB80:
-        // 55 8B EC 81 EC 04 05 00 00 56 68 ? ? ? ?
-        CBaseServer__ConnectClient->patternSize  = 15;
-        CBaseServer__ConnectClient->pattern      = "\x55\x8B\xEC\x81\xEC\x04\x05\x00\x00\x56\x68\x2A\x2A\x2A\x2A";
+        // Signature for sub_1015BB80 (branch previous2021)
+        // 55 8B EC 81 EC 04 05 00 00 56 68 ?? ??? ?? ??
+        // 55 8b ec 81 ec 24 05 00 00 53 56 57 68 ?? ?? ?? ??
+        // CBaseServer__ConnectClient->patternSize  = 15;
+        // CBaseServer__ConnectClient->pattern      = "\x55\x8B\xEC\x81\xEC\x04\x05\x00\x00\x56\x68\x2A\x2A\x2A\x2A";
+
+        // Signature for FUN_1013dc60 
+        // 55 8b ec 81 ec 24 05 00 00 53 56 57 68 ?? ?? ?? ??
+        CBaseServer__ConnectClient->patternSize = 17;
+        CBaseServer__ConnectClient->pattern = "\x55\x8B\xEC\x81\xEC\x24\x05\x00\x00\x53\x56\x57\x68\x2A\x2A\x2A\x2A";
     #else
 
         // Signature for sub_372660:
@@ -624,6 +637,8 @@ void CBaseServer__ConnectClient_Init()
 Signature for _ZN17CGameEventManager13RegisterEventEP9KeyValues:
 55 89 E5 57 56 53 83 EC 2C 8B 5D 0C 8B 75 08 85 DB
 \x55\x89\xE5\x57\x56\x53\x83\xEC\x2C\x8B\x5D\x0C\x8B\x75\x08\x85\xDB
+
+doesn't exist in previous2021 or latest? -kate
 */
 
 
@@ -733,7 +748,7 @@ void CClientState__FullConnect_Init()
 
     // unique string: "Connected to %s\n"
     #ifdef _WIN32
-        // Signature for sub_100D0450:
+        // Signature for FUN_100b6d20 (branch previous2021: sub_100D0450)
         // 55 8B EC 53 8B 5D 08 56 57 53 8B F9 E8 ? ? ? ? 8B 4F 10
         CClientState__FullConnect->patternSize   = 20;
         CClientState__FullConnect->pattern       = "\x55\x8B\xEC\x53\x8B\x5D\x08\x56\x57\x53\x8B\xF9\xE8\x2A\x2A\x2A\x2A\x8B\x4F\x10";
