@@ -196,6 +196,7 @@ void CSentry::Shutdown()
     didshutdown.store(true);
 
 #ifdef _WIN32
+    RemoveVectoredExceptionHandler(vec_handler_handle);
     SetUnhandledExceptionFilter(NULL);
 #endif
 }
@@ -476,7 +477,7 @@ void MINI(unsigned int uStructuredExceptionCode, _EXCEPTION_POINTERS* pException
         "WARNING - somehow we exploded and ended up in the minidump handler.\n"
         "***This should never happen, unless your game crashed before sentry could init...***\n"
         "Please harass sappho and azzy about this.\n"
-        "Thanks!" );
+        "Thanks!");
 
     sentry_ucontext_t* uctx = new sentry_ucontext_t{ *pExceptionInfo };
     sentry_handle_exception(uctx);
@@ -552,7 +553,9 @@ void CSentry::SentryInit()
     }
 
     SetMiniDumpFunction(MINI);
-    AddVectoredExceptionHandler(1 /* first handler */, VecXceptionHandler);
+#ifdef _WIN32
+    vec_handler_handle = AddVectoredExceptionHandler(1 /* first handler */, VecXceptionHandler);
+#endif
 
     const char* mpath = ConVarRef("_modpath", false).GetString();
     if (!mpath)

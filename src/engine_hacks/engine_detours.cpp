@@ -340,6 +340,7 @@ void mbrcallconv CNetChan__ProcessPacket_CB(CNetChan__ProcessPacket_vars)
             && UTIL_IsFullySignedOn(bPlayer)
             && bPlayer->IsConnected()
             && !bPlayer->IsDisconnecting()
+            && !engine->IsPaused()
         )
         {
             const char* kickcmd = UTIL_VarArgs( "kickid %i %s;", bPlayer->GetUserID(), "Exceeded processing time" );

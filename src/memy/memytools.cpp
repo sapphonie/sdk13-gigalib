@@ -15,6 +15,7 @@ modbin* tier0_bin           = new modbin();
     modbin* vgui_bin        = new modbin();
     modbin* client_bin      = new modbin();
     modbin* gameui_bin      = new modbin();
+    modbin* shaderapi_bin   = new modbin();
 #endif
 
 
@@ -27,6 +28,7 @@ char bins_list[][MAX_PATH] =
     {},             // vgui
     {},             // client
     {},             // gameui
+    {},             // shaderapi
 #endif
 };
 
@@ -39,6 +41,7 @@ modbin* modbins_list[]
     vgui_bin,
     client_bin,
     gameui_bin,
+    shaderapi_bin,
 #endif
 };
 
@@ -52,6 +55,7 @@ memy::memy()
     V_strncpy(bins_list[3], FORCE_OBFUSCATE("vguimatsurface"), 32);
     V_strncpy(bins_list[4], FORCE_OBFUSCATE("client"),         32);
     V_strncpy(bins_list[5], FORCE_OBFUSCATE("GameUI"),         32);
+    V_strncpy(bins_list[6], FORCE_OBFUSCATE("shaderapidx9"),   32);
 #endif
 }
 
