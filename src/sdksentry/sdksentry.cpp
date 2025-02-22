@@ -499,8 +499,8 @@ LONG CALLBACK VecXceptionHandler(EXCEPTION_POINTERS* info)
     //
     //    This produces the following numeric ranges:
     //
-    //      Success codes : 0x00000000–0x7FFFFFFF.
-    //      Error codes   : 0x80000000–0xFFFFFFFF.
+    //      Success codes : 0x00000000ï¿½0x7FFFFFFF.
+    //      Error codes   : 0x80000000ï¿½0xFFFFFFFF.
     // TL;DR? If we don't do this, we can catch benign debug stuff as errors...
     if (code < 0x80000000 && code != 0)
     {
@@ -958,7 +958,7 @@ void SentryAddressBreadcrumb(void* address, const char* optionalName)
     sentry_value_t addr_crumb = sentry_value_new_breadcrumb(NULL, NULL);
 
     sentry_value_t address_object = sentry_value_new_object();
-    sentry_value_set_by_key(address_object, optionalName ? optionalName : _OBFUSCATE("variable address"), sentry_value_new_string(addr.c_str()));
+    sentry_value_set_by_key(address_object, optionalName ? optionalName : AY_OBFUSCATE("variable address"), sentry_value_new_string(addr.c_str()));
     sentry_value_set_by_key
     (
         addr_crumb, "data", address_object

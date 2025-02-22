@@ -7,8 +7,9 @@
     #pragma once
 #endif
 #include <cbase.h>
+
 // You probably do not need this
-// #define dbging yep
+ #define dbging yep
 
 #if defined (BIN_PATCHES) && defined(ENGINE_DETOURS)
 #include <engine_hacks/bin_patch.h>
@@ -53,58 +54,60 @@ CBinPatch g_EnginePatches[] =
         */
         // --- PART ONE ---
         //
-        // Signature for sub_101C9090:
-        // 55 8B EC A1 ? ? ? ? 81 EC 04 01 00 00 A8 01
+        // Signature for FUN_101a44e0
+        // 55 8b ec 81 ec 1c 01 00 00 53 56 69 75 08 2c 01 00 00 8b 9d 57
         // Unique string: "Download file '%s' %s"
         //
         // CNetChan::HandleUpload(char *, int)
         {
-            FORCE_OBFUSCATE("\x55\x8B\xEC\xA1\x2A\x2A\x2A\x2A\x81\xEC\x04\x01\x00\x00\xA8\x01"),
-            16,
-            0x167,
+            AY_OBFUSCATE("\x55\x8b\xEC\x81\xEC\x1C\x01\x00\x00\x53\x56\x69\x75\x08\x2C\x01\x00\x00\x8B\xD9\x57"),
+            // AY_OBFUSCATE("\x55\x8B\xEC\xA1\x2A\x2A\x2A\x2A\x81\xEC\x04\x01\x00\x00\xA8\x01"),
+            21,
+            0x303, // 0x167,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x90\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP NOP
+            AY_OBFUSCATE("\x90\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP NOP
         },
         // --- PART TWO THREE FOUR AND FIVE---
         //
         // offsets for the ConMsgs in this func are
-        // 0x40
-        // 0x82
-        // 0xA8
-        // 0x121
+        // 0xC3
+        // 0x106
+        // 0x12D
+        // 0x1A6
         //
-        // Signature for sub_101C8430:
-        // 55 8B EC 51 56 8B 75 08 8B C1
+        // Signature for FUN_101a4f90
+        // 55 8b ec 83 ec 0c 53 8b 5d 08 8b d1 89 55 f4 56 57
         // Unique string: "CreateFragmentsFromFile: '%s' doesn't"
         //
         // CNetChan::CreateFragmentsFromFile(char const*, int, unsigned int)
         {
-            FORCE_OBFUSCATE("\x55\x8B\xEC\x51\x56\x8B\x75\x08\x8B\xC1"),
-            10,
-            0x40,
+            // AY_OBFUSCATE("\x55\x8B\xEC\x51\x56\x8B\x75\x08\x8B\xC1"),
+            AY_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x0C\x53\x8B\x5D\x08\x8B\xD1\x89\x55\xF4\x56\x57"),
+            17,
+            0xC3,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x90\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP NOP
+            AY_OBFUSCATE("\x90\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP NOP
         },
         {
-            FORCE_OBFUSCATE("\x55\x8B\xEC\x51\x56\x8B\x75\x08\x8B\xC1"),
-            10,
-            0x82,
+            AY_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x0C\x53\x8B\x5D\x08\x8B\xD1\x89\x55\xF4\x56\x57"),
+            17,
+            0x106,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x90\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP NOP
+            AY_OBFUSCATE("\x90\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP NOP
         },
         {
-            FORCE_OBFUSCATE("\x55\x8B\xEC\x51\x56\x8B\x75\x08\x8B\xC1"),
-            10,
-            0xA8,
+            AY_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x0C\x53\x8B\x5D\x08\x8B\xD1\x89\x55\xF4\x56\x57"),
+            17,
+            0x12D,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x90\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP NOP
+            AY_OBFUSCATE("\x90\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP NOP
         },
         {
-            FORCE_OBFUSCATE("\x55\x8B\xEC\x51\x56\x8B\x75\x08\x8B\xC1"),
-            10,
-            0x121,
+            AY_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x0C\x53\x8B\x5D\x08\x8B\xD1\x89\x55\xF4\x56\x57"),
+            17,
+            0x1A6,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x90\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP NOP
+            AY_OBFUSCATE("\x90\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP NOP
         },
         #else
         // Client only!
@@ -112,7 +115,7 @@ CBinPatch g_EnginePatches[] =
             Patch:
             Prevent the culling of skyboxes at high FOVs
         */
-        // Signature for sub_10106EA0:
+        // Signature for sub_100ECF90 (branch previous2021: 0x10106EA0)
         // 55 8B EC 81 EC 54 02 00 00 8B 0D ? ? ? ?
         // Uniqueish string: R_DrawSkybox
         // 
@@ -123,71 +126,70 @@ CBinPatch g_EnginePatches[] =
         //
         // R_DrawSkyBox
         {
-            FORCE_OBFUSCATE("\x55\x8B\xEC\x81\xEC\x54\x02\x00\x00\x8B\x0D\x2A\x2A\x2A\x2A"),
-            15,
-            0x133,
+            AY_OBFUSCATE("\x55\x8B\xEC\x81\xEC\x58\x02\x00\x00\x8B\x0D\x2A\x2A\x2A\x2A\x33\xD2"),
+            17,
+            0x278,
             PATCH_REFERENCE, // we are changing the value of a float**
             -1.0f
         },
-        /*
-        Unclamp mat_picmip
-
-        sub_101A4B70 + 0x76
-
-        6A 02  6A FF
-        ->
-        6A 0A  6A F0
-        sub_101A4B70 + 76   02C push    2
-        sub_101A4B70 + 78   030 push - 1
-
-        ->
-        sub_101A4B70 + 76   02C push    10
-        sub_101A4B70 + 78   030 push - 10
-        */
-        // Signature for sub_101A4B70:
-        // 55 8B EC 83 EC 20 8B 0D ? ? ? ? 56
-        // \x55\x8B\xEC\x83\xEC\x20\x8B\x0D\x2A\x2A\x2A\x2A\x56
+        // Unclamp mat_picmip
+        // Multiple patches are required since the new engine is comparing a pointer (current value?)
+        // to the raw, non-negative values. so we just replace the values that it's comparing the pointer to.
+        // 
+        // Signature for sub_10184f30 (branch previous2021: 101A4B70)
+        // 55 8b ec 83 ec 20 8b ?? ?? ?? ?? ?? 33 d2 53 33 db
+        // \x55\x8B\xEC\x83\xEC\x20\x8B\x2A\x2A\x2A\x2A\x2A\x33\xD2\x53\x33\xDB
         {
-            FORCE_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x20\x8B\x0D\x2A\x2A\x2A\x2A\x56"),
-            13,
-            0x76,
+            AY_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x20\x8B\x2A\x2A\x2A\x2A\x2A\x33\xD2\x53\x33\xDB"),
+            17,
+            0x92,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x6A\x0A\x6A\xF0")
+            AY_OBFUSCATE("\x0A")
         },
-        // rootlod callback (?)
-        // Signature for sub_1010DCC0:
+        {
+            AY_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x20\x8B\x2A\x2A\x2A\x2A\x2A\x33\xD2\x53\x33\xDB"),
+            17,
+            0x9E,
+            PATCH_IMMEDIATE,
+            AY_OBFUSCATE("\x0A")
+        },
+        // rootlod callback (?) 
+        // Signature for sub_100f3ea0: (branch previous2021: 0x1010dcc0)
         // 55 8B EC 83 EC 08 6A 02
         // \x55\x8B\xEC\x83\xEC\x08\x6A\x02
         {
-            FORCE_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x08\x6A\x02"),
+            AY_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x0C\x6A\x02\x6A\x00"),
             8,
             0x6,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x6A\x06\x6A\xF0")
+            AY_OBFUSCATE("\x6A\x06\x6A\xF0")
         },
 
         // rootlod
-        // Signature for sub_100EC8C0:
+        // Signature for sub_100F12B0: (branch previous2021: 0x101083f0)
         // 6A 02 6A 00 68 ? ? ? ? E8 ? ? ? ? 83 C4 0C C3
-        // \x6A\x02\x6A\x00\x68\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x83\xC4\x0C\xC3
         {
-            FORCE_OBFUSCATE("\x6A\x02\x6A\x00\x68\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x83\xC4\x0C\xC3"),
+            AY_OBFUSCATE("\x6A\x02\x6A\x00\x68\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x83\xC4\x0C\xC3"),
             18,
             0x0,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x6A\x06\x6A\xF0")
+            AY_OBFUSCATE("\x6A\x06\x6A\xF0")
         },
 
         // lod
-        // Signature for sub_100F1E40:
+        // Signature for sub_100F1290: (previous2021: 100F1E40)
         // 6A 02 6A FF 68 ? ? ? ? 
         // \x6A\x02\x6A\xFF\x68\x2A\x2A\x2A\x2A
+        // new signature
+        // 6a 02 6a ff 68 ?? ?? ?? ?? e8 ?? ?? ?? ?? 83 c4 0c c3
+        // \x6A\x02\x6A\xFF\x68\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x83\xC4\x0C\xC3
         {
-            FORCE_OBFUSCATE("\x6A\x02\x6A\xFF\x68\x2A\x2A\x2A\x2A"),
-            9,
+            // AY_OBFUSCATE("\x6A\x02\x6A\xFF\x68\x2A\x2A\x2A\x2A"),
+            AY_OBFUSCATE("\x6A\x02\x6A\xFF\x68\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x83\xC4\x0C\xC3"),
+            18, // 9,
             0x0,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x6A\x0A\x6A\xF0")
+            AY_OBFUSCATE("\x6A\x0A\x6A\xF0")
         }
 
         #endif
@@ -203,16 +205,22 @@ CBinPatch g_EnginePatches[] =
         // --- PART ONE ---
         //
         // Signature for _ZN8CNetChan12HandleUploadEPNS_15dataFragments_sEP18INetChannelHandler:
+        // previous2021: FUN_004ee130
         // 55 89 E5 81 EC 48 01 00 00 80 3D ? ? ? ? 00
+        // 
+        // latest: FUN_003cc630
+        // 55 89 E5 57 56 53 81 EC 1C 01 00 00 8B 75 08 0F B6 05 ?? ?? ?? ?? 84 C0
+        // 
         // Unique string: "Download file '%s' %s"
         //
         // CNetChan::HandleUpload(char *, int)
         {
-            FORCE_OBFUSCATE("\x55\x89\xE5\x81\xEC\x48\x01\x00\x00\x80\x3D\x2A\x2A\x2A\x2A\x00"),
-            16,
-            0x60,
+            // AY_OBFUSCATE("\x55\x89\xE5\x81\xEC\x48\x01\x00\x00\x80\x3D\x2A\x2A\x2A\x2A\x00"),
+            AY_OBFUSCATE("\x55\x89\xE5\x57\x56\x53\x81\xEC\x1C\x01\x00\x00\x8B\x75\x08\x0F\xB6\x05\x2A\x2A\x2A\x2A\x84\xC0"),
+            24, // 16,
+            0x3F, // 0x60,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP
+            AY_OBFUSCATE("\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP
         },
         // --- PART TWO THREE FOUR AND FIVE---
         //
@@ -222,39 +230,50 @@ CBinPatch g_EnginePatches[] =
         // 201
         // 21D
         //
-        // Signature for _ZN8CNetChan23CreateFragmentsFromFileEPKcij:
+        // Signature for FUN_004f0240 (previous2021)
         // 55 89 E5 83 EC 48 89 5D F4 8B 5D 0C 89 7D FC
         // \x55\x89\xE5\x83\xEC\x48\x89\x5D\xF4\x8B\x5D\x0C\x89\x7D\xFC
+        // 
+        // latest: FUN_003c7e10
+        // 55 89 E5 57 89 CF 56 53 89 D3 83 EC 30 89 45 D4 A1 ?? ?? ?? ?? 8D 50 04 8B 40 04
+        // \x55\x89\xE5\x57\x89\xCF\x56\x53\x89\xD3\x83\xEC\x30\x89\x45\xD4\xA1\x2A\x2A\x2A\x2A\x8D\x50\x04\x8B\x40\x04
+        // 
+        // new offsets
+        // 0x191
+        // 0x1DB
+        // 0x170
+        // 0x1B4
+        // 
         // Unique string: "CreateFragmentsFromFile: '%s' doesn't"
         //
         // CNetChan::CreateFragmentsFromFile(char const*, int, unsigned int)
         {
-            FORCE_OBFUSCATE("\x55\x89\xE5\x83\xEC\x48\x89\x5D\xF4\x8B\x5D\x0C\x89\x7D\xFC"),
-            15,
-            0x1DE,
+            AY_OBFUSCATE("\x55\x89\xE5\x83\xEC\x48\x89\x5D\xF4\x8B\x5D\x0C\x89\x7D\xFC"),
+            27, // 15,
+            0x191,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP
+            AY_OBFUSCATE("\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP
         },
         {
-            FORCE_OBFUSCATE("\x55\x89\xE5\x83\xEC\x48\x89\x5D\xF4\x8B\x5D\x0C\x89\x7D\xFC"),
-            15,
-            0x1B5,
+            AY_OBFUSCATE("\x55\x89\xE5\x83\xEC\x48\x89\x5D\xF4\x8B\x5D\x0C\x89\x7D\xFC"),
+            27, // 15,
+            0x1DB,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP
+            AY_OBFUSCATE("\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP
         },
         {
-            FORCE_OBFUSCATE("\x55\x89\xE5\x83\xEC\x48\x89\x5D\xF4\x8B\x5D\x0C\x89\x7D\xFC"),
-            15,
-            0x201,
+            AY_OBFUSCATE("\x55\x89\xE5\x83\xEC\x48\x89\x5D\xF4\x8B\x5D\x0C\x89\x7D\xFC"),
+            27, // 15,
+            0x170,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP
+            AY_OBFUSCATE("\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP
         },
         {
-            FORCE_OBFUSCATE("\x55\x89\xE5\x83\xEC\x48\x89\x5D\xF4\x8B\x5D\x0C\x89\x7D\xFC"),
-            15,
-            0x21D,
+            AY_OBFUSCATE("\x55\x89\xE5\x83\xEC\x48\x89\x5D\xF4\x8B\x5D\x0C\x89\x7D\xFC"),
+            27, // 15,
+            0x1B4,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP
+            AY_OBFUSCATE("\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP
         },
         #else
         // Client only!
@@ -263,9 +282,13 @@ CBinPatch g_EnginePatches[] =
             Prevent the culling of skyboxes at high FOVs
         */
         //
-        // Signature for sub_464880:
+        // Signature for sub_464880: (latest2021)
         // 55 89 E5 57 56 53 81 EC CC 02 00 00 C7 45 C8 00 00 00 00
         //
+        // Signature for FUN_002d4c10:
+        // 55 66 0F EF C0 89 E5 57 56 53 81 EC 8C 02 00 00 A1 ?? ?? ?? ?? C7 85 80 FD FF FF 00 00 00 00
+        // \x55\x66\x0F\xEF\xC0\x89\xE5\x57\x56\x53\x81\xEC\x8C\x02\x00\x00\xA1\x2A\x2A\x2A\x2A\xC7\x85\x80\xFD\xFF\xFF\x00\x00\x00\x00
+        // 
         // Uniqueish string: R_DrawSkybox
         //
         // if ( (((v6 * *&dword_B71424) + (v5 * *&dword_B71420)) + (v7 * *&dword_B71428)) < -0.29289001 )
@@ -273,10 +296,15 @@ CBinPatch g_EnginePatches[] =
         // if ( (((v6 * *&dword_B71424) + (v5 * *&dword_B71420)) + (v7 * *&dword_B71428)) < -1.0 )
         //
         // R_DrawSkyBox
+        // search for raw hex "BE95F5AE" and then go to the function that references that data. should be FUN_002d4c10
+        // code to replace isn't visible for the 32bit linux binary, but the MOVSS instructions match
+        // linux: https://res.kate.pet/upload/943d99c7a119/javaw_g1lgSM5YpC.png
+        // windows: https://res.kate.pet/upload/9dcc9307cc3b/javaw_4qjdBcT8kQ.png
         {
-            FORCE_OBFUSCATE("\x55\x89\xE5\x57\x56\x53\x81\xEC\xCC\x02\x00\x00\xC7\x45\xC8\x00\x00\x00\x00"),
-            19,
-            0x424,
+            // AY_OBFUSCATE("\x55\x89\xE5\x57\x56\x53\x81\xEC\xCC\x02\x00\x00\xC7\x45\xC8\x00\x00\x00\x00"),
+            AY_OBFUSCATE("\x55\x66\x0F\xEF\xC0\x89\xE5\x57\x56\x53\x81\xEC\x8C\x02\x00\x00\xA1\x2A\x2A\x2A\x2A\xC7\x85\x80\xFD\xFF\xFF\x00\x00\x00\x00"),
+            31, // 19,
+            0x25C, // 0x424,
             PATCH_REFERENCE, // we are changing the value of a float**
             -1.0f
         },

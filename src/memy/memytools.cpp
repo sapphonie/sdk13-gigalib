@@ -48,14 +48,14 @@ modbin* modbins_list[]
 memy _memy;
 memy::memy()
 {
-    V_strncpy(bins_list[0], FORCE_OBFUSCATE("engine"),         32);
-    V_strncpy(bins_list[1], FORCE_OBFUSCATE("server"),         32);
-    V_strncpy(bins_list[2], FORCE_OBFUSCATE("tier0"),          32);
+    V_strncpy(bins_list[0], AY_OBFUSCATE("engine"),         32);
+    V_strncpy(bins_list[1], AY_OBFUSCATE("server"),         32);
+    V_strncpy(bins_list[2], AY_OBFUSCATE("tier0"),          32);
 #ifdef CLIENT_DLL
-    V_strncpy(bins_list[3], FORCE_OBFUSCATE("vguimatsurface"), 32);
-    V_strncpy(bins_list[4], FORCE_OBFUSCATE("client"),         32);
-    V_strncpy(bins_list[5], FORCE_OBFUSCATE("GameUI"),         32);
-    V_strncpy(bins_list[6], FORCE_OBFUSCATE("shaderapidx9"),   32);
+    V_strncpy(bins_list[3], AY_OBFUSCATE("vguimatsurface"), 32);
+    V_strncpy(bins_list[4], AY_OBFUSCATE("client"),         32);
+    V_strncpy(bins_list[5], AY_OBFUSCATE("GameUI"),         32);
+    V_strncpy(bins_list[6], AY_OBFUSCATE("shaderapidx9"),   32);
 #endif
 }
 
