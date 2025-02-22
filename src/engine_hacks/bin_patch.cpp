@@ -205,14 +205,20 @@ CBinPatch g_EnginePatches[] =
         // --- PART ONE ---
         //
         // Signature for _ZN8CNetChan12HandleUploadEPNS_15dataFragments_sEP18INetChannelHandler:
+        // previous2021: FUN_004ee130
         // 55 89 E5 81 EC 48 01 00 00 80 3D ? ? ? ? 00
+        // 
+        // latest: FUN_003cc630
+        // 55 89 E5 57 56 53 81 EC 1C 01 00 00 8B 75 08 0F B6 05 ?? ?? ?? ?? 84 C0
+        // 
         // Unique string: "Download file '%s' %s"
         //
         // CNetChan::HandleUpload(char *, int)
         {
-            FORCE_OBFUSCATE("\x55\x89\xE5\x81\xEC\x48\x01\x00\x00\x80\x3D\x2A\x2A\x2A\x2A\x00"),
-            16,
-            0x60,
+            // FORCE_OBFUSCATE("\x55\x89\xE5\x81\xEC\x48\x01\x00\x00\x80\x3D\x2A\x2A\x2A\x2A\x00"),
+            FORCE_OBFUSCATE("\x55\x89\xE5\x57\x56\x53\x81\xEC\x1C\x01\x00\x00\x8B\x75\x08\x0F\xB6\x05\x2A\x2A\x2A\x2A\x84\xC0"),
+            24, // 16,
+            0x3F, // 0x60,
             PATCH_IMMEDIATE,
             FORCE_OBFUSCATE("\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP
         },
@@ -224,37 +230,48 @@ CBinPatch g_EnginePatches[] =
         // 201
         // 21D
         //
-        // Signature for _ZN8CNetChan23CreateFragmentsFromFileEPKcij:
+        // Signature for FUN_004f0240 (previous2021)
         // 55 89 E5 83 EC 48 89 5D F4 8B 5D 0C 89 7D FC
         // \x55\x89\xE5\x83\xEC\x48\x89\x5D\xF4\x8B\x5D\x0C\x89\x7D\xFC
+        // 
+        // latest: FUN_003c7e10
+        // 55 89 E5 57 89 CF 56 53 89 D3 83 EC 30 89 45 D4 A1 ?? ?? ?? ?? 8D 50 04 8B 40 04
+        // \x55\x89\xE5\x57\x89\xCF\x56\x53\x89\xD3\x83\xEC\x30\x89\x45\xD4\xA1\x2A\x2A\x2A\x2A\x8D\x50\x04\x8B\x40\x04
+        // 
+        // new offsets
+        // 0x191
+        // 0x1DB
+        // 0x170
+        // 0x1B4
+        // 
         // Unique string: "CreateFragmentsFromFile: '%s' doesn't"
         //
         // CNetChan::CreateFragmentsFromFile(char const*, int, unsigned int)
         {
             FORCE_OBFUSCATE("\x55\x89\xE5\x83\xEC\x48\x89\x5D\xF4\x8B\x5D\x0C\x89\x7D\xFC"),
-            15,
-            0x1DE,
+            27, // 15,
+            0x191,
             PATCH_IMMEDIATE,
             FORCE_OBFUSCATE("\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP
         },
         {
             FORCE_OBFUSCATE("\x55\x89\xE5\x83\xEC\x48\x89\x5D\xF4\x8B\x5D\x0C\x89\x7D\xFC"),
-            15,
-            0x1B5,
+            27, // 15,
+            0x1DB,
             PATCH_IMMEDIATE,
             FORCE_OBFUSCATE("\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP
         },
         {
             FORCE_OBFUSCATE("\x55\x89\xE5\x83\xEC\x48\x89\x5D\xF4\x8B\x5D\x0C\x89\x7D\xFC"),
-            15,
-            0x201,
+            27, // 15,
+            0x170,
             PATCH_IMMEDIATE,
             FORCE_OBFUSCATE("\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP
         },
         {
             FORCE_OBFUSCATE("\x55\x89\xE5\x83\xEC\x48\x89\x5D\xF4\x8B\x5D\x0C\x89\x7D\xFC"),
-            15,
-            0x21D,
+            27, // 15,
+            0x1B4,
             PATCH_IMMEDIATE,
             FORCE_OBFUSCATE("\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP
         },
@@ -265,9 +282,13 @@ CBinPatch g_EnginePatches[] =
             Prevent the culling of skyboxes at high FOVs
         */
         //
-        // Signature for sub_464880:
+        // Signature for sub_464880: (latest2021)
         // 55 89 E5 57 56 53 81 EC CC 02 00 00 C7 45 C8 00 00 00 00
         //
+        // Signature for FUN_002d4c10:
+        // 55 66 0F EF C0 89 E5 57 56 53 81 EC 8C 02 00 00 A1 ?? ?? ?? ?? C7 85 80 FD FF FF 00 00 00 00
+        // \x55\x66\x0F\xEF\xC0\x89\xE5\x57\x56\x53\x81\xEC\x8C\x02\x00\x00\xA1\x2A\x2A\x2A\x2A\xC7\x85\x80\xFD\xFF\xFF\x00\x00\x00\x00
+        // 
         // Uniqueish string: R_DrawSkybox
         //
         // if ( (((v6 * *&dword_B71424) + (v5 * *&dword_B71420)) + (v7 * *&dword_B71428)) < -0.29289001 )
@@ -275,10 +296,15 @@ CBinPatch g_EnginePatches[] =
         // if ( (((v6 * *&dword_B71424) + (v5 * *&dword_B71420)) + (v7 * *&dword_B71428)) < -1.0 )
         //
         // R_DrawSkyBox
+        // search for raw hex "BE95F5AE" and then go to the function that references that data. should be FUN_002d4c10
+        // code to replace isn't visible for the 32bit linux binary, but the MOVSS instructions match
+        // linux: https://res.kate.pet/upload/943d99c7a119/javaw_g1lgSM5YpC.png
+        // windows: https://res.kate.pet/upload/9dcc9307cc3b/javaw_4qjdBcT8kQ.png
         {
-            FORCE_OBFUSCATE("\x55\x89\xE5\x57\x56\x53\x81\xEC\xCC\x02\x00\x00\xC7\x45\xC8\x00\x00\x00\x00"),
-            19,
-            0x424,
+            // FORCE_OBFUSCATE("\x55\x89\xE5\x57\x56\x53\x81\xEC\xCC\x02\x00\x00\xC7\x45\xC8\x00\x00\x00\x00"),
+            FORCE_OBFUSCATE("\x55\x66\x0F\xEF\xC0\x89\xE5\x57\x56\x53\x81\xEC\x8C\x02\x00\x00\xA1\x2A\x2A\x2A\x2A\xC7\x85\x80\xFD\xFF\xFF\x00\x00\x00\x00"),
+            31, // 19,
+            0x25C, // 0x424,
             PATCH_REFERENCE, // we are changing the value of a float**
             -1.0f
         },
