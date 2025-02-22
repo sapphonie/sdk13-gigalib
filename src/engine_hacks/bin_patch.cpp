@@ -7,8 +7,9 @@
     #pragma once
 #endif
 #include <cbase.h>
+
 // You probably do not need this
-// #define dbging yep
+ #define dbging yep
 
 #if defined (BIN_PATCHES) && defined(ENGINE_DETOURS)
 #include <engine_hacks/bin_patch.h>
@@ -112,7 +113,7 @@ CBinPatch g_EnginePatches[] =
             Patch:
             Prevent the culling of skyboxes at high FOVs
         */
-        // Signature for sub_10106EA0:
+        // Signature for sub_100ECF90 (branch previous2021: 0x10106EA0)
         // 55 8B EC 81 EC 54 02 00 00 8B 0D ? ? ? ?
         // Uniqueish string: R_DrawSkybox
         // 
@@ -123,43 +124,39 @@ CBinPatch g_EnginePatches[] =
         //
         // R_DrawSkyBox
         {
-            FORCE_OBFUSCATE("\x55\x8B\xEC\x81\xEC\x54\x02\x00\x00\x8B\x0D\x2A\x2A\x2A\x2A"),
-            15,
-            0x133,
+            FORCE_OBFUSCATE("\x55\x8B\xEC\x81\xEC\x58\x02\x00\x00\x8B\x0D\x2A\x2A\x2A\x2A\x33\xD2"),
+            17,
+            0x278,
             PATCH_REFERENCE, // we are changing the value of a float**
             -1.0f
         },
-        /*
-        Unclamp mat_picmip
-
-        sub_101A4B70 + 0x76
-
-        6A 02  6A FF
-        ->
-        6A 0A  6A F0
-        sub_101A4B70 + 76   02C push    2
-        sub_101A4B70 + 78   030 push - 1
-
-        ->
-        sub_101A4B70 + 76   02C push    10
-        sub_101A4B70 + 78   030 push - 10
-        */
-        // Signature for sub_101A4B70:
-        // 55 8B EC 83 EC 20 8B 0D ? ? ? ? 56
-        // \x55\x8B\xEC\x83\xEC\x20\x8B\x0D\x2A\x2A\x2A\x2A\x56
+        // Unclamp mat_picmip
+        // Multiple patches are required since the new engine is comparing a pointer (current value?)
+        // to the raw, non-negative values. so we just replace the values that it's comparing the pointer to.
+        // 
+        // Signature for sub_10184f30 (branch previous2021: 101A4B70)
+        // 55 8b ec 83 ec 20 8b ?? ?? ?? ?? ?? 33 d2 53 33 db
+        // \x55\x8B\xEC\x83\xEC\x20\x8B\x2A\x2A\x2A\x2A\x2A\x33\xD2\x53\x33\xDB
         {
-            FORCE_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x20\x8B\x0D\x2A\x2A\x2A\x2A\x56"),
-            13,
-            0x76,
+            FORCE_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x20\x8B\x2A\x2A\x2A\x2A\x2A\x33\xD2\x53\x33\xDB"),
+            17,
+            0x92,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x6A\x0A\x6A\xF0")
+            FORCE_OBFUSCATE("\x0A")
         },
-        // rootlod callback (?)
-        // Signature for sub_1010DCC0:
+        {
+            FORCE_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x20\x8B\x2A\x2A\x2A\x2A\x2A\x33\xD2\x53\x33\xDB"),
+            17,
+            0x9E,
+            PATCH_IMMEDIATE,
+            FORCE_OBFUSCATE("\x0A")
+        },
+        // rootlod callback (?) 
+        // Signature for sub_100f3ea0: (branch previous2021: 0x1010dcc0)
         // 55 8B EC 83 EC 08 6A 02
         // \x55\x8B\xEC\x83\xEC\x08\x6A\x02
         {
-            FORCE_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x08\x6A\x02"),
+            FORCE_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x0C\x6A\x02\x6A\x00"),
             8,
             0x6,
             PATCH_IMMEDIATE,
@@ -167,9 +164,8 @@ CBinPatch g_EnginePatches[] =
         },
 
         // rootlod
-        // Signature for sub_100EC8C0:
+        // Signature for sub_100F12B0: (branch previous2021: 0x101083f0)
         // 6A 02 6A 00 68 ? ? ? ? E8 ? ? ? ? 83 C4 0C C3
-        // \x6A\x02\x6A\x00\x68\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x83\xC4\x0C\xC3
         {
             FORCE_OBFUSCATE("\x6A\x02\x6A\x00\x68\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x83\xC4\x0C\xC3"),
             18,
@@ -179,12 +175,16 @@ CBinPatch g_EnginePatches[] =
         },
 
         // lod
-        // Signature for sub_100F1E40:
+        // Signature for sub_100F1290: (previous2021: 100F1E40)
         // 6A 02 6A FF 68 ? ? ? ? 
         // \x6A\x02\x6A\xFF\x68\x2A\x2A\x2A\x2A
+        // new signature
+        // 6a 02 6a ff 68 ?? ?? ?? ?? e8 ?? ?? ?? ?? 83 c4 0c c3
+        // \x6A\x02\x6A\xFF\x68\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x83\xC4\x0C\xC3
         {
-            FORCE_OBFUSCATE("\x6A\x02\x6A\xFF\x68\x2A\x2A\x2A\x2A"),
-            9,
+            // FORCE_OBFUSCATE("\x6A\x02\x6A\xFF\x68\x2A\x2A\x2A\x2A"),
+            FORCE_OBFUSCATE("\x6A\x02\x6A\xFF\x68\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x83\xC4\x0C\xC3"),
+            18, // 9,
             0x0,
             PATCH_IMMEDIATE,
             FORCE_OBFUSCATE("\x6A\x0A\x6A\xF0")
