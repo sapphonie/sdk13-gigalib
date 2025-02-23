@@ -370,11 +370,11 @@ void CNetChan__ProcessPacket_Init()
         CNetChan__ProcessPacket->pattern = "\x55\x8B\xEC\x83\xEC\x08\x53\x56\x8B\x75\x08\x83\x7E\x24\x00\x8D\x5E\x1C\x57\x8B\xF9";
 
     #else
-
-        // Signature for FUN_004ef310:
-        // 55 89 E5 57 31 FF 56 53 83 EC 7C C7 45 D8 00 00 00 00
-        CNetChan__ProcessPacket->patternSize    = 18;
-        CNetChan__ProcessPacket->pattern        = "\x55\x89\xE5\x57\x31\xFF\x56\x53\x83\xEC\x7C\xC7\x45\xD8\x00\x00\x00\x00";
+        // Signature for _ZN8CNetChan13ProcessPacketEP11netpacket_sb:
+        // 55 66 0F EF C0 89 E5 57 56 53 83 EC 5C 8B 45 10
+        // \x55\x66\x0F\xEF\xC0\x89\xE5\x57\x56\x53\x83\xEC\x5C\x8B\x45\x10
+        CNetChan__ProcessPacket->patternSize    = 16;
+        CNetChan__ProcessPacket->pattern        = "\x55\x66\x0F\xEF\xC0\x89\xE5\x57\x56\x53\x83\xEC\x5C\x8B\x45\x10";
 
     #endif
 
@@ -450,9 +450,9 @@ void CBaseServer__RejectConnection_Init()
     /*
         Linux:
 
-        Signature for FUN_00380310:
-        55 89 E5 53 8D 85 F4 FA FF FF
-        \x55\x89\xE5\x53\x8D\x85\xF4\xFA\xFF\xFF
+        Signature for _ZN11CBaseServer16RejectConnectionERK8netadr_siPKc:
+        55 89 E5 57 56 8D BD E4 FA FF FF
+        \x55\x89\xE5\x57\x56\x8D\xBD\xE4\xFA\xFF\xFF
 
         ...
         sub_56ED90+8A   25C mov     dword ptr [esp+0Ch], offset aGameuiServerre_9 ; "#GameUI_ServerRejectBanned" (not unique)
@@ -468,8 +468,8 @@ void CBaseServer__RejectConnection_Init()
         sub_56ED90+B7   25C mov     dword ptr [esp], offset aSteamUseridSIs ; "STEAM UserID %s is banned" (unique)
         ...
     */
-    CBaseServer__RejectConnection->patternSize  = 10;
-    CBaseServer__RejectConnection->pattern      = "\x55\x89\xE5\x53\x8D\x85\xF4\xFA\xFF\xFF";
+    CBaseServer__RejectConnection->patternSize  = 11;
+    CBaseServer__RejectConnection->pattern      = "\x55\x89\xE5\x57\x56\x8D\xBD\xE4\xFA\xFF\xFF";
 
 #endif
     populateAndInitDetour(CBaseServer__RejectConnection, (void*)CBaseServer__RejectConnection_CB);
@@ -621,9 +621,9 @@ void CBaseServer__ConnectClient_Init()
     #else
 
         // Signature for sub_372660:
-        // 55 89 E5 83 EC 48 8B 55 0C 89 5D F4 8B 45 14
-        CBaseServer__ConnectClient->patternSize  = 15;
-        CBaseServer__ConnectClient->pattern      = "\x55\x89\xE5\x83\xEC\x48\x8B\x55\x0C\x89\x5D\xF4\x8B\x45\x14";
+        // 55 89 E5 57 56 53 81 EC 68 05 00 00
+        CBaseServer__ConnectClient->patternSize  = 12;
+        CBaseServer__ConnectClient->pattern      = "\x55\x89\xE5\x57\x56\x53\x81\xEC\x68\x05\x00\x00";
     #endif
 
     populateAndInitDetour(CBaseServer__ConnectClient, (void*)CBaseServer__ConnectClient_CB);
@@ -755,10 +755,11 @@ void CClientState__FullConnect_Init()
         CClientState__FullConnect->pattern       = "\x55\x8B\xEC\x53\x8B\x5D\x08\x56\x57\x53\x8B\xF9\xE8\x2A\x2A\x2A\x2A\x8B\x4F\x10";
     #else
 
-        // Signature for FUN_0039a7c0:
-        // 55 89 E5 83 EC 28 89 5D F4 8B 5D 0C 89 75 F8 8B 75 08 89 7D FC 89 5C 24 04 89 34 24 E8 ? ? ? ? 8B 46 10
-        CClientState__FullConnect->patternSize   = 36;
-        CClientState__FullConnect->pattern       = "\x55\x89\xE5\x83\xEC\x28\x89\x5D\xF4\x8B\x5D\x0C\x89\x75\xF8\x8B\x75\x08\x89\x7D\xFC\x89\x5C\x24\x04\x89\x34\x24\xE8\x2A\x2A\x2A\x2A\x8B\x46\x10";
+        // Signature for _ZN16CBaseClientState11FullConnectER8netadr_s:
+        // 55 89 E5 57 56 53 83 EC 28 8B 5D 08 68 ? ? ? ?
+        // \x55\x89\xE5\x57\x56\x53\x83\xEC\x28\x8B\x5D\x08\x68\x2A\x2A\x2A\x2A
+        CClientState__FullConnect->patternSize   = 17;
+        CClientState__FullConnect->pattern       = "\x55\x89\xE5\x57\x56\x53\x83\xEC\x28\x8B\x5D\x08\x68\x2A\x2A\x2A\x2A";
     #endif
 
     populateAndInitDetour(CClientState__FullConnect, (void*)CClientState__FullConnect_CB);
@@ -817,10 +818,11 @@ void CNetChan__Shutdown_Init()
         CNetChan__Shutdown->patternSize = 16;
         CNetChan__Shutdown->pattern     = "\x55\x8B\xEC\x83\xEC\x10\x56\x8B\xF1\x83\xBE\x8C\x00\x00\x00\x00";
     #else
-        // Signature for FUN_004EFAF0:
-        // 55 89 E5 57 56 53 83 EC 3C 8B 5D 08 8B 75 0C 8B 8B 8C 00 00 00
+        // Signature for _ZN8CNetChan8ShutdownEPKc:
+        // 55 89 E5 57 56 53 83 EC 1C 8B 5D 08 8B 75 0C 8B 83 8C 00 00 00
+        // \x55\x89\xE5\x57\x56\x53\x83\xEC\x1C\x8B\x5D\x08\x8B\x75\x0C\x8B\x83\x8C\x00\x00\x00
         CNetChan__Shutdown->patternSize = 21;
-        CNetChan__Shutdown->pattern     = "\x55\x89\xE5\x57\x56\x53\x83\xEC\x3C\x8B\x5D\x08\x8B\x75\x0C\x8B\x8B\x8C\x00\x00\x00";
+        CNetChan__Shutdown->pattern     = "\x55\x89\xE5\x57\x56\x53\x83\xEC\x1C\x8B\x5D\x08\x8B\x75\x0C\x8B\x83\x8C\x00\x00\x00";
     #endif
 
     populateAndInitDetour(CNetChan__Shutdown, (void*)CNetChan__Shutdown_CB);

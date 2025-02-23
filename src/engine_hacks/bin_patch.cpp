@@ -60,12 +60,12 @@ CBinPatch g_EnginePatches[] =
         //
         // CNetChan::HandleUpload(char *, int)
         {
-            FORCE_OBFUSCATE("\x55\x8b\xEC\x81\xEC\x1C\x01\x00\x00\x53\x56\x69\x75\x08\x2C\x01\x00\x00\x8B\xD9\x57"),
-            // FORCE_OBFUSCATE("\x55\x8B\xEC\xA1\x2A\x2A\x2A\x2A\x81\xEC\x04\x01\x00\x00\xA8\x01"),
+            AY_OBFUSCATE("\x55\x8b\xEC\x81\xEC\x1C\x01\x00\x00\x53\x56\x69\x75\x08\x2C\x01\x00\x00\x8B\xD9\x57"),
+            // AY_OBFUSCATE("\x55\x8B\xEC\xA1\x2A\x2A\x2A\x2A\x81\xEC\x04\x01\x00\x00\xA8\x01"),
             21,
             0x303, // 0x167,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x90\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP NOP
+            AY_OBFUSCATE("\x90\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP NOP
         },
         // --- PART TWO THREE FOUR AND FIVE---
         //
@@ -81,33 +81,33 @@ CBinPatch g_EnginePatches[] =
         //
         // CNetChan::CreateFragmentsFromFile(char const*, int, unsigned int)
         {
-            // FORCE_OBFUSCATE("\x55\x8B\xEC\x51\x56\x8B\x75\x08\x8B\xC1"),
-            FORCE_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x0C\x53\x8B\x5D\x08\x8B\xD1\x89\x55\xF4\x56\x57"),
+            // AY_OBFUSCATE("\x55\x8B\xEC\x51\x56\x8B\x75\x08\x8B\xC1"),
+            AY_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x0C\x53\x8B\x5D\x08\x8B\xD1\x89\x55\xF4\x56\x57"),
             17,
             0xC3,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x90\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP NOP
+            AY_OBFUSCATE("\x90\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP NOP
         },
         {
-            FORCE_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x0C\x53\x8B\x5D\x08\x8B\xD1\x89\x55\xF4\x56\x57"),
+            AY_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x0C\x53\x8B\x5D\x08\x8B\xD1\x89\x55\xF4\x56\x57"),
             17,
             0x106,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x90\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP NOP
+            AY_OBFUSCATE("\x90\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP NOP
         },
         {
-            FORCE_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x0C\x53\x8B\x5D\x08\x8B\xD1\x89\x55\xF4\x56\x57"),
+            AY_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x0C\x53\x8B\x5D\x08\x8B\xD1\x89\x55\xF4\x56\x57"),
             17,
             0x12D,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x90\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP NOP
+            AY_OBFUSCATE("\x90\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP NOP
         },
         {
-            FORCE_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x0C\x53\x8B\x5D\x08\x8B\xD1\x89\x55\xF4\x56\x57"),
+            AY_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x0C\x53\x8B\x5D\x08\x8B\xD1\x89\x55\xF4\x56\x57"),
             17,
             0x1A6,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x90\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP NOP
+            AY_OBFUSCATE("\x90\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP NOP
         },
         #else
         // Client only!
@@ -126,7 +126,7 @@ CBinPatch g_EnginePatches[] =
         //
         // R_DrawSkyBox
         {
-            FORCE_OBFUSCATE("\x55\x8B\xEC\x81\xEC\x58\x02\x00\x00\x8B\x0D\x2A\x2A\x2A\x2A\x33\xD2"),
+            AY_OBFUSCATE("\x55\x8B\xEC\x81\xEC\x58\x02\x00\x00\x8B\x0D\x2A\x2A\x2A\x2A\x33\xD2"),
             17,
             0x278,
             PATCH_REFERENCE, // we are changing the value of a float**
@@ -140,40 +140,40 @@ CBinPatch g_EnginePatches[] =
         // 55 8b ec 83 ec 20 8b ?? ?? ?? ?? ?? 33 d2 53 33 db
         // \x55\x8B\xEC\x83\xEC\x20\x8B\x2A\x2A\x2A\x2A\x2A\x33\xD2\x53\x33\xDB
         {
-            FORCE_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x20\x8B\x2A\x2A\x2A\x2A\x2A\x33\xD2\x53\x33\xDB"),
+            AY_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x20\x8B\x2A\x2A\x2A\x2A\x2A\x33\xD2\x53\x33\xDB"),
             17,
             0x92,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x0A")
+            AY_OBFUSCATE("\x0A")
         },
         {
-            FORCE_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x20\x8B\x2A\x2A\x2A\x2A\x2A\x33\xD2\x53\x33\xDB"),
+            AY_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x20\x8B\x2A\x2A\x2A\x2A\x2A\x33\xD2\x53\x33\xDB"),
             17,
             0x9E,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x0A")
+            AY_OBFUSCATE("\x0A")
         },
         // rootlod callback (?) 
         // Signature for sub_100f3ea0: (branch previous2021: 0x1010dcc0)
         // 55 8B EC 83 EC 08 6A 02
         // \x55\x8B\xEC\x83\xEC\x08\x6A\x02
         {
-            FORCE_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x0C\x6A\x02\x6A\x00"),
+            AY_OBFUSCATE("\x55\x8B\xEC\x83\xEC\x0C\x6A\x02\x6A\x00"),
             8,
             0x6,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x6A\x06\x6A\xF0")
+            AY_OBFUSCATE("\x6A\x06\x6A\xF0")
         },
 
         // rootlod
         // Signature for sub_100F12B0: (branch previous2021: 0x101083f0)
         // 6A 02 6A 00 68 ? ? ? ? E8 ? ? ? ? 83 C4 0C C3
         {
-            FORCE_OBFUSCATE("\x6A\x02\x6A\x00\x68\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x83\xC4\x0C\xC3"),
+            AY_OBFUSCATE("\x6A\x02\x6A\x00\x68\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x83\xC4\x0C\xC3"),
             18,
             0x0,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x6A\x06\x6A\xF0")
+            AY_OBFUSCATE("\x6A\x06\x6A\xF0")
         },
 
         // lod
@@ -184,12 +184,12 @@ CBinPatch g_EnginePatches[] =
         // 6a 02 6a ff 68 ?? ?? ?? ?? e8 ?? ?? ?? ?? 83 c4 0c c3
         // \x6A\x02\x6A\xFF\x68\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x83\xC4\x0C\xC3
         {
-            // FORCE_OBFUSCATE("\x6A\x02\x6A\xFF\x68\x2A\x2A\x2A\x2A"),
-            FORCE_OBFUSCATE("\x6A\x02\x6A\xFF\x68\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x83\xC4\x0C\xC3"),
+            // AY_OBFUSCATE("\x6A\x02\x6A\xFF\x68\x2A\x2A\x2A\x2A"),
+            AY_OBFUSCATE("\x6A\x02\x6A\xFF\x68\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x83\xC4\x0C\xC3"),
             18, // 9,
             0x0,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x6A\x0A\x6A\xF0")
+            AY_OBFUSCATE("\x6A\x0A\x6A\xF0")
         }
 
         #endif
@@ -215,12 +215,12 @@ CBinPatch g_EnginePatches[] =
         //
         // CNetChan::HandleUpload(char *, int)
         {
-            // FORCE_OBFUSCATE("\x55\x89\xE5\x81\xEC\x48\x01\x00\x00\x80\x3D\x2A\x2A\x2A\x2A\x00"),
-            FORCE_OBFUSCATE("\x55\x89\xE5\x57\x56\x53\x81\xEC\x1C\x01\x00\x00\x8B\x75\x08\x0F\xB6\x05\x2A\x2A\x2A\x2A\x84\xC0"),
+            // AY_OBFUSCATE("\x55\x89\xE5\x81\xEC\x48\x01\x00\x00\x80\x3D\x2A\x2A\x2A\x2A\x00"),
+            AY_OBFUSCATE("\x55\x89\xE5\x57\x56\x53\x81\xEC\x1C\x01\x00\x00\x8B\x75\x08\x0F\xB6\x05\x2A\x2A\x2A\x2A\x84\xC0"),
             24, // 16,
             0x3F, // 0x60,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP
+            AY_OBFUSCATE("\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP
         },
         // --- PART TWO THREE FOUR AND FIVE---
         //
@@ -248,32 +248,32 @@ CBinPatch g_EnginePatches[] =
         //
         // CNetChan::CreateFragmentsFromFile(char const*, int, unsigned int)
         {
-            FORCE_OBFUSCATE("\x55\x89\xE5\x83\xEC\x48\x89\x5D\xF4\x8B\x5D\x0C\x89\x7D\xFC"),
+            AY_OBFUSCATE("\x55\x89\xE5\x57\x89\xCF\x56\x53\x89\xD3\x83\xEC\x30\x89\x45\xD4\xA1\x2A\x2A\x2A\x2A\x8D\x50\x04\x8B\x40\x04"),
             27, // 15,
             0x191,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP
+            AY_OBFUSCATE("\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP
         },
         {
-            FORCE_OBFUSCATE("\x55\x89\xE5\x83\xEC\x48\x89\x5D\xF4\x8B\x5D\x0C\x89\x7D\xFC"),
+            AY_OBFUSCATE("\x55\x89\xE5\x57\x89\xCF\x56\x53\x89\xD3\x83\xEC\x30\x89\x45\xD4\xA1\x2A\x2A\x2A\x2A\x8D\x50\x04\x8B\x40\x04"),
             27, // 15,
             0x1DB,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP
+            AY_OBFUSCATE("\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP
         },
         {
-            FORCE_OBFUSCATE("\x55\x89\xE5\x83\xEC\x48\x89\x5D\xF4\x8B\x5D\x0C\x89\x7D\xFC"),
+            AY_OBFUSCATE("\x55\x89\xE5\x57\x89\xCF\x56\x53\x89\xD3\x83\xEC\x30\x89\x45\xD4\xA1\x2A\x2A\x2A\x2A\x8D\x50\x04\x8B\x40\x04"),
             27, // 15,
             0x170,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP
+            AY_OBFUSCATE("\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP
         },
         {
-            FORCE_OBFUSCATE("\x55\x89\xE5\x83\xEC\x48\x89\x5D\xF4\x8B\x5D\x0C\x89\x7D\xFC"),
+            AY_OBFUSCATE("\x55\x89\xE5\x57\x89\xCF\x56\x53\x89\xD3\x83\xEC\x30\x89\x45\xD4\xA1\x2A\x2A\x2A\x2A\x8D\x50\x04\x8B\x40\x04"),
             27, // 15,
             0x1B4,
             PATCH_IMMEDIATE,
-            FORCE_OBFUSCATE("\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP
+            AY_OBFUSCATE("\x90\x90\x90\x90\x90") // CALL -> NOP NOP NOP NOP NOP
         },
         #else
         // Client only!
@@ -301,8 +301,8 @@ CBinPatch g_EnginePatches[] =
         // linux: https://res.kate.pet/upload/943d99c7a119/javaw_g1lgSM5YpC.png
         // windows: https://res.kate.pet/upload/9dcc9307cc3b/javaw_4qjdBcT8kQ.png
         {
-            // FORCE_OBFUSCATE("\x55\x89\xE5\x57\x56\x53\x81\xEC\xCC\x02\x00\x00\xC7\x45\xC8\x00\x00\x00\x00"),
-            FORCE_OBFUSCATE("\x55\x66\x0F\xEF\xC0\x89\xE5\x57\x56\x53\x81\xEC\x8C\x02\x00\x00\xA1\x2A\x2A\x2A\x2A\xC7\x85\x80\xFD\xFF\xFF\x00\x00\x00\x00"),
+            // AY_OBFUSCATE("\x55\x89\xE5\x57\x56\x53\x81\xEC\xCC\x02\x00\x00\xC7\x45\xC8\x00\x00\x00\x00"),
+            AY_OBFUSCATE("\x55\x66\x0F\xEF\xC0\x89\xE5\x57\x56\x53\x81\xEC\x8C\x02\x00\x00\xA1\x2A\x2A\x2A\x2A\xC7\x85\x80\xFD\xFF\xFF\x00\x00\x00\x00"),
             31, // 19,
             0x25C, // 0x424,
             PATCH_REFERENCE, // we are changing the value of a float**
