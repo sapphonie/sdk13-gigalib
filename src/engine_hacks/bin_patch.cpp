@@ -298,8 +298,39 @@ CBinPatch g_EnginePatches[] =
         // R_DrawSkyBox
         // search for raw hex "BE95F5AE" and then go to the function that references that data. should be FUN_002d4c10
         // code to replace isn't visible for the 32bit linux binary, but the MOVSS instructions match
-        // linux: https://res.kate.pet/upload/943d99c7a119/javaw_g1lgSM5YpC.png
-        // windows: https://res.kate.pet/upload/9dcc9307cc3b/javaw_4qjdBcT8kQ.png
+        //
+        // linux:
+        // 002d4e50 f3 0f 59        MULSS    XMM2,dword ptr [DAT_0086115c]    = ??
+        //          15 5c 11
+        //          86 00
+        // 002d4e58 f3 0f 59        MULSS    XMM1,dword ptr [DAT_0061158]     = ??
+        //          0d 58 11
+        //          86 00
+        // 002d4e60 f3 0f 59        MULSS    XMM3,dword ptr [DAT_0061160]     = ??
+        //          1d 60 11
+        //          86 00
+        // 002d4e68 f3 0f 10        MOVSS    XMM7,dword ptr [DAT_0066fac0]    = BE95F5AEh     <<<< HERE
+        //          3d c0 fa
+        //          66 00
+        //
+        // windows:
+        // 100ed1e4 f3 0f 59        MULSS    XMM0,dword ptr [DAT_103c5d78]
+        //          05 78 5d
+        //          3c 10
+        // 100ed1ec f3 0f 59        MULSS    XMM4,dword ptr [DAT_103c5d74]    = 3F800000h
+        //          25 74 5d
+        //          3c 10
+        // 100ed1f4 f3 0f 59        MULSS    XMM1,dword ptr [DAT_103c5d7c]
+        //          0d 7c 5d
+        //          3c 10
+        // 100ed1fc f3 0f 58 c4     ADDSS    XMM0,XMM4
+        // 100ed200 f3 0f 58 c1     ADDSS    XMM0,XMM1
+        // 100ed204 f3 0f 10        MOVSS    XMM1,dword ptr [DAT_10309280]    = BE95F5AEh     <<<< HERE
+        //          0d 80 92
+        //          30 10
+        // 100ed20c 0f 2f c8        COMISS   XMM1,XMM0
+        // 100ed20f 0f 87 51        JA       LAB_100ed666
+        //          04 00 00
         {
             // AY_OBFUSCATE("\x55\x89\xE5\x57\x56\x53\x81\xEC\xCC\x02\x00\x00\xC7\x45\xC8\x00\x00\x00\x00"),
             AY_OBFUSCATE("\x55\x66\x0F\xEF\xC0\x89\xE5\x57\x56\x53\x81\xEC\x8C\x02\x00\x00\xA1\x2A\x2A\x2A\x2A\xC7\x85\x80\xFD\xFF\xFF\x00\x00\x00\x00"),
